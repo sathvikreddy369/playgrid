@@ -3,6 +3,8 @@ import { useAuth } from '../providers/AuthProvider';
 import { signOut } from '../lib/firebase';
 import api from '../lib/api';
 
+import { motion } from 'framer-motion';
+
 export const Profile = () => {
   const { user, profile, firebaseUser, syncUser } = useAuth();
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -33,18 +35,22 @@ export const Profile = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="max-w-4xl mx-auto p-6 space-y-8"
+    >
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">My Profile</h1>
         <button
           onClick={handleLogout}
-          className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700"
+          className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 transition-colors"
         >
           Sign Out
         </button>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 space-y-4">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 rounded-xl p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <img 
@@ -62,15 +68,34 @@ export const Profile = () => {
             </div>
           </div>
 
-          {user.role === 'PLAYER' && (
-            <button
-              onClick={handleUpgrade}
-              disabled={isUpgrading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
-            >
-              {isUpgrading ? 'Upgrading...' : 'Become an Organizer'}
-            </button>
-          )}
+          <div className="flex gap-2">
+            {user.role !== 'ORGANIZER' && user.role !== 'ADMIN' && (
+              <button
+                onClick={handleUpgrade}
+                disabled={isUpgrading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                {isUpgrading ? 'Upgrading...' : 'Become an Organizer'}
+              </button>
+            )}
+
+            {user.role !== 'ADMIN' && (
+              <button
+                onClick={async () => {
+                  try {
+                    await api.post('/auth/make-me-admin');
+                    await syncUser();
+                    alert('You are now an Admin!');
+                  } catch (e: any) {
+                    alert('Error: ' + e.message);
+                  }
+                }}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
+              >
+                Promote to Admin
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="border-t border-gray-100 dark:border-gray-700 pt-4 mt-4">
@@ -98,6 +123,6 @@ export const Profile = () => {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

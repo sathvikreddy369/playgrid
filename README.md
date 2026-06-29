@@ -1,65 +1,47 @@
-# Playgrid - Modern Sports Social Network
+# PlayGrid
 
-Playgrid is a modern sports social network designed to help people discover local sports activities, join communities, find teammates, and organize matches.
+PlayGrid is a comprehensive sports community platform that connects players, organizers, and venue owners. It features real-time messaging, AI-driven moderation and recommendations, interactive community feeds, and match scheduling.
 
-## 🚀 Tech Stack
+## Tech Stack
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS, React Router, React Query
+- **Backend**: Node.js, Express, TypeScript, Socket.IO, Prisma (PostgreSQL)
+- **Authentication**: Firebase Authentication
+- **AI Integration**: Google Gemini API
+- **Image Hosting**: Cloudinary
 
-- **Frontend:** React, Vite, TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, Zustand, Socket.IO Client, Mapbox GL JS.
-- **Backend:** Node.js, Express, TypeScript, Prisma ORM, Socket.IO, Cloudinary.
-- **Database:** PostgreSQL (Supabase or Local via Docker).
-- **Authentication:** Firebase Auth.
+## Features
+- **Authentication**: Firebase-backed secure login and registration.
+- **Social Feed**: Post looking for players, team announcements, and general sports updates.
+- **Communities**: Create and join sports communities based on interests.
+- **Matches**: Schedule matches, manage RSVPs, and invite players.
+- **Venues**: Register and verify sports grounds with AI-generated summaries.
+- **Real-time Messaging**: Chat with other players instantly using Socket.IO.
+- **Admin Dashboard**: Manage users, approve venues, and monitor platform health.
+- **AI Moderation**: Automatically filter spam and inappropriate content using Gemini.
 
-## 🛠 Project Structure
-
-- `/frontend` - The React Vite application.
-- `/backend` - The Node.js Express API.
-- `docker-compose.yml` - For local PostgreSQL database.
-
-## 🏃‍♂️ Getting Started (Local Development)
-
-### Prerequisites
-
-- Node.js (v18+)
-- Docker (optional, for local DB)
-- Firebase Project
-- Cloudinary Account
-- Mapbox Account
+## Local Development
 
 ### 1. Database Setup
-```bash
-# Start the local PostgreSQL database
-docker-compose up -d
-```
+We use PostgreSQL. Create a local database named `playgrid`.
 
-### 2. Backend Setup
+### 2. Environment Variables
+Create `.env` files in both `/frontend` and `/backend` based on the `.env.example` files provided.
+
+### 3. Start Backend
 ```bash
 cd backend
 npm install
-
-# Copy env example and fill in credentials
-cp .env.example .env
-
-# Generate Prisma client and migrate database
 npx prisma generate
-npx prisma migrate dev --name init
-
-# Start development server
+npx prisma migrate dev
 npm run dev
 ```
 
-### 3. Frontend Setup
+### 4. Start Frontend
 ```bash
 cd frontend
 npm install
-
-# Copy env example and fill in credentials
-cp .env.example .env
-
-# Start development server
 npm run dev
 ```
 
-## 🏗 Architecture Principles
-- **Clean Architecture:** The backend follows a strict layered architecture (Routes -> Controllers -> Services -> Repositories).
-- **Single Source of Truth:** Database schemas are managed entirely through Prisma.
-- **Strict Typing:** End-to-end type safety with TypeScript and Zod validation.
+## Deployment
+Please see `DEPLOYMENT.md` for step-by-step instructions on deploying the application to production using Vercel, Render, and Supabase.

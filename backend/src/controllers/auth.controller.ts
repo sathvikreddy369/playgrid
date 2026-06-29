@@ -86,7 +86,29 @@ export class AuthController {
       res.status(500).json({ error: 'Failed to upgrade role' });
     }
   }
+
+  /**
+   * Upgrade current user to ADMIN role (For MVP/Testing)
+   */
+  static async makeMeAdmin(req: Request, res: Response): Promise<void> {
+    try {
+      const firebaseUid = req.firebaseUid;
+      if (!firebaseUid) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const updatedUser = await prisma.user.update({
+        where: { firebaseUid },
+        data: { role: 'ADMIN' },
+      });
+
+      res.status(200).json({ message: 'Successfully upgraded to Admin', user: updatedUser });
+    } catch (error) {
+      console.error('Admin Upgrade Error:', error);
+      res.status(500).json({ error: 'Failed to upgrade to admin' });
+    }
+  }
 }
 
-// Need to import prisma inside controller for 'me' function since we use it directly there
-import prisma from '../utils/db';
+// End of controller

@@ -13,4 +13,7 @@ router.get('/me', requireAuth, AuthController.me);
 // Upgrade to Organizer
 router.post('/upgrade-organizer', requireAuth, AuthController.upgradeToOrganizer);
 
+// Upgrade to Admin (for local testing)
+router.post('/make-me-admin', requireAuth, AuthController.makeMeAdmin);
+
 export default router;

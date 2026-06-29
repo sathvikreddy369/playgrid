@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User as FirebaseUser } from 'firebase/auth';
+import type { User as FirebaseUser } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import api from '../lib/api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -16,6 +16,7 @@ interface ProfileData {
   id: string;
   bio: string | null;
   location: string | null;
+  avatarUrl: string | null;
   sports: string[];
 }
 

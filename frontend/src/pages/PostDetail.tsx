@@ -9,7 +9,7 @@ import { useAuth } from '../providers/AuthProvider';
 export const PostDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { data: post, isLoading, isError } = usePostDetail(id!);
   const createReply = useCreateReply();
 
@@ -55,7 +55,7 @@ export const PostDetail = () => {
       {user ? (
         <form onSubmit={handleSubmit} className="mt-6 mb-8 flex items-start gap-3">
           <img 
-            src={user.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}`} 
+            src={profile?.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}`} 
             alt={user.name}
             className="w-10 h-10 rounded-full object-cover"
           />

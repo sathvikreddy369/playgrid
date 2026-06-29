@@ -4,6 +4,7 @@ import { Heart, MessageCircle, Bookmark, Share2 } from 'lucide-react';
 import { useToggleLike, useToggleSave } from '../hooks/usePosts';
 import { useAuth } from '../providers/AuthProvider';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 export const PostCard = ({ post }: { post: any }) => {
   const { user } = useAuth();
@@ -32,9 +33,12 @@ export const PostCard = ({ post }: { post: any }) => {
   };
 
   return (
-    <div 
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-4 hover:shadow-md transition-shadow cursor-pointer"
       onClick={() => navigate(`/posts/${post.id}`)}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 mb-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
     >
       <div className="flex items-start gap-4">
         <img 
@@ -101,6 +105,6 @@ export const PostCard = ({ post }: { post: any }) => {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

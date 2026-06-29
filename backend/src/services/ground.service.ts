@@ -1,5 +1,6 @@
 import prisma from '../utils/db';
 import { GroundStatus } from '@prisma/client';
+import { aiService } from './ai.service';
 
 export class GroundService {
   async createGround(userId: string, data: any) {
@@ -70,11 +71,16 @@ export class GroundService {
     if (rating < 1 || rating > 5) throw new Error('Rating must be between 1 and 5');
     
     // Upsert to handle the unique constraint (one review per user per ground)
-    return prisma.groundReview.upsert({
+    const review = await prisma.groundReview.upsert({
       where: { groundId_userId: { groundId, userId } },
       update: { rating, comment },
       create: { groundId, userId, rating, comment }
     });
+
+    // Fire and forget AI summary generation
+    this.generateAiSummary(groundId).catch(err => console.error('Failed to generate AI summary:', err));
+
+    return review;
   }
 
   async deleteReview(reviewId: string, userId: string, userRole: string) {
@@ -95,6 +101,30 @@ export class GroundService {
       where: { id },
       data: { status }
     });
+  }
+
+  async generateAiSummary(id: string) {
+    const ground = await prisma.ground.findUnique({
+      where: { id },
+      include: { reviews: { select: { comment: true } } }
+    });
+
+    if (!ground) throw new Error('Ground not found');
+
+    const reviewTexts = ground.reviews
+      .map(r => r.comment)
+      .filter(c => c !== null) as string[];
+
+    if (reviewTexts.length === 0) return null;
+
+    const summary = await aiService.summarizeReviews(reviewTexts);
+
+    await prisma.ground.update({
+      where: { id },
+      data: { aiSummary: summary }
+    });
+
+    return summary;
   }
 }
 

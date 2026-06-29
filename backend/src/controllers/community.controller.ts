@@ -27,7 +27,7 @@ export class CommunityController {
 
   async getCommunityById(req: Request, res: Response) {
     try {
-      const community = await communityService.getCommunityById(req.params.id);
+      const community = await communityService.getCommunityById((req.params.id as string));
       if (!community) {
         return res.status(404).json({ error: 'Community not found' });
       }
@@ -40,7 +40,7 @@ export class CommunityController {
   async joinCommunity(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
-      const member = await communityService.joinCommunity(req.params.id, userId);
+      const member = await communityService.joinCommunity((req.params.id as string), userId);
       res.json(member);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -50,7 +50,7 @@ export class CommunityController {
   async leaveCommunity(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
-      await communityService.leaveCommunity(req.params.id, userId);
+      await communityService.leaveCommunity((req.params.id as string), userId);
       res.json({ message: 'Left community' });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -61,7 +61,8 @@ export class CommunityController {
     try {
       const requesterId = req.user!.id;
       const requesterRole = req.user!.role;
-      const { id, userId } = req.params;
+      const id = req.params.id as string;
+      const userId = req.params.userId as string;
       
       await communityService.kickMember(id, userId, requesterId, requesterRole);
       res.json({ message: 'Member removed' });
@@ -76,7 +77,7 @@ export class CommunityController {
       const adminRole = req.user!.role;
       const { status } = req.body;
       
-      const community = await communityService.verifyCommunity(req.params.id, status, adminId, adminRole);
+      const community = await communityService.verifyCommunity((req.params.id as string), status, adminId, adminRole);
       res.json(community);
     } catch (error: any) {
       res.status(400).json({ error: error.message });

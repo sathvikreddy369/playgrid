@@ -113,6 +113,18 @@ export const GroundDetail = () => {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 shadow-sm">
             <h3 className="font-semibold text-xl mb-6">Reviews</h3>
             
+            {ground.aiSummary && (
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 p-4 rounded-xl mb-8">
+                <div className="flex items-center gap-2 text-purple-700 font-bold mb-2">
+                  <Star className="w-5 h-5 fill-current" />
+                  AI Summary
+                </div>
+                <p className="text-sm text-purple-900 leading-relaxed">
+                  {ground.aiSummary}
+                </p>
+              </div>
+            )}
+            
             {user && (
               <form onSubmit={handleReviewSubmit} className="mb-8 border-b pb-8">
                 <h4 className="font-medium mb-3">{hasReviewed ? 'Update your review' : 'Write a review'}</h4>

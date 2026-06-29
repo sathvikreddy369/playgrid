@@ -24,7 +24,7 @@ export class PostController {
   async getPostById(req: Request, res: Response) {
     try {
       const userId = req.user?.id;
-      const post = await postService.getPostById(req.params.id, userId);
+      const post = await postService.getPostById((req.params.id as string), userId);
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
       }
@@ -48,7 +48,7 @@ export class PostController {
     try {
       const userId = req.user!.id;
       const { content } = req.body;
-      const post = await postService.updatePost(req.params.id, userId, content);
+      const post = await postService.updatePost((req.params.id as string), userId, content);
       res.json(post);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -59,7 +59,7 @@ export class PostController {
     try {
       const userId = req.user!.id;
       const role = req.user!.role;
-      await postService.deletePost(req.params.id, userId, role);
+      await postService.deletePost((req.params.id as string), userId, role);
       res.json({ message: 'Post deleted' });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -69,7 +69,7 @@ export class PostController {
   async toggleLike(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
-      const result = await postService.toggleLike(req.params.id, userId);
+      const result = await postService.toggleLike((req.params.id as string), userId);
       res.json(result);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -79,7 +79,7 @@ export class PostController {
   async toggleSave(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
-      const result = await postService.toggleSave(req.params.id, userId);
+      const result = await postService.toggleSave((req.params.id as string), userId);
       res.json(result);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -92,7 +92,7 @@ export class PostController {
     try {
       const userId = req.user!.id;
       const { content, parentId } = req.body;
-      const reply = await replyService.createReply(userId, req.params.id, content, parentId);
+      const reply = await replyService.createReply(userId, (req.params.id as string), content, parentId);
       res.status(201).json(reply);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -102,7 +102,7 @@ export class PostController {
   async toggleReplyLike(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
-      const result = await replyService.toggleLike(req.params.id, userId);
+      const result = await replyService.toggleLike((req.params.id as string), userId);
       res.json(result);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -113,7 +113,7 @@ export class PostController {
     try {
       const userId = req.user!.id;
       const role = req.user!.role;
-      await replyService.deleteReply(req.params.id, userId, role);
+      await replyService.deleteReply((req.params.id as string), userId, role);
       res.json({ message: 'Reply deleted' });
     } catch (error: any) {
       res.status(400).json({ error: error.message });

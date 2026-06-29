@@ -4,6 +4,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Loader2, MapPin, Star } from 'lucide-react';
 import { useAuth } from '../providers/AuthProvider';
 
+import { motion } from 'framer-motion';
+
+const MotionLink = motion(Link);
+
 export const Grounds = () => {
   const { data: grounds, isLoading } = useGrounds('VERIFIED');
   const navigate = useNavigate();
@@ -31,9 +35,21 @@ export const Grounds = () => {
           <Loader2 className="w-10 h-10 animate-spin text-green-600" />
         </div>
       ) : grounds?.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <motion.div 
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+          }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
           {grounds.map((ground: any) => (
-            <Link 
+            <MotionLink 
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 }
+              }}
               key={ground.id} 
               to={`/grounds/${ground.id}`}
               className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md hover:border-green-500 transition-all group block"
@@ -81,9 +97,9 @@ export const Grounds = () => {
                    </div>
                 </div>
               </div>
-            </Link>
+            </MotionLink>
           ))}
-        </div>
+        </motion.div>
       ) : (
         <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
           <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">No venues found</h3>

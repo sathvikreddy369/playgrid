@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { signInWithGoogle } from '../lib/firebase';
 import { useAuth } from '../providers/AuthProvider';
 
+import { motion } from 'framer-motion';
+
 export const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,7 +35,12 @@ export const Login = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4 }}
+        className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl"
+      >
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Welcome to Playgrid</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Find Players. Build Communities. Play More.</p>
@@ -76,7 +83,7 @@ export const Login = () => {
             </>
           )}
         </button>
-      </div>
+      </motion.div>
     </div>
   );
 };

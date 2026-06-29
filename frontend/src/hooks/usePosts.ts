@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import api from '../lib/api';
 
-export const useFeed = (filters: { type?: string; location?: string } = {}) => {
+export const useFeed = (filters: { type?: string; location?: string; communityId?: string } = {}) => {
   return useInfiniteQuery({
     queryKey: ['posts', 'feed', filters],
     queryFn: async ({ pageParam = undefined }) => {

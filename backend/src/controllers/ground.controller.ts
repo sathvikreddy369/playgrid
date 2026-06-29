@@ -25,7 +25,7 @@ export class GroundController {
 
   async getGroundById(req: Request, res: Response) {
     try {
-      const ground = await groundService.getGroundById(req.params.id);
+      const ground = await groundService.getGroundById((req.params.id as string));
       if (!ground) {
         return res.status(404).json({ error: 'Ground not found' });
       }
@@ -38,7 +38,7 @@ export class GroundController {
   async updateGround(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
-      const ground = await groundService.updateGround(req.params.id, userId, req.body);
+      const ground = await groundService.updateGround((req.params.id as string), userId, req.body);
       res.json(ground);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -49,7 +49,7 @@ export class GroundController {
     try {
       const userId = req.user!.id;
       const { rating, comment } = req.body;
-      const review = await groundService.addReview(req.params.id, userId, rating, comment);
+      const review = await groundService.addReview((req.params.id as string), userId, rating, comment);
       res.status(201).json(review);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -60,7 +60,7 @@ export class GroundController {
     try {
       const userId = req.user!.id;
       const userRole = req.user!.role;
-      await groundService.deleteReview(req.params.reviewId, userId, userRole);
+      await groundService.deleteReview((req.params.reviewId as string), userId, userRole);
       res.json({ message: 'Review deleted' });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -71,7 +71,7 @@ export class GroundController {
     try {
       const adminRole = req.user!.role;
       const { status } = req.body;
-      const ground = await groundService.verifyGround(req.params.id, status, adminRole);
+      const ground = await groundService.verifyGround((req.params.id as string), status, adminRole);
       res.json(ground);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
