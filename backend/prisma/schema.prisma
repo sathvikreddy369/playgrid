@@ -1,0 +1,427 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// -----------------------------------------------------------------------------
+// ENUMS
+// -----------------------------------------------------------------------------
+
+enum Role {
+  GUEST
+  PLAYER
+  ORGANIZER
+  ADMIN
+}
+
+enum MatchStatus {
+  OPEN
+  FULL
+  CANCELLED
+  COMPLETED
+}
+
+enum MatchSkillLevel {
+  ALL
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  PRO
+}
+
+enum CommunityStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum GroundStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum PostType {
+  LOOKING_FOR_PLAYERS
+  LOOKING_FOR_TEAM
+  COMMUNITY_POST
+  TOURNAMENT_ANNOUNCEMENT
+  GROUND_PROMOTION
+  GENERAL
+  QUESTION
+  EQUIPMENT
+  TRAINING
+}
+
+enum ReportType {
+  POST
+  USER
+  COMMUNITY
+  GROUND
+  MESSAGE
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  DISMISSED
+  ACTION_TAKEN
+}
+
+enum NotificationType {
+  MATCH_REMINDER
+  JOIN_REQUEST
+  JOIN_APPROVED
+  JOIN_REJECTED
+  NEW_REPLY
+  NEW_MESSAGE
+  SYSTEM_ALERT
+  COMMUNITY_ANNOUNCEMENT
+}
+
+// -----------------------------------------------------------------------------
+// MODELS
+// -----------------------------------------------------------------------------
+
+model User {
+  id          String   @id @default(uuid())
+  firebaseUid String   @unique
+  email       String   @unique
+  name        String
+  role        Role     @default(PLAYER)
+  reputation  Int      @default(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profile Profile?
+  posts   Post[]
+  replies Reply[]
+
+  // Relations
+  matchesCreated      Match[]       @relation("MatchCreator")
+  matchParticipations MatchPlayer[]
+
+  communitiesOwned     Community[]       @relation("CommunityOwner")
+  communityMemberships CommunityMember[]
+
+  groundsOwned Ground[] @relation("GroundOwner")
+
+  tournamentsOrganized Tournament[]            @relation("TournamentOrganizer")
+  tournamentEntries    TournamentParticipant[]
+
+  badges UserBadge[]
+
+  messagesSent     Message[] @relation("SentMessages")
+  messagesReceived Message[] @relation("ReceivedMessages")
+
+  notifications Notification[]
+
+  reportsSubmitted Report[] @relation("ReportSubmitter")
+
+  postLikes     PostLike[]
+  replyLikes    ReplyLike[]
+  savedPosts    SavedPost[]
+  groundReviews GroundReview[]
+
+  @@index([firebaseUid])
+  @@index([email])
+}
+
+model Profile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  bio       String?
+  avatarUrl String?
+  location  String?
+  sports    String[] // e.g. ["Cricket", "Football"]
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Community {
+  id          String          @id @default(uuid())
+  name        String
+  description String
+  location    String?
+  status      CommunityStatus @default(PENDING)
+  ownerId     String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  owner   User              @relation("CommunityOwner", fields: [ownerId], references: [id])
+  members CommunityMember[]
+  posts   Post[]
+  matches Match[]
+
+  @@index([status])
+}
+
+model CommunityMember {
+  id          String   @id @default(uuid())
+  userId      String
+  communityId String
+  joinedAt    DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, communityId])
+}
+
+model Ground {
+  id           String       @id @default(uuid())
+  name         String
+  location     String
+  latitude     Float?
+  longitude    Float?
+  pricing      String?
+  amenities    String[]
+  sports       String[]
+  photos       String[]
+  contactPhone String?
+  status       GroundStatus @default(PENDING)
+  ownerId      String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  owner   User           @relation("GroundOwner", fields: [ownerId], references: [id])
+  reviews GroundReview[]
+
+  @@index([status])
+  @@index([latitude, longitude]) // Spatial queries approximation
+}
+
+model Match {
+  id            String          @id @default(uuid())
+  title         String
+  sport         String
+  date          DateTime
+  location      String
+  latitude      Float?
+  longitude     Float?
+  maxPlayers    Int
+  costPerPerson Float?
+  skillLevel    MatchSkillLevel @default(ALL)
+  status        MatchStatus     @default(OPEN)
+  creatorId     String
+  communityId   String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  creator   User          @relation("MatchCreator", fields: [creatorId], references: [id])
+  community Community?    @relation(fields: [communityId], references: [id], onDelete: SetNull)
+  players   MatchPlayer[]
+
+  @@index([date, sport])
+  @@index([status])
+  @@index([latitude, longitude])
+}
+
+model MatchPlayer {
+  id       String   @id @default(uuid())
+  matchId  String
+  userId   String
+  status   String // PENDING, APPROVED, REJECTED
+  joinedAt DateTime @default(now())
+
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, userId])
+}
+
+model Tournament {
+  id          String   @id @default(uuid())
+  name        String
+  sport       String
+  startDate   DateTime
+  endDate     DateTime
+  location    String
+  latitude    Float?
+  longitude   Float?
+  entryFee    Float?
+  prizePool   String?
+  organizerId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  organizer    User                    @relation("TournamentOrganizer", fields: [organizerId], references: [id])
+  participants TournamentParticipant[]
+
+  @@index([startDate, sport])
+}
+
+model TournamentParticipant {
+  id           String   @id @default(uuid())
+  tournamentId String
+  userId       String
+  teamName     String?
+  status       String // PENDING, APPROVED, ELIMINATED
+  joinedAt     DateTime @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, userId])
+}
+
+model Post {
+  id          String   @id @default(uuid())
+  content     String
+  type        PostType @default(GENERAL)
+  location    String? // Optional for local feed filtering
+  authorId    String
+  communityId String?
+  tags        String[]
+  isEdited    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  community Community?  @relation(fields: [communityId], references: [id], onDelete: SetNull)
+  replies   Reply[]
+  likes     PostLike[]
+  savedBy   SavedPost[]
+
+  @@index([createdAt])
+  @@index([type])
+  @@index([communityId])
+}
+
+model Reply {
+  id        String   @id @default(uuid())
+  content   String
+  postId    String
+  authorId  String
+  parentId  String? // For nested replies
+  isEdited  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post    Post        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author  User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent  Reply?      @relation("ReplyToReply", fields: [parentId], references: [id])
+  replies Reply[]     @relation("ReplyToReply")
+  likes   ReplyLike[]
+
+  @@index([postId])
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  content    String
+  senderId   String
+  receiverId String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, receiverId])
+  @@index([receiverId, isRead])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  content   String
+  link      String? // URL to redirect on click
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+model Report {
+  id          String       @id @default(uuid())
+  submitterId String
+  targetType  ReportType
+  targetId    String // UUID of the reported entity
+  reason      String
+  status      ReportStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  submitter User @relation("ReportSubmitter", fields: [submitterId], references: [id])
+
+  @@index([status])
+  @@index([targetType, targetId])
+}
+
+model Badge {
+  id          String  @id @default(uuid())
+  name        String  @unique // e.g. VERIFIED_PLAYER, TOURNAMENT_WINNER
+  description String
+  icon        String?
+
+  users UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  userId    String
+  badgeId   String
+  awardedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+}
+
+model PostLike {
+  id        String   @id @default(uuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+}
+
+model ReplyLike {
+  id        String   @id @default(uuid())
+  userId    String
+  replyId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reply Reply @relation(fields: [replyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, replyId])
+}
+
+model SavedPost {
+  id        String   @id @default(uuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+}
+
+model GroundReview {
+  id        String   @id @default(uuid())
+  groundId  String
+  userId    String
+  rating    Int // 1 to 5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  ground Ground @relation(fields: [groundId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groundId, userId]) // one review per user per ground
+}
