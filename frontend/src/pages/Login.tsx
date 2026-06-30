@@ -67,6 +67,7 @@ export const Login = () => {
           <button
             onClick={handleGoogleLogin}
             disabled={isLoading}
+            aria-label="Continue with Google"
             className="w-full flex items-center justify-center gap-3 px-6 py-4 text-base font-bold text-foreground transition-all bg-surface border-2 border-border rounded-2xl hover:bg-border/50 focus:outline-none focus:ring-4 focus:ring-primary-500/20 disabled:opacity-50 active:scale-95 shadow-sm"
           >
             {isLoading ? (

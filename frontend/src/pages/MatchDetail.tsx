@@ -6,6 +6,7 @@ import { Loader2, ArrowLeft, Calendar, MapPin, Users, IndianRupee, ShieldAlert, 
 import { format } from 'date-fns';
 import { Skeleton } from '../components/Skeleton';
 import { motion } from 'framer-motion';
+import type { MatchPlayer, MatchComment } from '../types';
 
 export const MatchDetail = () => {
   const { id } = useParams();
@@ -32,10 +33,10 @@ export const MatchDetail = () => {
   if (!match) return <div className="text-center py-20 text-muted font-medium">Match not found</div>;
 
   const isCreator = match.creatorId === user?.id;
-  const myRequest = match.players?.find((p: any) => p.userId === user?.id);
+  const myRequest = match.players?.find((p: MatchPlayer) => p.userId === user?.id);
   
-  const approvedPlayers = match.players?.filter((p: any) => p.status === 'APPROVED' || p.status === 'ATTENDED') || [];
-  const pendingPlayers = match.players?.filter((p: any) => p.status === 'PENDING') || [];
+  const approvedPlayers = match.players?.filter((p: MatchPlayer) => p.status === 'APPROVED' || p.status === 'ATTENDED') || [];
+  const pendingPlayers = match.players?.filter((p: MatchPlayer) => p.status === 'PENDING') || [];
 
   const handleAction = (userId: string | undefined, action: 'approve' | 'reject' | 'attend' | 'cancel') => {
     const rating = action === 'attend' && userId ? ratings[userId] || 3 : undefined;
@@ -103,7 +104,7 @@ export const MatchDetail = () => {
 
               <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <img src={match.creator.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${match.creator.name}`} className="w-11 h-11 rounded-full border-2 border-surface shadow-sm bg-border shrink-0" />
+                  <img loading="lazy" decoding="async" src={match.creator.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${match.creator.name}`} alt={match.creator.name} className="w-11 h-11 rounded-full border-2 border-surface shadow-sm bg-border shrink-0" />
                   <div>
                     <p className="text-[11px] font-bold text-muted uppercase tracking-wider">Host</p>
                     <p className="font-bold text-foreground">{match.creator.name}</p>
@@ -130,9 +131,9 @@ export const MatchDetail = () => {
             <h3 className="font-black text-xl mb-6 flex items-center gap-2"><MessageSquare className="w-5 h-5 text-muted" /> Match Discussion</h3>
             <div className="space-y-5 mb-6">
               {match.comments?.length > 0 ? (
-                match.comments.map((comment: any) => (
+                match.comments.map((comment: MatchComment) => (
                   <div key={comment.id} className="flex gap-4">
-                    <img src={comment.user.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${comment.user.name}`} className="w-9 h-9 rounded-full bg-border shrink-0" />
+                    <img loading="lazy" decoding="async" src={comment.user.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${comment.user.name}`} alt={comment.user.name} className="w-9 h-9 rounded-full bg-border shrink-0" />
                     <div className="flex-1">
                       <div className="bg-surface border border-border rounded-2xl rounded-tl-none px-4 py-3">
                         <p className="text-[13px] font-bold text-foreground mb-1">{comment.user.name}</p>
@@ -181,10 +182,10 @@ export const MatchDetail = () => {
               <p className="text-muted text-[15px] font-medium text-center py-6 bg-surface/50 rounded-xl border border-dashed border-border">No players confirmed yet.</p>
             ) : (
               <div className="space-y-4">
-                {approvedPlayers.map((p: any) => (
+                {approvedPlayers.map((p: MatchPlayer) => (
                   <div key={p.userId} className="flex flex-col gap-3 pb-4 border-b border-border last:border-0 last:pb-0">
                     <div className="flex items-center gap-3">
-                      <img src={p.user.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${p.user.name}`} className="w-10 h-10 rounded-full bg-border" />
+                      <img loading="lazy" decoding="async" src={p.user.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${p.user.name}`} alt={p.user.name} className="w-10 h-10 rounded-full bg-border" />
                       <div>
                         <p className="font-bold text-foreground text-[15px]">{p.user.name} {p.userId === match.creatorId && <span className="text-[10px] bg-primary-100 text-primary-800 px-1.5 py-0.5 rounded ml-1 uppercase tracking-wider">Host</span>}</p>
                         <p className="text-[12px] text-muted font-medium">Rep: {p.user.reputation}</p>
@@ -229,10 +230,10 @@ export const MatchDetail = () => {
                 <p className="text-muted text-[15px] font-medium text-center py-4 bg-surface/50 rounded-xl border border-dashed border-border">No pending requests.</p>
               ) : (
                 <div className="space-y-4">
-                  {pendingPlayers.map((p: any) => (
+                  {pendingPlayers.map((p: MatchPlayer) => (
                     <div key={p.userId} className="flex flex-col gap-3 p-4 bg-surface rounded-xl border border-border shadow-sm">
                       <div className="flex items-center gap-3">
-                        <img src={p.user.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${p.user.name}`} className="w-8 h-8 rounded-full bg-border" />
+                        <img loading="lazy" decoding="async" src={p.user.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${p.user.name}`} alt={p.user.name} className="w-8 h-8 rounded-full bg-border" />
                         <div>
                           <span className="font-bold text-foreground text-[14px] block">{p.user.name}</span>
                           <span className="text-[11px] text-muted font-medium">Rep: {p.user.reputation}</span>

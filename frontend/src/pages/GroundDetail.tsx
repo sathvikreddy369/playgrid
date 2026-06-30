@@ -59,11 +59,11 @@ export const GroundDetail = () => {
           <div className="bg-surface border border-border rounded-2xl overflow-hidden aspect-video relative shadow-sm group">
             {ground.photos?.length > 0 ? (
               <>
-                <img src={ground.photos[activeImage]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <img src={ground.photos[activeImage]} alt={ground.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
                   {ground.photos.map((_: any, i: number) => (
-                    <button key={i} onClick={() => setActiveImage(i)} className={`w-2.5 h-2.5 rounded-full transition-all ${i === activeImage ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/80'}`} />
+                    <button key={i} onClick={() => setActiveImage(i)} aria-label={`View photo ${i + 1}`} className={`w-2.5 h-2.5 rounded-full transition-all ${i === activeImage ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/80'}`} />
                   ))}
                 </div>
               </>
@@ -153,7 +153,7 @@ export const GroundDetail = () => {
                 <h4 className="font-bold text-foreground mb-4">{hasReviewed ? 'Update your review' : 'Write a review'}</h4>
                 <div className="flex gap-2 mb-4">
                   {[1,2,3,4,5].map(star => (
-                    <button type="button" key={star} onClick={() => setRating(star)} className="focus:outline-none transition-transform hover:scale-110">
+                    <button type="button" key={star} onClick={() => setRating(star)} aria-label={`Rate ${star} stars`} className="focus:outline-none transition-transform hover:scale-110">
                       <Star className={`w-7 h-7 ${rating >= star ? 'fill-yellow-500 text-yellow-500' : 'text-muted/50'}`} />
                     </button>
                   ))}
@@ -177,7 +177,7 @@ export const GroundDetail = () => {
                   <div key={r.id} className="group">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-3">
-                        <img src={r.user.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${r.user.name}`} className="w-10 h-10 rounded-full bg-border" />
+                        <img src={r.user.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${r.user.name}`} alt={r.user.name} className="w-10 h-10 rounded-full bg-border" />
                         <div>
                           <p className="font-bold text-foreground text-[15px]">{r.user.name}</p>
                           <p className="text-[12px] font-medium text-muted">{formatDistanceToNow(new Date(r.createdAt))} ago</p>

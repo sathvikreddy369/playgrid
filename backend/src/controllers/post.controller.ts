@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { postService } from '../services/post.service';
 import { replyService } from '../services/reply.service';
 import { AppError } from '../utils/AppError';
+import { StructuredLogger } from '../utils/logger';
 
 export class PostController {
   async getPosts(req: Request, res: Response, next: NextFunction) {
@@ -60,7 +61,11 @@ export class PostController {
     try {
       const userId = req.user!.id;
       const role = req.user!.role;
-      await postService.deletePost((req.params.id as string), userId, role);
+      const postId = req.params.id as string;
+      await postService.deletePost(postId, userId, role);
+      
+      StructuredLogger.audit('DELETE_POST', userId, postId, 'SUCCESS', req.id);
+      
       res.json({ message: 'Post deleted' });
     } catch (error) {
       next(error);

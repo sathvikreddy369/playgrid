@@ -41,20 +41,24 @@ export class AdminService {
     };
   }
 
-  async getUsers() {
+  async getUsers(page = 1, limit = 50) {
+    const skip = (page - 1) * limit;
     return prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
-      take: 100, // MVP limit
+      skip,
+      take: limit,
       include: {
         _count: { select: { posts: true, matchesCreated: true } }
       }
     });
   }
 
-  async getMatches() {
+  async getMatches(page = 1, limit = 50) {
+    const skip = (page - 1) * limit;
     return prisma.match.findMany({
       orderBy: { createdAt: 'desc' },
-      take: 100,
+      skip,
+      take: limit,
       include: {
         creator: { select: { name: true } },
         _count: { select: { players: true } }

@@ -178,6 +178,7 @@ model Community {
   matches Match[]
 
   @@index([status])
+  @@index([ownerId])
 }
 
 model CommunityMember {
@@ -242,6 +243,7 @@ model Match {
   @@index([status])
   @@index([status, date])
   @@index([latitude, longitude])
+  @@index([creatorId])
 }
 
 model MatchComment {
@@ -269,6 +271,7 @@ model MatchPlayer {
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([matchId, userId])
+  @@index([userId])
 }
 
 model Tournament {
@@ -350,6 +353,7 @@ model Reply {
   likes   ReplyLike[]
 
   @@index([postId])
+  @@index([authorId])
 }
 
 model Message {

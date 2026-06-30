@@ -188,35 +188,35 @@ export const Profile = () => {
                 className="overflow-hidden border-t border-border mt-4 pt-6 space-y-5"
               >
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-muted uppercase tracking-wider">Bio</label>
-                  <textarea className="w-full bg-surface border border-border rounded-xl p-3 text-foreground focus:ring-2 focus:ring-primary-500 outline-none resize-none" rows={3} value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} />
+                  <label htmlFor="bio" className="text-xs font-bold text-muted uppercase tracking-wider">Bio</label>
+                  <textarea id="bio" className="w-full bg-surface border border-border rounded-xl p-3 text-foreground focus:ring-2 focus:ring-primary-500 outline-none resize-none" rows={3} value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} />
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-muted uppercase tracking-wider">Location</label>
+                    <label htmlFor="location" className="text-xs font-bold text-muted uppercase tracking-wider">Location</label>
                     <div className="flex gap-2">
-                      <input type="text" className="flex-1 bg-surface border border-border rounded-xl px-3 py-2 text-foreground focus:ring-2 focus:ring-primary-500 outline-none" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
-                      <button type="button" onClick={handleUseLocation} className="px-3 py-2 bg-surface border border-border hover:bg-border rounded-xl flex items-center justify-center transition-colors text-muted hover:text-foreground">
+                      <input id="location" type="text" className="flex-1 bg-surface border border-border rounded-xl px-3 py-2 text-foreground focus:ring-2 focus:ring-primary-500 outline-none" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
+                      <button type="button" aria-label="Use current location" onClick={handleUseLocation} className="px-3 py-2 bg-surface border border-border hover:bg-border rounded-xl flex items-center justify-center transition-colors text-muted hover:text-foreground">
                         <Navigation className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-muted uppercase tracking-wider">Age</label>
-                    <input type="number" className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-foreground focus:ring-2 focus:ring-primary-500 outline-none" value={formData.age} onChange={e => setFormData({...formData, age: e.target.value})} />
+                    <label htmlFor="age" className="text-xs font-bold text-muted uppercase tracking-wider">Age</label>
+                    <input id="age" type="number" className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-foreground focus:ring-2 focus:ring-primary-500 outline-none" value={formData.age} onChange={e => setFormData({...formData, age: e.target.value})} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-muted uppercase tracking-wider">Home Latitude</label>
-                    <input type="number" step="any" className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-foreground focus:ring-2 focus:ring-primary-500 outline-none" value={formData.homeLatitude} onChange={e => setFormData({...formData, homeLatitude: e.target.value})} />
+                    <label htmlFor="homeLatitude" className="text-xs font-bold text-muted uppercase tracking-wider">Home Latitude</label>
+                    <input id="homeLatitude" type="number" step="any" className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-foreground focus:ring-2 focus:ring-primary-500 outline-none" value={formData.homeLatitude} onChange={e => setFormData({...formData, homeLatitude: e.target.value})} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-muted uppercase tracking-wider">Home Longitude</label>
-                    <input type="number" step="any" className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-foreground focus:ring-2 focus:ring-primary-500 outline-none" value={formData.homeLongitude} onChange={e => setFormData({...formData, homeLongitude: e.target.value})} />
+                    <label htmlFor="homeLongitude" className="text-xs font-bold text-muted uppercase tracking-wider">Home Longitude</label>
+                    <input id="homeLongitude" type="number" step="any" className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-foreground focus:ring-2 focus:ring-primary-500 outline-none" value={formData.homeLongitude} onChange={e => setFormData({...formData, homeLongitude: e.target.value})} />
                   </div>
                   <div className="space-y-1 md:col-span-2">
-                    <label className="text-xs font-bold text-muted uppercase tracking-wider">Favorite Games (comma separated)</label>
-                    <input type="text" className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-foreground focus:ring-2 focus:ring-primary-500 outline-none" value={formData.favoriteGames} onChange={e => setFormData({...formData, favoriteGames: e.target.value})} />
+                    <label htmlFor="favoriteGames" className="text-xs font-bold text-muted uppercase tracking-wider">Favorite Games (comma separated)</label>
+                    <input id="favoriteGames" type="text" className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-foreground focus:ring-2 focus:ring-primary-500 outline-none" value={formData.favoriteGames} onChange={e => setFormData({...formData, favoriteGames: e.target.value})} />
                   </div>
                   <div className="space-y-1 md:col-span-2">
                     <label className="text-xs font-bold text-muted uppercase tracking-wider mb-2 block">Preferred Play Times</label>

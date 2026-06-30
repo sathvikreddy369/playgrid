@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../utils/db';
 import { AppError } from '../utils/AppError';
+import { StructuredLogger } from '../utils/logger';
 
 export class AuthController {
   static async sync(req: Request, res: Response, next: NextFunction) {
@@ -16,24 +17,27 @@ export class AuthController {
         include: { profile: true, badges: { include: { badge: true } }, communityMemberships: { include: { community: true } } }
       });
 
-      if (!user) {
-        // Create user
-        const { email, name } = req.body || {};
-        user = await prisma.user.create({
-          data: {
-            firebaseUid,
-            email: email || '',
-            name: name || 'Anonymous User',
-            profile: {
-              create: {} // Create empty profile
-            }
-          },
-          include: { profile: true, badges: { include: { badge: true } }, communityMemberships: { include: { community: true } } }
-        });
-      }
+        if (!user) {
+          // Create user
+          const { email, name } = req.body || {};
+          user = await prisma.user.create({
+            data: {
+              firebaseUid,
+              email: email || '',
+              name: name || 'Anonymous User',
+              profile: {
+                create: {} // Create empty profile
+              }
+            },
+            include: { profile: true, badges: { include: { badge: true } }, communityMemberships: { include: { community: true } } }
+          });
+          StructuredLogger.audit('USER_SIGNUP', user.id, user.id, 'SUCCESS', req.id);
+        } else {
+          StructuredLogger.audit('USER_LOGIN', user.id, user.id, 'SUCCESS', req.id);
+        }
 
-      res.status(200).json(user);
-    } catch (error) {
+        res.status(200).json(user);
+      } catch (error) {
       next(error);
     }
   }
@@ -76,6 +80,9 @@ export class AuthController {
           ...data
         }
       });
+      
+      StructuredLogger.audit('UPDATE_PROFILE', user.id, user.id, 'SUCCESS', req.id);
+      
       res.status(200).json(updatedProfile);
     } catch (error) {
       next(error);

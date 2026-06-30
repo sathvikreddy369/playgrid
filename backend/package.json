@@ -7,7 +7,8 @@
     "dev": "nodemon src/index.ts",
     "build": "tsc",
     "start": "node -r dotenv/config dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",
@@ -23,10 +24,10 @@
     "express-rate-limit": "^8.5.2",
     "firebase-admin": "^14.1.0",
     "helmet": "^8.2.0",
-    "morgan": "^1.11.0",
     "multer": "^2.2.0",
     "pg": "^8.22.0",
     "socket.io": "^4.8.3",
+    "xss-clean": "^0.1.4",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -34,17 +35,22 @@
     "@types/cors": "^2.8.19",
     "@types/eslint": "^9.6.1",
     "@types/express": "^5.0.6",
-    "@types/morgan": "^1.9.10",
     "@types/multer": "^2.1.0",
     "@types/node": "^26.0.1",
     "@types/pg": "^8.20.0",
     "@types/socket.io": "^3.0.2",
+    "@types/supertest": "^7.2.0",
+    "@vitest/coverage-v8": "^4.1.9",
     "eslint": "^10.6.0",
     "nodemon": "^3.1.14",
     "prettier": "^3.9.3",
     "prisma": "^7.8.0",
+    "socket.io-client": "^4.8.3",
+    "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9",
+    "vitest-mock-extended": "^4.0.0"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

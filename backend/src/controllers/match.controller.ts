@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { matchService } from '../services/match.service';
-import { aiService } from '../services/ai.service';
 import prisma from '../utils/db';
 import { AppError } from '../utils/AppError';
+import { StructuredLogger } from '../utils/logger';
 
 export class MatchController {
   async getRecommendations(req: Request, res: Response, next: NextFunction) {
@@ -15,14 +15,7 @@ export class MatchController {
       });
       if (!user?.profile) return res.json([]);
 
-      // Fetch upcoming open matches
-      const matches = await prisma.match.findMany({
-        where: { status: 'OPEN', date: { gte: new Date() } },
-        include: { creator: { select: { name: true } }, _count: { select: { players: true } } },
-        take: 20
-      });
-
-      const recommendations = await aiService.getRecommendations(user.profile, matches);
+      const recommendations = await matchService.getRecommendations(user.profile);
       res.json(recommendations);
     } catch (error) {
       next(error);
@@ -33,6 +26,9 @@ export class MatchController {
     try {
       const userId = req.user!.id;
       const match = await matchService.createMatch(userId, req.body);
+      
+      StructuredLogger.audit('CREATE_MATCH', userId, match.id, 'SUCCESS', req.id);
+      
       res.status(201).json(match);
     } catch (error) {
       next(error);
@@ -71,7 +67,12 @@ export class MatchController {
   async approvePlayer(req: Request, res: Response, next: NextFunction) {
     try {
       const creatorId = req.user!.id;
-      const result = await matchService.handleJoinRequest((req.params.id as string), creatorId, (req.params.userId as string), 'APPROVED');
+      const matchId = req.params.id as string;
+      const playerId = req.params.userId as string;
+      const result = await matchService.handleJoinRequest(matchId, creatorId, playerId, 'APPROVED');
+      
+      StructuredLogger.audit('APPROVE_PLAYER', creatorId, matchId, 'SUCCESS', req.id, { playerId });
+      
       res.json(result);
     } catch (error) {
       next(error);
@@ -81,7 +82,12 @@ export class MatchController {
   async rejectPlayer(req: Request, res: Response, next: NextFunction) {
     try {
       const creatorId = req.user!.id;
-      const result = await matchService.handleJoinRequest((req.params.id as string), creatorId, (req.params.userId as string), 'REJECTED');
+      const matchId = req.params.id as string;
+      const playerId = req.params.userId as string;
+      const result = await matchService.handleJoinRequest(matchId, creatorId, playerId, 'REJECTED');
+      
+      StructuredLogger.audit('REJECT_PLAYER', creatorId, matchId, 'SUCCESS', req.id, { playerId });
+      
       res.json(result);
     } catch (error) {
       next(error);
@@ -107,7 +113,11 @@ export class MatchController {
   async cancelMatch(req: Request, res: Response, next: NextFunction) {
     try {
       const creatorId = req.user!.id;
-      const result = await matchService.cancelMatch((req.params.id as string), creatorId);
+      const matchId = req.params.id as string;
+      const result = await matchService.cancelMatch(matchId, creatorId);
+      
+      StructuredLogger.audit('CANCEL_MATCH', creatorId, matchId, 'SUCCESS', req.id);
+      
       res.json(result);
     } catch (error) {
       next(error);

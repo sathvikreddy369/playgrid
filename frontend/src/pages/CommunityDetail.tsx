@@ -178,7 +178,7 @@ export const CommunityDetail = () => {
                 {community.members.map((member: any) => (
                   <div key={member.userId} className="flex items-center justify-between card p-4 group">
                     <div className="flex items-center gap-3">
-                      <img src={member.user.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${member.user.name}`} className="w-10 h-10 rounded-full bg-border" />
+                      <img src={member.user.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${member.user.name}`} alt={member.user.name} className="w-10 h-10 rounded-full bg-border" />
                       <div>
                         <p className="font-bold text-foreground">{member.user.name}</p>
                         <p className="text-[11px] font-bold uppercase tracking-wider text-muted mt-0.5">{member.user.role}</p>

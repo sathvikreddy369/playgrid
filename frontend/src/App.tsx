@@ -3,6 +3,7 @@ import { Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './providers/AuthProvider';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Loader2 } from 'lucide-react';
 
 const Home = React.lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
@@ -33,30 +34,32 @@ const SuspenseFallback = () => (
 function App() {
   return (
     <AuthProvider>
-      <Suspense fallback={<SuspenseFallback />}>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/feed" element={<Feed />} />
-            <Route path="/posts/:id" element={<PostDetail />} />
-            <Route path="/communities" element={<Communities />} />
-            <Route path="/communities/:id" element={<CommunityDetail />} />
-            <Route path="/communities/create" element={<ProtectedRoute><CreateCommunity /></ProtectedRoute>} />
-            <Route path="/grounds" element={<Grounds />} />
-            <Route path="/grounds/:id" element={<GroundDetail />} />
-            <Route path="/grounds/create" element={<ProtectedRoute><CreateGround /></ProtectedRoute>} />
-            <Route path="/matches" element={<Matches />} />
-            <Route path="/matches/:id" element={<MatchDetail />} />
-            <Route path="/matches/create" element={<ProtectedRoute><CreateMatch /></ProtectedRoute>} />
-            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/admin" element={<ProtectedRoute requireRole={['ADMIN']}><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/profile/:id" element={<ProtectedRoute><UserPublicProfile /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          </Route>
-        </Routes>
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<SuspenseFallback />}>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/feed" element={<Feed />} />
+              <Route path="/posts/:id" element={<PostDetail />} />
+              <Route path="/communities" element={<Communities />} />
+              <Route path="/communities/:id" element={<CommunityDetail />} />
+              <Route path="/communities/create" element={<ProtectedRoute><CreateCommunity /></ProtectedRoute>} />
+              <Route path="/grounds" element={<Grounds />} />
+              <Route path="/grounds/:id" element={<GroundDetail />} />
+              <Route path="/grounds/create" element={<ProtectedRoute><CreateGround /></ProtectedRoute>} />
+              <Route path="/matches" element={<Matches />} />
+              <Route path="/matches/:id" element={<MatchDetail />} />
+              <Route path="/matches/create" element={<ProtectedRoute><CreateMatch /></ProtectedRoute>} />
+              <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/admin" element={<ProtectedRoute requireRole={['ADMIN']}><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/profile/:id" element={<ProtectedRoute><UserPublicProfile /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            </Route>
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </AuthProvider>
   );
 }

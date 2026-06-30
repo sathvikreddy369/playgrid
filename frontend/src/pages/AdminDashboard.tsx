@@ -3,8 +3,8 @@ import { useAdminStats, useAdminQueue, useAdminUsers, useAdminMatches, useAdminV
 import { useAuth } from '../providers/AuthProvider';
 import { Navigate, Link } from 'react-router-dom';
 import { Loader2, Users, MapPin, Activity, Check, X, Shield, BarChart3, Clock, AlertTriangle, Trash2, Ban } from 'lucide-react';
-
 import { motion } from 'framer-motion';
+import type { Community, Ground, User, Match, Report } from "../types";
 
 export const AdminDashboard = () => {
   const { user } = useAuth();
@@ -82,15 +82,15 @@ export const AdminDashboard = () => {
                     <h2 className="font-semibold text-lg">Pending Communities ({queue.pendingCommunities?.length || 0})</h2>
                   </div>
                   <ul className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {queue.pendingCommunities?.map((comm: any) => (
+                    {queue.pendingCommunities?.map((comm: Community) => (
                       <li key={comm.id} className="p-4 flex justify-between items-center">
                         <div>
                           <p className="font-bold">{comm.name}</p>
-                          <p className="text-sm text-gray-500">By: {comm.creator.name}</p>
+                          <p className="text-sm text-gray-500">By: {comm.owner?.name}</p>
                         </div>
                         <div className="flex gap-2">
-                          <button onClick={() => handleVerifyComm(comm.id, 'REJECTED')} className="p-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100"><X className="w-5 h-5" /></button>
-                          <button onClick={() => handleVerifyComm(comm.id, 'VERIFIED')} className="p-2 text-white bg-green-600 rounded-lg hover:bg-green-700"><Check className="w-5 h-5" /></button>
+                          <button onClick={() => handleVerifyComm(comm.id, 'REJECTED')} aria-label="Reject community" className="p-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100"><X className="w-5 h-5" /></button>
+                          <button onClick={() => handleVerifyComm(comm.id, 'VERIFIED')} aria-label="Verify community" className="p-2 text-white bg-green-600 rounded-lg hover:bg-green-700"><Check className="w-5 h-5" /></button>
                         </div>
                       </li>
                     ))}
@@ -104,15 +104,15 @@ export const AdminDashboard = () => {
                     <h2 className="font-semibold text-lg">Pending Grounds ({queue.pendingGrounds?.length || 0})</h2>
                   </div>
                   <ul className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {queue.pendingGrounds?.map((ground: any) => (
+                    {queue.pendingGrounds?.map((ground: Ground) => (
                       <li key={ground.id} className="p-4 flex justify-between items-center">
                         <div>
                           <p className="font-bold">{ground.name}</p>
                           <p className="text-sm text-gray-500">{ground.location}</p>
                         </div>
                         <div className="flex gap-2">
-                          <button onClick={() => handleVerifyGround(ground.id, 'REJECTED')} className="p-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100"><X className="w-5 h-5" /></button>
-                          <button onClick={() => handleVerifyGround(ground.id, 'VERIFIED')} className="p-2 text-white bg-green-600 rounded-lg hover:bg-green-700"><Check className="w-5 h-5" /></button>
+                          <button onClick={() => handleVerifyGround(ground.id, 'REJECTED')} aria-label="Reject ground" className="p-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100"><X className="w-5 h-5" /></button>
+                          <button onClick={() => handleVerifyGround(ground.id, 'VERIFIED')} aria-label="Verify ground" className="p-2 text-white bg-green-600 rounded-lg hover:bg-green-700"><Check className="w-5 h-5" /></button>
                         </div>
                       </li>
                     ))}
@@ -140,7 +140,7 @@ export const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {usersData?.map((u: any) => (
+                    {usersData?.map((u: User) => (
                       <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                         <td className="px-6 py-4 font-medium">
                           <Link to={`/profile/${u.id}`} className="text-indigo-600 hover:underline">{u.name}</Link>
@@ -184,7 +184,7 @@ export const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {matchesData?.map((m: any) => (
+                    {matchesData?.map((m: Match) => (
                       <tr key={m.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                         <td className="px-6 py-4 font-medium">{m.title}</td>
                         <td className="px-6 py-4">{m.sport}</td>
@@ -218,7 +218,7 @@ export const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {reportsData?.map((r: any) => (
+                    {reportsData?.map((r: Report) => (
                       <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                         <td className="px-6 py-4 font-medium">
                           <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded font-bold mr-2">{r.targetType}</span>
@@ -229,7 +229,7 @@ export const AdminDashboard = () => {
                         <td className="px-6 py-4 flex gap-2">
                           <button 
                             onClick={() => resolveReport.mutate({ id: r.id, action: 'DISMISSED' })}
-                            className="p-2 bg-gray-100 text-gray-600 rounded hover:bg-gray-200" title="Dismiss"
+                            className="p-2 bg-gray-100 text-gray-600 rounded hover:bg-gray-200" title="Dismiss" aria-label="Dismiss report"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -239,7 +239,7 @@ export const AdminDashboard = () => {
                                 deletePost.mutate(r.targetId);
                                 resolveReport.mutate({ id: r.id, action: 'ACTION_TAKEN' });
                               }}
-                              className="p-2 bg-red-100 text-red-600 rounded hover:bg-red-200" title="Delete Post"
+                              className="p-2 bg-red-100 text-red-600 rounded hover:bg-red-200" title="Delete Post" aria-label="Delete post"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -250,7 +250,7 @@ export const AdminDashboard = () => {
                                 blockUser.mutate(r.targetId);
                                 resolveReport.mutate({ id: r.id, action: 'ACTION_TAKEN' });
                               }}
-                              className="p-2 bg-red-100 text-red-600 rounded hover:bg-red-200" title="Block User"
+                              className="p-2 bg-red-100 text-red-600 rounded hover:bg-red-200" title="Block User" aria-label="Block user"
                             >
                               <Ban className="w-4 h-4" />
                             </button>
@@ -275,7 +275,7 @@ export const AdminDashboard = () => {
   );
 };
 
-const SidebarButton = ({ active, onClick, icon, label, count }: any) => (
+const SidebarButton = ({ active, onClick, icon, label, count }: { active: boolean, onClick: () => void, icon: React.ReactElement, label: string, count?: number }) => (
   <button 
     onClick={onClick}
     className={`w-full flex items-center justify-between px-4 py-3 rounded-lg font-medium transition-colors ${active ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}`}
@@ -290,7 +290,7 @@ const SidebarButton = ({ active, onClick, icon, label, count }: any) => (
   </button>
 );
 
-const StatCard = ({ title, value, subtext, icon }: any) => (
+const StatCard = ({ title, value, subtext, icon }: { title: string, value: number, subtext?: string, icon: React.ReactElement }) => (
   <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4">
     <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
       {React.cloneElement(icon, { className: 'w-8 h-8' })}

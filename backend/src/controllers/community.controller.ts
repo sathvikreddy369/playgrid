@@ -2,12 +2,16 @@ import { Request, Response, NextFunction } from 'express';
 import { communityService } from '../services/community.service';
 import { CommunityStatus } from '@prisma/client';
 import { AppError } from '../utils/AppError';
+import { StructuredLogger } from '../utils/logger';
 
 export class CommunityController {
   async createCommunity(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.id;
       const community = await communityService.createCommunity(userId, req.body);
+      
+      StructuredLogger.audit('CREATE_COMMUNITY', userId, community.id, 'SUCCESS', req.id);
+      
       res.status(201).json(community);
     } catch (error) {
       next(error);
@@ -75,8 +79,12 @@ export class CommunityController {
       const adminId = req.user!.id;
       const adminRole = req.user!.role;
       const { status } = req.body;
+      const communityId = req.params.id as string;
       
-      const community = await communityService.verifyCommunity((req.params.id as string), status, adminId, adminRole);
+      const community = await communityService.verifyCommunity(communityId, status, adminId, adminRole);
+      
+      StructuredLogger.audit('VERIFY_COMMUNITY', adminId, communityId, 'SUCCESS', req.id, { status });
+      
       res.json(community);
     } catch (error) {
       next(error);

@@ -20,6 +20,28 @@ export class FraudDetection {
   }
 
   /**
+   * Checks if a match seems like a fake event or scam based on deterministic rules.
+   */
+  static isFakeEvent(title: string, cost: number): { isFake: boolean; reason?: string } {
+    const lowerTitle = title.toLowerCase();
+    
+    // Check for absurd costs for casual games (e.g. > $1000)
+    if (cost > 1000) {
+      return { isFake: true, reason: 'Cost exceeds maximum threshold for casual matches.' };
+    }
+
+    // Check for scammy keywords in the title
+    const scamKeywords = ['crypto', 'invest', 'seminar', 'guaranteed returns', 'free money'];
+    for (const word of scamKeywords) {
+      if (lowerTitle.includes(word)) {
+        return { isFake: true, reason: 'Title contains flagged scam or solicitation keywords.' };
+      }
+    }
+
+    return { isFake: false };
+  }
+
+  /**
    * Checks if the user is posting exact duplicates within a short timeframe.
    */
   static async isDuplicatePost(userId: string, content: string): Promise<boolean> {

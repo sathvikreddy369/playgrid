@@ -74,6 +74,7 @@ export const CreatePostForm = () => {
           className="w-full bg-transparent resize-none border-none focus:ring-0 text-foreground placeholder-muted text-lg outline-none min-h-[60px]"
           rows={isExpanded || content ? 3 : 1}
           placeholder="What's happening in your sports world?"
+          aria-label="Write a post content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onFocus={() => setIsExpanded(true)}
@@ -93,6 +94,7 @@ export const CreatePostForm = () => {
                   <input 
                     type="text" 
                     placeholder="Add location" 
+                    aria-label="Add location query"
                     value={location} 
                     onChange={e => setLocation(e.target.value)}
                     className="flex-1 bg-transparent text-sm border-none focus:ring-0 p-0 text-foreground outline-none"
@@ -101,6 +103,7 @@ export const CreatePostForm = () => {
                     type="button" 
                     onClick={handleUseLocation} 
                     disabled={isLocating} 
+                    aria-label="Detect my location automatically"
                     className="text-[11px] font-medium flex items-center gap-1 bg-surface border border-border px-2 py-1 rounded-md hover:bg-border transition-colors text-muted hover:text-foreground"
                   >
                     {isLocating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Navigation className="w-3 h-3" />}
@@ -114,6 +117,7 @@ export const CreatePostForm = () => {
                     <input 
                       type="text" 
                       placeholder="Add tags (press Enter)" 
+                      aria-label="Type tags and hit enter to add"
                       value={tagInput}
                       onChange={e => setTagInput(e.target.value)}
                       onKeyDown={e => {
@@ -127,6 +131,7 @@ export const CreatePostForm = () => {
                     <select 
                       onChange={e => handleAddTag(e.target.value)} 
                       value="" 
+                      aria-label="Add popular tag"
                       className="text-[11px] font-medium bg-surface border border-border rounded-md px-2 py-1 text-muted focus:outline-none cursor-pointer"
                     >
                       <option value="" disabled>Popular</option>
@@ -141,7 +146,7 @@ export const CreatePostForm = () => {
                       {tags.map(tag => (
                         <span key={tag} className="flex items-center gap-1 bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400 px-2 py-1 rounded-md text-xs font-medium">
                           #{tag}
-                          <button type="button" onClick={() => setTags(tags.filter(t => t !== tag))} className="hover:text-primary-800 dark:hover:text-primary-200"><X className="w-3 h-3" /></button>
+                          <button type="button" onClick={() => setTags(tags.filter(t => t !== tag))} aria-label={`Remove tag ${tag}`} className="hover:text-primary-800 dark:hover:text-primary-200"><X className="w-3 h-3" /></button>
                         </span>
                       ))}
                     </div>
@@ -157,6 +162,7 @@ export const CreatePostForm = () => {
             <select
               value={postType}
               onChange={(e) => setPostType(e.target.value)}
+              aria-label="Select post type filter"
               className="text-xs font-medium bg-background border border-border rounded-full px-3 py-1.5 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-foreground cursor-pointer outline-none transition-all"
             >
               <option value="GENERAL">General</option>
@@ -164,7 +170,7 @@ export const CreatePostForm = () => {
               <option value="LOOKING_FOR_TEAM">Looking for Team</option>
               <option value="QUESTION">Question</option>
             </select>
-            <button type="button" className="p-1.5 text-muted hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-full transition-colors">
+            <button type="button" aria-label="Attach sports images" className="p-1.5 text-muted hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-full transition-colors">
               <ImageIcon className="w-4 h-4" />
             </button>
           </div>

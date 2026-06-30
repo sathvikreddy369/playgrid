@@ -6,6 +6,7 @@ import { useAuth } from '../providers/AuthProvider';
 import { format } from 'date-fns';
 import { Skeleton } from '../components/Skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { Match } from '../types';
 
 const MotionLink = motion.create(Link);
 
@@ -40,7 +41,7 @@ export const Matches = () => {
             <span className="text-lg">✨</span> Recommended for You
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recommendations.map((rec: any, i: number) => (
+            {recommendations.map((rec: { match: Match, reason: string }, i: number) => (
               <MotionLink 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -100,7 +101,7 @@ export const Matches = () => {
           }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-          {matches.map((match: any) => (
+          {matches.map((match: Match) => (
             <MotionLink 
               variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
               key={match.id} 
@@ -139,7 +140,7 @@ export const Matches = () => {
 
               <div className="pt-4 border-t border-border flex justify-between items-center text-sm">
                 <div className="flex items-center gap-2">
-                  <img src={`https://ui-avatars.com/api/?name=${match.creator.name}`} className="w-6 h-6 rounded-full" alt="" />
+                  <img src={`https://ui-avatars.com/api/?name=${match.creator.name}`} className="w-6 h-6 rounded-full" alt={match.creator.name} />
                   <span className="font-semibold text-foreground truncate max-w-[100px]">{match.creator.name}</span>
                 </div>
                 {match.costPerPerson ? (

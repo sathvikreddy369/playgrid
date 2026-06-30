@@ -2,12 +2,16 @@ import { Request, Response, NextFunction } from 'express';
 import { groundService } from '../services/ground.service';
 import { GroundStatus } from '@prisma/client';
 import { AppError } from '../utils/AppError';
+import { StructuredLogger } from '../utils/logger';
 
 export class GroundController {
   async createGround(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.id;
       const ground = await groundService.createGround(userId, req.body);
+      
+      StructuredLogger.audit('CREATE_GROUND', userId, ground.id, 'SUCCESS', req.id);
+      
       res.status(201).json(ground);
     } catch (error) {
       next(error);
@@ -71,8 +75,13 @@ export class GroundController {
   async verifyGround(req: Request, res: Response, next: NextFunction) {
     try {
       const adminRole = req.user!.role;
+      const adminId = req.user!.id;
       const { status } = req.body;
-      const ground = await groundService.verifyGround((req.params.id as string), status, adminRole);
+      const groundId = req.params.id as string;
+      const ground = await groundService.verifyGround(groundId, status, adminRole);
+      
+      StructuredLogger.audit('VERIFY_GROUND', adminId, groundId, 'SUCCESS', req.id, { status });
+      
       res.json(ground);
     } catch (error) {
       next(error);

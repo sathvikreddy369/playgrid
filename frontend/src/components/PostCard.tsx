@@ -62,7 +62,7 @@ export const PostCard = ({ post, isCommunityOwner = false }: { post: any, isComm
           url: url,
         });
       } catch (error) {
-        console.log('Error sharing', error);
+        // Silently ignore abort errors if user cancels share sheet
       }
     } else {
       navigator.clipboard.writeText(url);
@@ -88,6 +88,8 @@ export const PostCard = ({ post, isCommunityOwner = false }: { post: any, isComm
         <img 
           src={post.author.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${post.author.name}`} 
           alt={post.author.name}
+          loading="lazy"
+          decoding="async"
           className="w-11 h-11 rounded-full object-cover shrink-0 bg-border"
         />
         <div className="flex-1 min-w-0">

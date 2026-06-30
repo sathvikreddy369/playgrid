@@ -81,55 +81,55 @@ export const CreateMatch = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Match Title *</label>
-              <input required name="title" value={formData.title} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. Sunday Morning Football 5v5" />
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">Match Title *</label>
+              <input required id="title" name="title" value={formData.title} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. Sunday Morning Football 5v5" />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Sport *</label>
-              <input required name="sport" value={formData.sport} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. Football" />
+              <label htmlFor="sport" className="block text-sm font-medium text-gray-700 mb-1">Sport *</label>
+              <input required id="sport" name="sport" value={formData.sport} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. Football" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time *</label>
-              <input required type="datetime-local" name="date" value={formData.date} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" />
+              <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">Date & Time *</label>
+              <input required id="date" type="datetime-local" name="date" value={formData.date} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Location Name *</label>
-              <input required name="location" value={formData.location} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="Venue name or address" />
+              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Location Name *</label>
+              <input required id="location" name="location" value={formData.location} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="Venue name or address" />
             </div>
 
             <div className="md:col-span-2 border p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
-               <label className="block text-sm font-medium text-gray-700 mb-1">Paste Google Maps Link (Auto-extracts coordinates)</label>
-               <input type="url" value={mapsLink} onChange={handleMapsLinkChange} className="w-full border rounded-lg px-4 py-2 mb-4" placeholder="https://www.google.com/maps/..." />
+               <label htmlFor="mapsLink" className="block text-sm font-medium text-gray-700 mb-1">Paste Google Maps Link (Auto-extracts coordinates)</label>
+               <input id="mapsLink" type="url" value={mapsLink} onChange={handleMapsLinkChange} className="w-full border rounded-lg px-4 py-2 mb-4" placeholder="https://www.google.com/maps/..." />
                
                <div className="grid grid-cols-2 gap-4">
                  <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
-                   <input type="number" step="any" name="latitude" value={formData.latitude} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="17.3966" />
+                   <label htmlFor="latitude" className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+                   <input id="latitude" type="number" step="any" name="latitude" value={formData.latitude} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="17.3966" />
                  </div>
                  <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
-                   <input type="number" step="any" name="longitude" value={formData.longitude} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="78.4889" />
+                   <label htmlFor="longitude" className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+                   <input id="longitude" type="number" step="any" name="longitude" value={formData.longitude} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="78.4889" />
                  </div>
                </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Total Spots *</label>
-              <input required type="number" min="2" max="100" name="maxPlayers" value={formData.maxPlayers} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" />
+              <label htmlFor="maxPlayers" className="block text-sm font-medium text-gray-700 mb-1">Total Spots *</label>
+              <input required id="maxPlayers" type="number" min="2" max="100" name="maxPlayers" value={formData.maxPlayers} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" />
               <p className="text-xs text-gray-500 mt-1">Openings available: {formData.maxPlayers}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Cost Per Head (₹) - Optional</label>
-              <input type="number" min="0" name="costPerPerson" value={formData.costPerPerson} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. 150" />
+              <label htmlFor="costPerPerson" className="block text-sm font-medium text-gray-700 mb-1">Cost Per Head (₹) - Optional</label>
+              <input id="costPerPerson" type="number" min="0" name="costPerPerson" value={formData.costPerPerson} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. 150" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Skill Level</label>
-              <select name="skillLevel" value={formData.skillLevel} onChange={handleChange} className="w-full border rounded-lg px-4 py-2 bg-white">
+              <label htmlFor="skillLevel" className="block text-sm font-medium text-gray-700 mb-1">Skill Level</label>
+              <select id="skillLevel" name="skillLevel" value={formData.skillLevel} onChange={handleChange} className="w-full border rounded-lg px-4 py-2 bg-white">
                 <option value="ALL">All Levels</option>
                 <option value="BEGINNER">Beginner</option>
                 <option value="INTERMEDIATE">Intermediate</option>
@@ -139,8 +139,8 @@ export const CreateMatch = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Link to Community (Optional)</label>
-              <select name="communityId" value={formData.communityId} onChange={handleChange} className="w-full border rounded-lg px-4 py-2 bg-white">
+              <label htmlFor="communityId" className="block text-sm font-medium text-gray-700 mb-1">Link to Community (Optional)</label>
+              <select id="communityId" name="communityId" value={formData.communityId} onChange={handleChange} className="w-full border rounded-lg px-4 py-2 bg-white">
                 <option value="">None (Global Match)</option>
                 {communities?.map((c: any) => (
                   <option key={c.id} value={c.id}>{c.name}</option>

@@ -32,7 +32,7 @@ export const Layout = () => {
           </Link>
           
           {/* Desktop Nav */}
-          <nav className="hidden md:flex gap-1 bg-surface/50 border border-border p-1 rounded-full shadow-sm">
+          <nav aria-label="Primary navigation" className="hidden md:flex gap-1 bg-surface/50 border border-border p-1 rounded-full shadow-sm">
             {[
               { path: '/feed', label: 'Feed' },
               { path: '/communities', label: 'Communities' },
@@ -64,7 +64,7 @@ export const Layout = () => {
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link to="/search" className="hidden md:flex w-9 h-9 items-center justify-center rounded-full text-muted hover:bg-border transition-colors">
+            <Link to="/search" aria-label="Search" className="hidden md:flex w-9 h-9 items-center justify-center rounded-full text-muted hover:bg-border transition-colors">
               <Search className="w-5 h-5" />
             </Link>
             
@@ -72,10 +72,10 @@ export const Layout = () => {
               <>
                 {/* Ensure NotificationBell inherits clean styling if needed */}
                 <NotificationBell />
-                <Link to="/messages" className="hidden md:flex w-9 h-9 items-center justify-center rounded-full text-muted hover:bg-border transition-colors relative">
+                <Link to="/messages" aria-label="Messages" className="hidden md:flex w-9 h-9 items-center justify-center rounded-full text-muted hover:bg-border transition-colors relative">
                   <MessageSquare className="w-5 h-5" />
                 </Link>
-                <Link to="/profile" className="hidden md:block ml-2 group">
+                <Link to="/profile" aria-label="Your Profile" className="hidden md:block ml-2 group">
                   <div className="p-0.5 rounded-full ring-2 ring-transparent group-hover:ring-primary-500 transition-all">
                     <img 
                       src={user.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}&background=random`} 
@@ -111,7 +111,7 @@ export const Layout = () => {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t-0 border-t border-border z-50 px-2 pb-safe">
+      <nav aria-label="Mobile navigation" className="md:hidden fixed bottom-0 left-0 right-0 glass border-t-0 border-t border-border z-50 px-2 pb-safe">
         <div className="flex justify-around items-center h-16">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -120,6 +120,7 @@ export const Layout = () => {
               <Link 
                 key={item.path} 
                 to={item.path} 
+                aria-label={item.label}
                 className="relative flex flex-col items-center justify-center w-full h-full"
               >
                 <div className={`p-2 rounded-xl transition-all ${isActive ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/30' : 'text-muted hover:text-foreground'}`}>
@@ -129,13 +130,13 @@ export const Layout = () => {
             );
           })}
           {user ? (
-            <Link to="/profile" className="relative flex flex-col items-center justify-center w-full h-full">
+            <Link to="/profile" aria-label="Profile" className="relative flex flex-col items-center justify-center w-full h-full">
               <div className={`p-2 rounded-xl transition-all ${location.pathname.startsWith('/profile') ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/30' : 'text-muted hover:text-foreground'}`}>
                 <User className={`w-6 h-6 ${location.pathname.startsWith('/profile') ? 'stroke-[2.5px]' : 'stroke-2'}`} />
               </div>
             </Link>
           ) : (
-            <Link to="/login" className="relative flex flex-col items-center justify-center w-full h-full">
+            <Link to="/login" aria-label="Sign In" className="relative flex flex-col items-center justify-center w-full h-full">
               <div className={`p-2 rounded-xl transition-all ${location.pathname === '/login' ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/30' : 'text-muted hover:text-foreground'}`}>
                 <User className="w-6 h-6 stroke-2" />
               </div>

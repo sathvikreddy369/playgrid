@@ -1,16 +1,16 @@
 import prisma from '../utils/db';
 import { MatchStatus } from '@prisma/client';
 import { notificationService } from './notification.service';
-import { aiService } from './ai.service';
+import { FraudDetection } from '../utils/fraudDetection';
 
 export class MatchService {
   async createMatch(userId: string, data: any) {
     const cost = data.costPerPerson ? parseFloat(data.costPerPerson) : 0;
     
-    // AI Fake Event Check
-    const aiCheck = await aiService.detectFakeEvent(data.title, data.sport, cost);
-    if (aiCheck.isFake) {
-      throw new Error(`Match creation blocked by AI: ${aiCheck.reason}`);
+    // Deterministic Fake Event Check
+    const fraudCheck = FraudDetection.isFakeEvent(data.title, cost);
+    if (fraudCheck.isFake) {
+      throw new Error(`Match creation blocked: ${fraudCheck.reason}`);
     }
 
     return prisma.match.create({
@@ -60,6 +60,7 @@ export class MatchService {
           }
         },
         comments: {
+          take: 50, // Limit nested comments
           include: {
             user: { select: { id: true, name: true, profile: { select: { avatarUrl: true } } } }
           },
@@ -67,6 +68,42 @@ export class MatchService {
         }
       }
     });
+  }
+
+  async getRecommendations(userProfile: any) {
+    // 1. Get user's preferred sports
+    const preferredSports = userProfile?.sports || [];
+    
+    // 2. Query upcoming open matches
+    let matches = await prisma.match.findMany({
+      where: { 
+        status: 'OPEN', 
+        date: { gte: new Date() } 
+      },
+      include: { 
+        creator: { select: { name: true } }, 
+        _count: { select: { players: true } } 
+      },
+      orderBy: { date: 'asc' },
+      take: 20
+    });
+
+    // 3. Filter and sort (prefer matching sports first)
+    if (preferredSports.length > 0) {
+      matches.sort((a, b) => {
+        const aMatch = preferredSports.includes(a.sport) ? 1 : 0;
+        const bMatch = preferredSports.includes(b.sport) ? 1 : 0;
+        return bMatch - aMatch;
+      });
+    }
+
+    // 4. Return top 3 with reasons
+    return matches.slice(0, 3).map(m => ({
+      match: m,
+      reason: preferredSports.includes(m.sport) 
+        ? `Because you like ${m.sport}` 
+        : `Upcoming ${m.sport} game near you`
+    }));
   }
 
   async requestToJoin(matchId: string, userId: string) {

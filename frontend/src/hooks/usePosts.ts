@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient, useQuery, keepPreviousData } from '@tanstack/react-query';
 import api from '../lib/api';
 
 export const useFeed = (filters: { type?: string; location?: string; communityId?: string } = {}) => {
@@ -16,6 +16,7 @@ export const useFeed = (filters: { type?: string; location?: string; communityId
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
+    placeholderData: keepPreviousData,
   });
 };
 

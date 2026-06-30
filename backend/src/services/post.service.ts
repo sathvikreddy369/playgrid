@@ -1,7 +1,6 @@
 import prisma from '../utils/db';
 import { PostType } from '@prisma/client';
 import { FraudDetection } from '../utils/fraudDetection';
-import { aiService } from './ai.service';
 
 export class PostService {
   async getPosts(filters: { type?: string; communityId?: string; authorId?: string }, cursor?: string, limit: number = 10) {
@@ -40,6 +39,7 @@ export class PostService {
       include: {
         author: { select: { id: true, name: true, profile: { select: { avatarUrl: true } } } },
         replies: {
+          take: 50, // Limit nested replies for performance
           orderBy: { createdAt: 'asc' },
           include: {
             author: { select: { id: true, name: true, profile: { select: { avatarUrl: true } } } },
@@ -60,11 +60,6 @@ export class PostService {
   async createPost(userId: string, data: { content: string; type?: PostType; location?: string; latitude?: number; longitude?: number; tags?: string[] }) {
     if (FraudDetection.containsProfanityOrSpam(data.content)) {
       throw new Error('Content flagged as spam or contains profanity.');
-    }
-
-    const aiCheck = await aiService.moderateContent(data.content);
-    if (aiCheck.isSpam) {
-      throw new Error(`Content blocked by AI Moderator: ${aiCheck.reason}`);
     }
     if (await FraudDetection.isDuplicatePost(userId, data.content)) {
       throw new Error('Duplicate post detected. Please wait before posting again.');

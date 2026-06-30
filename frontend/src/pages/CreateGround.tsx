@@ -78,20 +78,20 @@ export const CreateGround = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Venue Name *</label>
-              <input required name="name" value={formData.name} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. Play Arena" />
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Venue Name *</label>
+              <input required id="name" name="name" value={formData.name} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. Play Arena" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
-              <input required name="location" value={formData.location} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. HSR Layout, Bangalore" />
+              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
+              <input required id="location" name="location" value={formData.location} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. HSR Layout, Bangalore" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Pricing Guide</label>
-              <input name="pricing" value={formData.pricing} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. ₹1500 / hr" />
+              <label htmlFor="pricing" className="block text-sm font-medium text-gray-700 mb-1">Pricing Guide</label>
+              <input id="pricing" name="pricing" value={formData.pricing} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. ₹1500 / hr" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Phone</label>
-              <input name="contactPhone" value={formData.contactPhone} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="+91..." />
+              <label htmlFor="contactPhone" className="block text-sm font-medium text-gray-700 mb-1">Contact Phone</label>
+              <input id="contactPhone" name="contactPhone" value={formData.contactPhone} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="+91..." />
             </div>
           </div>
 
@@ -99,16 +99,16 @@ export const CreateGround = () => {
 
           {/* Photos */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Photo URLs (Gallery)</label>
+            <label htmlFor="photoUrl" className="block text-sm font-medium text-gray-700 mb-1">Photo URLs (Gallery)</label>
             <div className="flex gap-2">
-              <input value={photoUrl} onChange={e => setPhotoUrl(e.target.value)} className="flex-1 border rounded-lg px-4 py-2" placeholder="https://image-url.jpg" />
-              <button type="button" onClick={() => handleAddItem(setPhotos, photoUrl, setPhotoUrl)} className="bg-gray-100 px-4 rounded-lg"><Plus className="w-5 h-5" /></button>
+              <input id="photoUrl" value={photoUrl} onChange={e => setPhotoUrl(e.target.value)} className="flex-1 border rounded-lg px-4 py-2" placeholder="https://image-url.jpg" />
+              <button type="button" aria-label="Add photo URL" onClick={() => handleAddItem(setPhotos, photoUrl, setPhotoUrl)} className="bg-gray-100 px-4 rounded-lg"><Plus className="w-5 h-5" /></button>
             </div>
             <div className="flex flex-wrap gap-2 mt-3">
               {photos.map((p, i) => (
                 <div key={i} className="relative w-24 h-24 rounded overflow-hidden group">
-                  <img src={p} className="w-full h-full object-cover" />
-                  <button type="button" onClick={() => handleRemoveItem(setPhotos, i)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"><X className="w-3 h-3" /></button>
+                  <img src={p} alt="Ground photo" className="w-full h-full object-cover" />
+                  <button type="button" aria-label="Remove photo" onClick={() => handleRemoveItem(setPhotos, i)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"><X className="w-3 h-3" /></button>
                 </div>
               ))}
             </div>
@@ -116,15 +116,15 @@ export const CreateGround = () => {
 
           {/* Sports */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Supported Sports</label>
+            <label htmlFor="sportInput" className="block text-sm font-medium text-gray-700 mb-1">Supported Sports</label>
             <div className="flex gap-2">
-              <input value={sportInput} onChange={e => setSportInput(e.target.value)} className="flex-1 border rounded-lg px-4 py-2" placeholder="e.g. Football, Cricket" />
-              <button type="button" onClick={() => handleAddItem(setSports, sportInput, setSportInput)} className="bg-gray-100 px-4 rounded-lg"><Plus className="w-5 h-5" /></button>
+              <input id="sportInput" value={sportInput} onChange={e => setSportInput(e.target.value)} className="flex-1 border rounded-lg px-4 py-2" placeholder="e.g. Football, Cricket" />
+              <button type="button" aria-label="Add sport" onClick={() => handleAddItem(setSports, sportInput, setSportInput)} className="bg-gray-100 px-4 rounded-lg"><Plus className="w-5 h-5" /></button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
               {sports.map((s, i) => (
                 <span key={i} className="flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
-                  {s} <button type="button" onClick={() => handleRemoveItem(setSports, i)}><X className="w-3 h-3" /></button>
+                  {s} <button type="button" aria-label={`Remove sport ${s}`} onClick={() => handleRemoveItem(setSports, i)}><X className="w-3 h-3" /></button>
                 </span>
               ))}
             </div>
@@ -132,15 +132,15 @@ export const CreateGround = () => {
 
           {/* Amenities */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Amenities</label>
+            <label htmlFor="amenityInput" className="block text-sm font-medium text-gray-700 mb-1">Amenities</label>
             <div className="flex gap-2">
-              <input value={amenityInput} onChange={e => setAmenityInput(e.target.value)} className="flex-1 border rounded-lg px-4 py-2" placeholder="e.g. Floodlights, Parking, Washrooms" />
-              <button type="button" onClick={() => handleAddItem(setAmenities, amenityInput, setAmenityInput)} className="bg-gray-100 px-4 rounded-lg"><Plus className="w-5 h-5" /></button>
+              <input id="amenityInput" value={amenityInput} onChange={e => setAmenityInput(e.target.value)} className="flex-1 border rounded-lg px-4 py-2" placeholder="e.g. Floodlights, Parking, Washrooms" />
+              <button type="button" aria-label="Add amenity" onClick={() => handleAddItem(setAmenities, amenityInput, setAmenityInput)} className="bg-gray-100 px-4 rounded-lg"><Plus className="w-5 h-5" /></button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
               {amenities.map((a, i) => (
                 <span key={i} className="flex items-center gap-1 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm">
-                  {a} <button type="button" onClick={() => handleRemoveItem(setAmenities, i)}><X className="w-3 h-3" /></button>
+                  {a} <button type="button" aria-label={`Remove amenity ${a}`} onClick={() => handleRemoveItem(setAmenities, i)}><X className="w-3 h-3" /></button>
                 </span>
               ))}
             </div>
