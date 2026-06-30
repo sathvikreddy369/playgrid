@@ -13,8 +13,10 @@ export const MatchDetail = () => {
   const { data: match, isLoading } = useMatchDetail(id!);
   const joinMatch = useJoinMatch();
   const matchAction = useMatchAction();
+  const addComment = useAddMatchComment();
 
   const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [commentContent, setCommentContent] = useState('');
 
   if (isLoading) return <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-orange-600" /></div>;
   if (!match) return <div className="text-center py-20">Match not found</div>;
@@ -35,6 +37,15 @@ export const MatchDetail = () => {
   };
 
   const isPast = new Date(match.date) < new Date();
+  const isParticipant = isCreator || myRequest?.status === 'APPROVED' || myRequest?.status === 'ATTENDED';
+
+  const handleCommentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentContent.trim()) return;
+    addComment.mutate({ matchId: match.id, content: commentContent }, {
+      onSuccess: () => setCommentContent('')
+    });
+  };
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4">
@@ -102,6 +113,51 @@ export const MatchDetail = () => {
             </div>
           </div>
 
+          {/* Comments Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 p-6 mt-6">
+            <h3 className="font-bold text-lg mb-4">Participant Comments</h3>
+            <div className="space-y-4 mb-6">
+              {match.comments?.length > 0 ? (
+                match.comments.map((comment: any) => (
+                  <div key={comment.id} className="flex gap-3">
+                    <img src={comment.user.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${comment.user.name}`} className="w-8 h-8 rounded-full" />
+                    <div className="flex-1 bg-gray-50 dark:bg-gray-700 rounded-2xl rounded-tl-none px-4 py-2">
+                      <p className="text-xs font-semibold">{comment.user.name}</p>
+                      <p className="text-sm text-gray-800 dark:text-gray-200">{comment.content}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm">No comments yet. Be the first to comment!</p>
+              )}
+            </div>
+
+            {isParticipant ? (
+              <form onSubmit={handleCommentSubmit} className="flex gap-2">
+                <input
+                  type="text"
+                  value={commentContent}
+                  onChange={(e) => setCommentContent(e.target.value)}
+                  placeholder="Add a comment..."
+                  className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-sm"
+                  disabled={addComment.isPending}
+                />
+                <button
+                  type="submit"
+                  disabled={addComment.isPending || !commentContent.trim()}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {addComment.isPending ? 'Posting...' : 'Post'}
+                </button>
+              </form>
+            ) : (
+              <p className="text-xs text-gray-500 italic mt-4">Only approved participants can comment on this match.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Right Col: Player Roster & Creator Management */}
+        <div className="space-y-6">
           {/* Player Roster */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 className="font-bold text-lg mb-4">Confirmed Players ({approvedPlayers.length})</h3>
@@ -148,11 +204,8 @@ export const MatchDetail = () => {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Right Col: Creator Management */}
-        {isCreator && (
-          <div className="space-y-6">
+          {isCreator && (
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-bold text-lg mb-4">Pending Requests</h3>
               
@@ -176,8 +229,8 @@ export const MatchDetail = () => {
                 </div>
               )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

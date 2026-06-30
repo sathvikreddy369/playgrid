@@ -74,3 +74,17 @@ export const useCreateReply = () => {
     },
   });
 };
+
+export const useDeletePost = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (postId: string) => {
+      const { data } = await api.delete(`/posts/${postId}`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts', 'feed'] });
+      queryClient.invalidateQueries({ queryKey: ['userPosts'] });
+    },
+  });
+};

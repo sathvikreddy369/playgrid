@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 
 import { motion } from 'framer-motion';
 
-const MotionLink = motion(Link);
+const MotionLink = motion.create(Link);
 
 export const Matches = () => {
   const [filter, setFilter] = useState('OPEN');
@@ -104,7 +104,7 @@ export const Matches = () => {
               }}
               key={match.id} 
               to={`/matches/${match.id}`}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md hover:border-orange-500 transition-all group block"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md hover:-translate-y-1 hover:border-orange-500 transition-all group block"
             >
               <div className="flex justify-between items-start mb-4">
                 <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded">

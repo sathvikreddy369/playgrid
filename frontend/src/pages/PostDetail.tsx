@@ -3,8 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { usePostDetail, useCreateReply } from '../hooks/usePosts';
 import { PostCard } from '../components/PostCard';
 import { ReplyTree } from '../components/ReplyTree';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, ShieldAlert, AlertTriangle, MapPin } from 'lucide-react';
+import Map, { Marker } from 'react-map-gl/mapbox';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { useAuth } from '../providers/AuthProvider';
+import { useCreateReport } from '../hooks/useReports';
 
 export const PostDetail = () => {
   const { id } = useParams();
@@ -12,8 +15,11 @@ export const PostDetail = () => {
   const { user, profile } = useAuth();
   const { data: post, isLoading, isError } = usePostDetail(id!);
   const createReply = useCreateReply();
+  const reportMutation = useCreateReport();
 
   const [content, setContent] = useState('');
+  const [reportReason, setReportReason] = useState('');
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +27,23 @@ export const PostDetail = () => {
     createReply.mutate({ postId: post.id, content }, {
       onSuccess: () => setContent('')
     });
+  };
+
+  const handleReport = () => {
+    if (!reportReason.trim()) return alert('Please enter a reason');
+    reportMutation.mutate(
+      { targetType: 'POST', targetId: post.id, reason: reportReason },
+      {
+        onSuccess: () => {
+          alert('Post reported successfully.');
+          setShowReportModal(false);
+          setReportReason('');
+        },
+        onError: (err: any) => {
+          alert(err.response?.data?.error || 'Failed to report post.');
+        }
+      }
+    );
   };
 
   if (isLoading) {
@@ -41,16 +64,43 @@ export const PostDetail = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4">
-      <button 
-        onClick={() => navigate(-1)} 
-        className="flex items-center gap-2 text-gray-500 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        Back
-      </button>
+    <div className="max-w-2xl mx-auto py-8 px-4 relative">
+      <div className="flex items-center justify-between mb-6">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="flex items-center gap-2 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back
+        </button>
+        <button 
+          onClick={() => setShowReportModal(true)}
+          className="flex items-center gap-2 text-gray-400 hover:text-red-600 transition-colors bg-gray-50 dark:bg-gray-800 px-3 py-1.5 rounded-lg text-sm font-medium"
+        >
+          <ShieldAlert className="w-4 h-4" />
+          Report Post
+        </button>
+      </div>
 
       <PostCard post={post} />
+
+      {post.latitude && post.longitude && (
+        <div className="mb-6 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 h-64 relative shadow-sm">
+          <Map
+            mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
+            initialViewState={{
+              longitude: post.longitude,
+              latitude: post.latitude,
+              zoom: 14
+            }}
+            mapStyle="mapbox://styles/mapbox/streets-v12"
+          >
+            <Marker longitude={post.longitude} latitude={post.latitude} anchor="bottom">
+              <MapPin className="text-red-600 fill-red-100 w-8 h-8 -mt-8" />
+            </Marker>
+          </Map>
+        </div>
+      )}
 
       {user ? (
         <form onSubmit={handleSubmit} className="mt-6 mb-8 flex items-start gap-3">
@@ -85,6 +135,27 @@ export const PostDetail = () => {
       )}
 
       <ReplyTree replies={post.replies} postId={post.id} />
+
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full m-4">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><AlertTriangle className="text-red-500" /> Report Post</h2>
+            <textarea 
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg mb-4 bg-transparent"
+              rows={4}
+              placeholder="Reason for reporting this post..."
+              value={reportReason}
+              onChange={e => setReportReason(e.target.value)}
+            />
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowReportModal(false)} className="px-4 py-2 text-gray-600 bg-gray-100 dark:bg-gray-700 rounded-lg font-medium">Cancel</button>
+              <button onClick={handleReport} disabled={reportMutation.isPending} className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium disabled:opacity-50">
+                {reportMutation.isPending ? 'Submitting...' : 'Submit Report'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

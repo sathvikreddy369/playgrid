@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useAdminStats, useAdminQueue, useAdminUsers, useAdminMatches, useAdminVerifyCommunity, useAdminVerifyGround } from '../hooks/useAdmin';
+import { useAdminStats, useAdminQueue, useAdminUsers, useAdminMatches, useAdminVerifyCommunity, useAdminVerifyGround, useAdminReports, useResolveReport, useBlockUser, useDeletePost } from '../hooks/useAdmin';
 import { useAuth } from '../providers/AuthProvider';
-import { Navigate } from 'react-router-dom';
-import { Loader2, Users, MapPin, Activity, Check, X, Shield, BarChart3, Clock, AlertTriangle } from 'lucide-react';
+import { Navigate, Link } from 'react-router-dom';
+import { Loader2, Users, MapPin, Activity, Check, X, Shield, BarChart3, Clock, AlertTriangle, Trash2, Ban } from 'lucide-react';
 
 import { motion } from 'framer-motion';
 
@@ -14,9 +14,13 @@ export const AdminDashboard = () => {
   const { data: queue, isLoading: queueLoading } = useAdminQueue();
   const { data: usersData, isLoading: usersLoading } = useAdminUsers();
   const { data: matchesData, isLoading: matchesLoading } = useAdminMatches();
+  const { data: reportsData, isLoading: reportsLoading } = useAdminReports();
 
   const verifyComm = useAdminVerifyCommunity();
   const verifyGround = useAdminVerifyGround();
+  const resolveReport = useResolveReport();
+  const blockUser = useBlockUser();
+  const deletePost = useDeletePost();
 
   if (!user || user.role !== 'ADMIN') {
     return <Navigate to="/" replace />;
@@ -45,6 +49,7 @@ export const AdminDashboard = () => {
         <nav className="space-y-2">
           <SidebarButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<BarChart3 />} label="Overview" />
           <SidebarButton active={activeTab === 'queue'} onClick={() => setActiveTab('queue')} icon={<Clock />} label="Mod Queue" count={(queue?.pendingCommunities?.length || 0) + (queue?.pendingGrounds?.length || 0)} />
+          <SidebarButton active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} icon={<AlertTriangle />} label="Reports" count={reportsData?.length || 0} />
           <SidebarButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<Users />} label="Users" />
           <SidebarButton active={activeTab === 'matches'} onClick={() => setActiveTab('matches')} icon={<Activity />} label="Matches" />
         </nav>
@@ -131,12 +136,15 @@ export const AdminDashboard = () => {
                       <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-300">Email</th>
                       <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-300">Role</th>
                       <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-300">Reputation</th>
+                      <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                     {usersData?.map((u: any) => (
                       <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="px-6 py-4 font-medium">{u.name}</td>
+                        <td className="px-6 py-4 font-medium">
+                          <Link to={`/profile/${u.id}`} className="text-indigo-600 hover:underline">{u.name}</Link>
+                        </td>
                         <td className="px-6 py-4 text-gray-500">{u.email}</td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 text-xs rounded-full font-bold ${u.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-800' : u.role === 'ORGANIZER' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800'}`}>
@@ -144,6 +152,14 @@ export const AdminDashboard = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 font-bold text-green-600">{u.reputation}</td>
+                        <td className="px-6 py-4">
+                          <button 
+                            onClick={() => blockUser.mutate(u.id)}
+                            className={`px-3 py-1 text-sm font-medium rounded-lg ${u.isBlocked ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} hover:opacity-80`}
+                          >
+                            {u.isBlocked ? 'Unblock' : 'Block'}
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -180,6 +196,73 @@ export const AdminDashboard = () => {
                         <td className="px-6 py-4 text-gray-500">{m.creator.name}</td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {activeTab === 'reports' && (
+          <motion.div initial="hidden" animate="visible" variants={fadeVariants}>
+            <h1 className="text-2xl font-bold mb-6">User Reports</h1>
+            {reportsLoading ? <Loader /> : (
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                    <tr>
+                      <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-300">Target</th>
+                      <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-300">Reason</th>
+                      <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-300">Reported By</th>
+                      <th className="px-6 py-3 font-semibold text-gray-600 dark:text-gray-300">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                    {reportsData?.map((r: any) => (
+                      <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td className="px-6 py-4 font-medium">
+                          <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded font-bold mr-2">{r.targetType}</span>
+                          <span className="text-sm font-mono text-gray-500">{r.targetId.substring(0, 8)}...</span>
+                        </td>
+                        <td className="px-6 py-4 text-red-600 font-medium">{r.reason}</td>
+                        <td className="px-6 py-4 text-gray-500">{r.submitter.name}</td>
+                        <td className="px-6 py-4 flex gap-2">
+                          <button 
+                            onClick={() => resolveReport.mutate({ id: r.id, action: 'DISMISSED' })}
+                            className="p-2 bg-gray-100 text-gray-600 rounded hover:bg-gray-200" title="Dismiss"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                          {r.targetType === 'POST' && (
+                            <button 
+                              onClick={() => {
+                                deletePost.mutate(r.targetId);
+                                resolveReport.mutate({ id: r.id, action: 'ACTION_TAKEN' });
+                              }}
+                              className="p-2 bg-red-100 text-red-600 rounded hover:bg-red-200" title="Delete Post"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                          {r.targetType === 'USER' && (
+                            <button 
+                              onClick={() => {
+                                blockUser.mutate(r.targetId);
+                                resolveReport.mutate({ id: r.id, action: 'ACTION_TAKEN' });
+                              }}
+                              className="p-2 bg-red-100 text-red-600 rounded hover:bg-red-200" title="Block User"
+                            >
+                              <Ban className="w-4 h-4" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {reportsData?.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-8 text-center text-gray-500">No pending reports</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

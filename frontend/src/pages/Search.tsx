@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useGlobalSearch, useAISearch } from '../hooks/useSearch';
+import { useAuth } from '../providers/AuthProvider';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Search as SearchIcon, MapPin, Sparkles, Loader2, Users, Calendar } from 'lucide-react';
 
 import { motion } from 'framer-motion';
 
-const MotionLink = motion(Link);
+const MotionLink = motion.create(Link);
 
 export const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -16,20 +17,24 @@ export const Search = () => {
   const [isNearbyMode, setIsNearbyMode] = useState(false);
   const [coords, setCoords] = useState<{lat: string, lng: string} | null>(null);
 
-  // When Nearby Mode is toggled, request geolocation
+  const { profile } = useAuth();
+  
+  // When Nearby Mode is toggled, request geolocation or use profile home location
   useEffect(() => {
     if (isNearbyMode && !coords) {
-      if (navigator.geolocation) {
+      if (profile?.homeLatitude && profile?.homeLongitude) {
+        setCoords({ lat: profile.homeLatitude.toString(), lng: profile.homeLongitude.toString() });
+      } else if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => setCoords({ lat: pos.coords.latitude.toString(), lng: pos.coords.longitude.toString() }),
           (err) => {
-            alert('Failed to get location. Enable permissions.');
+            alert('Failed to get location from browser. Please set your home location in your profile.');
             setIsNearbyMode(false);
           }
         );
       }
     }
-  }, [isNearbyMode]);
+  }, [isNearbyMode, profile]);
 
   // Standard Search hook
   const { data: searchResults, isLoading: searchLoading } = useGlobalSearch({

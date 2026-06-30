@@ -78,3 +78,16 @@ export const useMatchRecommendations = () => {
     },
   });
 };
+
+export const useAddMatchComment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ matchId, content }: { matchId: string; content: string }) => {
+      const { data } = await api.post(`/matches/${matchId}/comments`, { content });
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['matches', variables.matchId] });
+    },
+  });
+};

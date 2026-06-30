@@ -17,11 +17,35 @@ export const CreateMatch = () => {
     sport: '',
     date: '',
     location: '',
+    latitude: '',
+    longitude: '',
     maxPlayers: 10,
     costPerPerson: '',
     skillLevel: 'ALL',
     communityId: ''
   });
+
+  const [mapsLink, setMapsLink] = useState('');
+
+  const handleMapsLinkChange = (e: any) => {
+    const link = e.target.value;
+    setMapsLink(link);
+    
+    // Parse Google maps link
+    // e.g. https://www.google.com/maps/@17.3966,78.4889,15z
+    // or https://maps.google.com/?q=17.3966,78.4889
+    const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+    const qRegex = /q=(-?\d+\.\d+),(-?\d+\.\d+)/;
+    
+    const match = link.match(regex) || link.match(qRegex);
+    if (match) {
+      setFormData(prev => ({
+        ...prev,
+        latitude: match[1],
+        longitude: match[2]
+      }));
+    }
+  };
 
   const handleChange = (e: any) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -29,7 +53,14 @@ export const CreateMatch = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMatch.mutate(formData, {
+    const payload = {
+      ...formData,
+      latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
+      longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
+      costPerPerson: formData.costPerPerson ? parseFloat(formData.costPerPerson) : undefined
+    };
+
+    createMatch.mutate(payload as any, {
       onSuccess: () => {
         navigate('/matches');
       },
@@ -65,17 +96,34 @@ export const CreateMatch = () => {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Location Name *</label>
               <input required name="location" value={formData.location} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="Venue name or address" />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Max Players *</label>
-              <input required type="number" min="2" max="100" name="maxPlayers" value={formData.maxPlayers} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" />
+            <div className="md:col-span-2 border p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
+               <label className="block text-sm font-medium text-gray-700 mb-1">Paste Google Maps Link (Auto-extracts coordinates)</label>
+               <input type="url" value={mapsLink} onChange={handleMapsLinkChange} className="w-full border rounded-lg px-4 py-2 mb-4" placeholder="https://www.google.com/maps/..." />
+               
+               <div className="grid grid-cols-2 gap-4">
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+                   <input type="number" step="any" name="latitude" value={formData.latitude} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="17.3966" />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+                   <input type="number" step="any" name="longitude" value={formData.longitude} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="78.4889" />
+                 </div>
+               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Cost Per Person (₹) - Optional</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total Spots *</label>
+              <input required type="number" min="2" max="100" name="maxPlayers" value={formData.maxPlayers} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" />
+              <p className="text-xs text-gray-500 mt-1">Openings available: {formData.maxPlayers}</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cost Per Head (₹) - Optional</label>
               <input type="number" min="0" name="costPerPerson" value={formData.costPerPerson} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. 150" />
             </div>
 

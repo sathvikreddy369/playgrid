@@ -66,3 +66,52 @@ export const useAdminVerifyCommunity = () => {
     },
   });
 };
+
+export const useAdminReports = () => {
+  return useQuery({
+    queryKey: ['admin', 'reports'],
+    queryFn: async () => {
+      const { data } = await api.get('/admin/reports');
+      return data;
+    },
+  });
+};
+
+export const useResolveReport = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, action }: { id: string; action: 'ACTION_TAKEN' | 'DISMISSED' }) => {
+      const { data } = await api.put(`/admin/reports/${id}/resolve`, { action });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'reports'] });
+    },
+  });
+};
+
+export const useBlockUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.put(`/admin/users/${id}/block`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+  });
+};
+
+export const useDeletePost = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.delete(`/admin/posts/${id}`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'reports'] });
+    },
+  });
+};

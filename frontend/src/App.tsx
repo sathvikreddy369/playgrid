@@ -2,6 +2,7 @@ import { Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './providers/AuthProvider';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
+import { UserPublicProfile } from './pages/UserPublicProfile';
 import { Feed } from './pages/Feed';
 import { PostDetail } from './pages/PostDetail';
 import { Communities } from './pages/Communities';
@@ -19,25 +20,7 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
 
-const Home = () => {
-  const { user } = useAuth();
-  return (
-    <div className="p-8 text-center space-y-8 mt-10">
-      <h1 className="text-5xl font-bold text-gray-900 dark:text-white tracking-tight">Welcome to Playgrid</h1>
-      <p className="text-xl text-gray-500 max-w-2xl mx-auto">Your ultimate sports community platform. Find players, build communities, and play more.</p>
-      {user ? (
-        <div className="flex justify-center gap-4 flex-wrap max-w-2xl mx-auto">
-          <Link to="/search" className="bg-white text-blue-600 border-2 border-blue-600 px-8 py-3 rounded-full font-medium hover:bg-blue-50 transition-colors shadow-sm">Global Search</Link>
-          <Link to="/matches" className="bg-orange-600 text-white px-8 py-3 rounded-full font-medium hover:bg-orange-700 transition-colors shadow-sm">Find Matches</Link>
-          <Link to="/communities" className="bg-white text-blue-600 border-2 border-blue-600 px-8 py-3 rounded-full font-medium hover:bg-blue-50 transition-colors shadow-sm">Communities</Link>
-          <Link to="/grounds" className="bg-white text-green-600 border-2 border-green-600 px-8 py-3 rounded-full font-medium hover:bg-green-50 transition-colors shadow-sm">Venues</Link>
-        </div>
-      ) : (
-        <Link to="/login" className="inline-block bg-blue-600 text-white px-10 py-4 rounded-full text-lg font-bold hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl hover:-translate-y-1 transform duration-200">Get Started</Link>
-      )}
-    </div>
-  );
-};
+import { Home } from './pages/Home';
 
 function App() {
   return (
@@ -60,6 +43,7 @@ function App() {
           <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
           <Route path="/search" element={<Search />} />
           <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/profile/:id" element={<ProtectedRoute><UserPublicProfile /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         </Route>
       </Routes>

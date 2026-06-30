@@ -102,7 +102,7 @@ export const CommunityDetail = () => {
             
             {feedData?.pages.map((page, i) => (
               <React.Fragment key={i}>
-                {page.posts.map((post: any) => <PostCard key={post.id} post={post} />)}
+                {page.posts.map((post: any) => <PostCard key={post.id} post={post} isCommunityOwner={isOwner} />)}
               </React.Fragment>
             ))}
 

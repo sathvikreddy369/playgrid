@@ -6,7 +6,7 @@ import { useAuth } from '../providers/AuthProvider';
 
 import { motion } from 'framer-motion';
 
-const MotionLink = motion(Link);
+const MotionLink = motion.create(Link);
 
 export const Grounds = () => {
   const { data: grounds, isLoading } = useGrounds('VERIFIED');

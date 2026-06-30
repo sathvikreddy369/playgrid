@@ -6,7 +6,7 @@ import { useAuth } from '../providers/AuthProvider';
 
 import { motion } from 'framer-motion';
 
-const MotionLink = motion(Link);
+const MotionLink = motion.create(Link);
 
 export const Communities = () => {
   const { data: communities, isLoading } = useCommunities('VERIFIED');
@@ -52,7 +52,7 @@ export const Communities = () => {
               }}
               key={community.id} 
               to={`/communities/${community.id}`}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:border-blue-500 transition-colors group block"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md hover:-translate-y-1 hover:border-blue-500 transition-all group block"
             >
               <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 transition-colors">{community.name}</h3>
               <p className="text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">{community.description}</p>

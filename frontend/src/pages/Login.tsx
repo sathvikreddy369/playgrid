@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { signInWithGoogle } from '../lib/firebase';
 import { useAuth } from '../providers/AuthProvider';
@@ -14,8 +14,13 @@ export const Login = () => {
 
   const from = location.state?.from?.pathname || '/';
 
+  useEffect(() => {
+    if (firebaseUser) {
+      navigate(from, { replace: true });
+    }
+  }, [firebaseUser, navigate, from]);
+
   if (firebaseUser) {
-    navigate(from, { replace: true });
     return null;
   }
 

@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setFirebaseUser(user);
       if (user) {
         // Upon login, we eagerly sync to ensure DB has the user
-        await syncUser();
+        await syncUser(user);
       } else {
         // Clear cached user data if logged out
         queryClient.setQueryData(['me'], null);
@@ -62,9 +62,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsubscribe();
   }, [queryClient]);
 
-  const syncUser = async () => {
+  const syncUser = async (userObj?: FirebaseUser) => {
     try {
-      await api.post('/auth/sync');
+      const u = userObj || firebaseUser;
+      await api.post('/auth/sync', {
+        email: u?.email,
+        name: u?.displayName
+      });
       queryClient.invalidateQueries({ queryKey: ['me'] });
     } catch (error) {
       console.error('Failed to sync user with database', error);
@@ -86,7 +90,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     <AuthContext.Provider
       value={{
         firebaseUser,
-        user: dbData?.user || null,
+        user: dbData || null,
         profile: dbData?.profile || null,
         isLoading: isLoading || isDbLoading,
         syncUser,
