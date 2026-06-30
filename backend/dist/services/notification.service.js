@@ -47,4 +47,3 @@ class NotificationService {
 }
 exports.NotificationService = NotificationService;
 exports.notificationService = new NotificationService();
-//# sourceMappingURL=notification.service.js.map

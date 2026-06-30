@@ -21,4 +21,10 @@ router.put('/communities/:id/verify', communityController.verifyCommunity);
 // Ground Verification
 router.put('/grounds/:id/verify', groundController.verifyGround);
 
+// Moderation & Reports
+router.get('/reports', adminController.getReports);
+router.put('/reports/:id/resolve', adminController.resolveReport);
+router.put('/users/:id/block', adminController.toggleBlockUser);
+router.delete('/posts/:id', adminController.deletePost);
+
 export default router;

@@ -1,4 +1,5 @@
 import prisma from '../utils/db';
+import { ReportStatus } from '@prisma/client';
 
 export class AdminService {
   async getStats() {
@@ -6,11 +7,10 @@ export class AdminService {
     const totalMatches = await prisma.match.count();
     const totalCommunities = await prisma.community.count();
     const totalGrounds = await prisma.ground.count();
-
     const activeMatches = await prisma.match.count({ where: { status: 'OPEN' } });
     const pendingGrounds = await prisma.ground.count({ where: { status: 'PENDING' } });
     const pendingCommunities = await prisma.community.count({ where: { status: 'PENDING' } });
-
+    
     return {
       totalUsers,
       totalMatches,
@@ -28,14 +28,13 @@ export class AdminService {
       include: { owner: { select: { name: true, email: true } } },
       orderBy: { createdAt: 'asc' }
     });
-
+    
     const pendingGrounds = await prisma.ground.findMany({
       where: { status: 'PENDING' },
       include: { owner: { select: { name: true, email: true } } },
       orderBy: { createdAt: 'asc' }
     });
-
-    // In a real app we'd also pull flagged posts/reports here
+    
     return {
       pendingCommunities,
       pendingGrounds
@@ -60,6 +59,40 @@ export class AdminService {
         creator: { select: { name: true } },
         _count: { select: { players: true } }
       }
+    });
+  }
+
+  async getReports() {
+    // Fetch pending reports
+    return prisma.report.findMany({
+      where: { status: 'PENDING' },
+      orderBy: { createdAt: 'asc' },
+      include: {
+        submitter: { select: { name: true, email: true } }
+      }
+    });
+  }
+
+  async resolveReport(id: string, action: ReportStatus) {
+    return prisma.report.update({
+      where: { id },
+      data: { status: action }
+    });
+  }
+
+  async toggleBlockUser(id: string) {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) throw new Error('User not found');
+    
+    return prisma.user.update({
+      where: { id },
+      data: { isBlocked: !user.isBlocked }
+    });
+  }
+
+  async deletePost(id: string) {
+    return prisma.post.delete({
+      where: { id }
     });
   }
 }

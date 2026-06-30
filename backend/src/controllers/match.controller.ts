@@ -92,6 +92,11 @@ export class MatchController {
       const creatorId = req.user!.id;
       const { rating } = req.body;
       const result = await matchService.markAttendance((req.params.id as string), creatorId, (req.params.userId as string), rating);
+      
+      // Evaluate badges after attendance
+      const { badgeService } = await import('../services/badge.service');
+      await badgeService.evaluateUserMatches(req.params.userId as string);
+      
       res.json(result);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -103,6 +108,17 @@ export class MatchController {
       const creatorId = req.user!.id;
       const result = await matchService.cancelMatch((req.params.id as string), creatorId);
       res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async addComment(req: Request, res: Response) {
+    try {
+      const userId = req.user!.id;
+      const { content } = req.body;
+      const comment = await matchService.addComment((req.params.id as string), userId, content);
+      res.status(201).json(comment);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }

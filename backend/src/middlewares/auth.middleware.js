@@ -21,6 +21,7 @@ const requireAuth = async (req, res, next) => {
         // Verify token
         const decodedToken = await firebase_1.auth.verifyIdToken(idToken);
         req.firebaseUid = decodedToken.uid;
+        req.firebaseDecodedToken = decodedToken;
         // Fetch user from DB and attach to req
         const user = await db_1.default.user.findUnique({
             where: { firebaseUid: decodedToken.uid },

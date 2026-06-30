@@ -10,4 +10,3 @@ router.get('/', notification_controller_1.notificationController.getNotification
 router.put('/mark-all-read', notification_controller_1.notificationController.markAllAsRead);
 router.put('/:id/read', notification_controller_1.notificationController.markAsRead);
 exports.default = router;
-//# sourceMappingURL=notification.routes.js.map

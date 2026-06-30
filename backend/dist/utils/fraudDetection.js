@@ -41,4 +41,3 @@ class FraudDetection {
     }
 }
 exports.FraudDetection = FraudDetection;
-//# sourceMappingURL=fraudDetection.js.map

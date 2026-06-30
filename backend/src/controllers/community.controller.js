@@ -75,6 +75,12 @@ class CommunityController {
             const adminRole = req.user.role;
             const { status } = req.body;
             const community = await community_service_1.communityService.verifyCommunity(req.params.id, status, adminId, adminRole);
+            
+            if (status === 'VERIFIED') {
+                const badgeServiceModule = await Promise.resolve().then(() => require('../services/badge.service'));
+                await badgeServiceModule.badgeService.evaluateCommunityCreator(community.ownerId);
+            }
+            
             res.json(community);
         }
         catch (error) {

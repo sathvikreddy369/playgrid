@@ -15,4 +15,3 @@ router.delete('/:id/leave', auth_middleware_1.requireAuth, rateLimiter_1.apiLimi
 // Moderation
 router.delete('/:id/members/:userId', auth_middleware_1.requireAuth, rateLimiter_1.apiLimiter, community_controller_1.communityController.kickMember);
 exports.default = router;
-//# sourceMappingURL=community.routes.js.map

@@ -39,4 +39,3 @@ class NotificationController {
 }
 exports.NotificationController = NotificationController;
 exports.notificationController = new NotificationController();
-//# sourceMappingURL=notification.controller.js.map

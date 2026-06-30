@@ -8,6 +8,7 @@ const router = (0, express_1.Router)();
 router.post('/sync', auth_middleware_1.requireAuth, auth_controller_1.AuthController.sync);
 // Protected me route: Fetch user profile
 router.get('/me', auth_middleware_1.requireAuth, auth_controller_1.AuthController.me);
+router.put('/profile', auth_middleware_1.requireAuth, auth_controller_1.AuthController.updateProfile);
 // Upgrade to Organizer
 router.post('/upgrade-organizer', auth_middleware_1.requireAuth, auth_controller_1.AuthController.upgradeToOrganizer);
 // Upgrade to Admin (for local testing)

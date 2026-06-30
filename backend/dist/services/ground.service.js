@@ -119,4 +119,3 @@ class GroundService {
 }
 exports.GroundService = GroundService;
 exports.groundService = new GroundService();
-//# sourceMappingURL=ground.service.js.map

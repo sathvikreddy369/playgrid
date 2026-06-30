@@ -10,4 +10,3 @@ router.get('/conversations', message_controller_1.messageController.getConversat
 router.get('/:otherUserId', message_controller_1.messageController.getMessages);
 router.put('/:otherUserId/read', message_controller_1.messageController.markAsRead);
 exports.default = router;
-//# sourceMappingURL=message.routes.js.map

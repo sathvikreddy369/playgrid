@@ -37,4 +37,3 @@ class SearchController {
 }
 exports.SearchController = SearchController;
 exports.searchController = new SearchController();
-//# sourceMappingURL=search.controller.js.map

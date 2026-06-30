@@ -1,13 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cloudinary = void 0;
-const cloudinary_1 = require("cloudinary");
-Object.defineProperty(exports, "cloudinary", { enumerable: true, get: function () { return cloudinary_1.v2; } });
-// Cloudinary configuration
-// These should be set in your .env file
-cloudinary_1.v2.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
-    api_key: process.env.CLOUDINARY_API_KEY || '',
-    api_secret: process.env.CLOUDINARY_API_SECRET || '',
-});
-//# sourceMappingURL=cloudinary.js.map
+exports.uploadToCloudinary = void 0;
+const uploadToCloudinary = async (fileBuffer) => {
+    return "https://via.placeholder.com/150";
+};
+exports.uploadToCloudinary = uploadToCloudinary;

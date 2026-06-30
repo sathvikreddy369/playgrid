@@ -78,4 +78,3 @@ class MessageService {
 }
 exports.MessageService = MessageService;
 exports.messageService = new MessageService();
-//# sourceMappingURL=message.service.js.map

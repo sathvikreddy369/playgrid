@@ -25,9 +25,9 @@ class AuthController {
                 res.status(500).json({ error: 'Firebase Auth is not initialized properly on the server' });
                 return;
             }
-            const firebaseUser = await firebase_1.auth.getUser(firebaseUid);
-            const email = firebaseUser.email || '';
-            const name = firebaseUser.displayName || 'Unknown User';
+            const decodedToken = req.firebaseDecodedToken;
+            const email = decodedToken?.email || '';
+            const name = decodedToken?.name || decodedToken?.displayName || 'Unknown User';
             const { user, profile } = await auth_service_1.AuthService.syncUser(firebaseUid, email, name);
             res.status(200).json({
                 message: 'User synced successfully',
@@ -49,12 +49,27 @@ class AuthController {
                 res.status(404).json({ error: 'User not found in database' });
                 return;
             }
-            // req.user already contains the user object from the middleware.
-            // We can also fetch the profile if needed.
-            const profile = await db_1.default.profile.findUnique({
-                where: { userId: req.user.id }
+            // Fetch the profile and related user models
+            const userWithRelations = await db_1.default.user.findUnique({
+                where: { id: req.user.id },
+                include: {
+                    profile: true,
+                    badges: {
+                        include: { badge: true }
+                    },
+                    communityMemberships: {
+                        include: { community: true }
+                    }
+                }
             });
-            res.status(200).json({ user: req.user, profile });
+            if (!userWithRelations) {
+                res.status(404).json({ error: 'User not found' });
+                return;
+            }
+            res.status(200).json({ 
+                user: userWithRelations, 
+                profile: userWithRelations.profile 
+            });
         }
         catch (error) {
             console.error('Fetch Me Error:', error);
@@ -101,6 +116,38 @@ class AuthController {
         catch (error) {
             console.error('Admin Upgrade Error:', error);
             res.status(500).json({ error: 'Failed to upgrade to admin' });
+        }
+    }
+    
+    /**
+     * Update current user profile
+     */
+    static async updateProfile(req, res) {
+        try {
+            if (!req.user) {
+                res.status(401).json({ error: 'Unauthorized' });
+                return;
+            }
+            const { bio, location, sports, age, homeLatitude, homeLongitude, preferredPlayTimes, favoriteGames, skillLevels } = req.body;
+            const updatedProfile = await db_1.default.profile.update({
+                where: { userId: req.user.id },
+                data: {
+                    bio,
+                    location,
+                    sports,
+                    age,
+                    homeLatitude,
+                    homeLongitude,
+                    preferredPlayTimes,
+                    favoriteGames,
+                    skillLevels
+                }
+            });
+            res.status(200).json({ message: 'Profile updated successfully', profile: updatedProfile });
+        }
+        catch (error) {
+            console.error('Update Profile Error:', error);
+            res.status(500).json({ error: 'Failed to update profile' });
         }
     }
 }

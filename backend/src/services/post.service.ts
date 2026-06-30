@@ -57,7 +57,7 @@ export class PostService {
     return post;
   }
 
-  async createPost(userId: string, data: { content: string; type?: PostType; location?: string; tags?: string[] }) {
+  async createPost(userId: string, data: { content: string; type?: PostType; location?: string; latitude?: number; longitude?: number; tags?: string[] }) {
     if (FraudDetection.containsProfanityOrSpam(data.content)) {
       throw new Error('Content flagged as spam or contains profanity.');
     }
@@ -76,6 +76,8 @@ export class PostService {
         content: data.content,
         type: data.type || PostType.GENERAL,
         location: data.location,
+        latitude: data.latitude,
+        longitude: data.longitude,
         tags: data.tags || [],
       },
     });
@@ -97,10 +99,17 @@ export class PostService {
   }
 
   async deletePost(postId: string, userId: string, userRole: string) {
-    const post = await prisma.post.findUnique({ where: { id: postId } });
+    const post = await prisma.post.findUnique({ 
+      where: { id: postId },
+      include: { community: true }
+    });
     if (!post) throw new Error('Post not found');
 
-    if (post.authorId !== userId && userRole !== 'ADMIN') {
+    const isAuthor = post.authorId === userId;
+    const isAdmin = userRole === 'ADMIN';
+    const isCommunityOwner = post.community?.ownerId === userId;
+
+    if (!isAuthor && !isAdmin && !isCommunityOwner) {
       throw new Error('Unauthorized to delete this post');
     }
 

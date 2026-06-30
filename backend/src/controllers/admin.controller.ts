@@ -37,6 +37,45 @@ export class AdminController {
       res.status(500).json({ error: error.message });
     }
   }
+  async getReports(req: Request, res: Response) {
+    try {
+      const reports = await adminService.getReports();
+      res.json(reports);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async resolveReport(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { action } = req.body; // 'ACTION_TAKEN' or 'DISMISSED'
+      const report = await adminService.resolveReport(id as string, action);
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async toggleBlockUser(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const user = await adminService.toggleBlockUser(id as string);
+      res.json(user);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async deletePost(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      await adminService.deletePost(id as string);
+      res.json({ message: 'Post deleted successfully' });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 export const adminController = new AdminController();

@@ -16,4 +16,3 @@ const censorText = (text) => {
     return censored;
 };
 exports.censorText = censorText;
-//# sourceMappingURL=badWords.js.map

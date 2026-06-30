@@ -93,6 +93,7 @@ model User {
   name        String
   role        Role     @default(PLAYER)
   reputation  Int      @default(100)
+  isBlocked   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -103,6 +104,7 @@ model User {
   // Relations
   matchesCreated      Match[]       @relation("MatchCreator")
   matchParticipations MatchPlayer[]
+  matchComments       MatchComment[]
 
   communitiesOwned     Community[]       @relation("CommunityOwner")
   communityMemberships CommunityMember[]
@@ -136,7 +138,13 @@ model Profile {
   bio       String?
   avatarUrl String?
   location  String?
-  sports    String[] // e.g. ["Cricket", "Football"]
+  sports             String[] // e.g. ["Cricket", "Football"]
+  favoriteGames      String[]
+  age                Int?
+  homeLatitude       Float?
+  homeLongitude      Float?
+  preferredPlayTimes String[] // e.g. ["Weekdays", "Weekends"]
+  skillLevels        Json?    // e.g. { "Cricket": "PRO", "Football": "BEGINNER" }
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -215,10 +223,24 @@ model Match {
   creator   User          @relation("MatchCreator", fields: [creatorId], references: [id])
   community Community?    @relation(fields: [communityId], references: [id], onDelete: SetNull)
   players   MatchPlayer[]
+  comments  MatchComment[]
 
   @@index([date, sport])
   @@index([status])
   @@index([latitude, longitude])
+}
+
+model MatchComment {
+  id        String   @id @default(uuid())
+  matchId   String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
 }
 
 model MatchPlayer {
@@ -275,6 +297,8 @@ model Post {
   content     String
   type        PostType @default(GENERAL)
   location    String? // Optional for local feed filtering
+  latitude    Float?
+  longitude   Float?
   authorId    String
   communityId String?
   tags        String[]

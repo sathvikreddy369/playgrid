@@ -1,19 +1,13 @@
 import { Router } from 'express';
 import { postController } from '../controllers/post.controller';
-import { requireAuth } from '../middlewares/auth.middleware';
+import { requireAuth, optionalAuth } from '../middlewares/auth.middleware';
 import { postLimiter, apiLimiter } from '../middlewares/rateLimiter';
 
 const router = Router();
 
-// Publicly readable or require auth? Let's say feed is public but actions require auth.
-// Actually, let's allow optionally authenticated reads to get "liked" status.
-// We can use a loose auth middleware for GET, but for now we'll just use standard requireAuth since it's a social app.
-// Or we can just let `req.user` be populated if token exists in a custom middleware.
-// For simplicity, let's requireAuth for everything right now, or just make GET public and check req headers if we want.
-// Let's assume you must be logged in to see the feed for now.
-
-router.get('/', requireAuth, apiLimiter, postController.getPosts);
-router.get('/:id', requireAuth, apiLimiter, postController.getPostById);
+// Feed should be public, but optionally loaded with user
+router.get('/', optionalAuth, apiLimiter, postController.getPosts);
+router.get('/:id', optionalAuth, apiLimiter, postController.getPostById);
 
 // Write actions require strict rate limiting
 router.post('/', requireAuth, postLimiter, postController.createPost);

@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+require("dotenv/config");
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
@@ -16,7 +17,9 @@ const match_routes_1 = __importDefault(require("./routes/match.routes"));
 const notification_routes_1 = __importDefault(require("./routes/notification.routes"));
 const message_routes_1 = __importDefault(require("./routes/message.routes"));
 const admin_routes_1 = __importDefault(require("./routes/admin.routes"));
+const report_routes_1 = __importDefault(require("./routes/report.routes"));
 const search_routes_1 = __importDefault(require("./routes/search.routes"));
+const user_routes_1 = __importDefault(require("./routes/user.routes"));
 const upload_routes_1 = __importDefault(require("./routes/upload.routes"));
 const http_1 = __importDefault(require("http"));
 const socket_1 = require("./socket");
@@ -32,6 +35,7 @@ app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', auth_routes_1.default);
+app.use('/api/users', user_routes_1.default);
 app.use('/api/posts', post_routes_1.default);
 app.use('/api/communities', community_routes_1.default);
 app.use('/api/grounds', ground_routes_1.default);
@@ -39,6 +43,7 @@ app.use('/api/matches', match_routes_1.default);
 app.use('/api/notifications', notification_routes_1.default);
 app.use('/api/messages', message_routes_1.default);
 app.use('/api/admin', admin_routes_1.default);
+app.use('/api/reports', report_routes_1.default);
 app.use('/api/search', search_routes_1.default);
 app.use('/api/upload', upload_routes_1.default);
 // Health check
@@ -55,4 +60,3 @@ app.use((err, req, res, next) => {
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-//# sourceMappingURL=index.js.map

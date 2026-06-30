@@ -1,71 +1,50 @@
-import { PrismaClient, Role, MatchStatus, MatchSkillLevel, CommunityStatus, GroundStatus, PostType } from '@prisma/client';
-import { fakerEN_IN as faker } from '@faker-js/faker';
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
-
-const connectionString = process.env.DATABASE_URL;
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
-
-const SPORTS = ['Cricket', 'Football', 'Badminton', 'Tennis', 'Basketball'];
-const LOCATIONS = [
-  'Koramangala, Bangalore',
-  'HSR Layout, Bangalore',
-  'Indiranagar, Bangalore',
-  'Whitefield, Bangalore',
-  'Jayanagar, Bangalore',
-];
+import { Role, MatchSkillLevel, MatchStatus, CommunityStatus, PostType } from '@prisma/client';
+import { faker } from '@faker-js/faker';
+import prisma from '../src/utils/db';
 
 async function main() {
-  console.log('🌱 Starting seed...');
-
-  // 1. Clean existing data (Optional, be careful in prod. We use cascade deletes mostly but explicit is safer for seed)
+  console.log('Clearing existing data...');
+  // Clear data in reverse order of dependencies to avoid foreign key constraints errors
+  await prisma.replyLike.deleteMany();
+  await prisma.postLike.deleteMany();
+  await prisma.savedPost.deleteMany();
   await prisma.reply.deleteMany();
   await prisma.post.deleteMany();
   await prisma.matchPlayer.deleteMany();
   await prisma.match.deleteMany();
   await prisma.communityMember.deleteMany();
   await prisma.community.deleteMany();
+  await prisma.groundReview.deleteMany();
   await prisma.ground.deleteMany();
+  await prisma.tournamentParticipant.deleteMany();
+  await prisma.tournament.deleteMany();
+  await prisma.message.deleteMany();
+  await prisma.notification.deleteMany();
+  await prisma.report.deleteMany();
+  await prisma.userBadge.deleteMany();
+  await prisma.badge.deleteMany();
   await prisma.profile.deleteMany();
   await prisma.user.deleteMany();
 
-  // 2. Create Admin
-  const admin = await prisma.user.create({
-    data: {
-      firebaseUid: 'admin-mock-uid-12345',
-      email: 'admin@playgrid.in',
-      name: 'Playgrid Admin',
-      role: Role.ADMIN,
-      profile: {
-        create: {
-          bio: 'Platform Administrator',
-          location: 'Bangalore',
-          sports: ['Cricket'],
-        },
-      },
-    },
-  });
-
-  // 3. Create Users (Players & Organizers)
+  console.log('Creating users...');
   const users = [];
-  for (let i = 0; i < 20; i++) {
-    const isOrganizer = i < 3; // First 3 are organizers
-    const name = faker.person.fullName();
+  const numberOfUsers = 25; 
+  const hyderabadLocations = ['Gachibowli', 'Madhapur', 'Jubilee Hills', 'Banjara Hills', 'Kondapur', 'Hitech City', 'Kukatpally', 'Secunderabad', 'Begumpet', 'Miyapur'];
+
+  for (let i = 0; i < numberOfUsers; i++) {
     const user = await prisma.user.create({
       data: {
         firebaseUid: faker.string.uuid(),
-        email: faker.internet.email({ firstName: name }),
-        name: name,
-        role: isOrganizer ? Role.ORGANIZER : Role.PLAYER,
-        reputation: faker.number.int({ min: 80, max: 100 }),
+        email: faker.internet.email({ provider: 'gmail.com' }),
+        name: faker.person.fullName(),
+        role: i === 0 ? Role.ADMIN : Role.PLAYER,
+        reputation: faker.number.int({ min: 50, max: 200 }),
         profile: {
           create: {
             bio: faker.person.bio(),
-            location: faker.helpers.arrayElement(LOCATIONS),
-            sports: faker.helpers.arrayElements(SPORTS, { min: 1, max: 3 }),
             avatarUrl: faker.image.avatar(),
+            location: faker.helpers.arrayElement(hyderabadLocations),
+            sports: faker.helpers.arrayElements(['Cricket', 'Football', 'Basketball', 'Badminton', 'Tennis'], { min: 1, max: 3 }),
           },
         },
       },
@@ -73,111 +52,177 @@ async function main() {
     users.push(user);
   }
 
-  const organizers = users.filter((u) => u.role === Role.ORGANIZER);
-  const players = users.filter((u) => u.role === Role.PLAYER);
-
-  // 4. Create Grounds
-  const grounds = [];
-  for (let i = 0; i < 5; i++) {
-    const owner = faker.helpers.arrayElement(organizers);
-    const ground = await prisma.ground.create({
-      data: {
-        name: `${faker.company.name()} Sports Arena`,
-        location: faker.helpers.arrayElement(LOCATIONS),
-        latitude: faker.location.latitude({ min: 12.8, max: 13.1 }), // Bangalore approx
-        longitude: faker.location.longitude({ min: 77.5, max: 77.8 }),
-        pricing: '₹1200/hr',
-        amenities: ['Parking', 'Washroom', 'Drinking Water', 'Floodlights'],
-        sports: faker.helpers.arrayElements(SPORTS, { min: 1, max: 2 }),
-        status: GroundStatus.VERIFIED,
-        ownerId: owner.id,
-      },
-    });
-    grounds.push(ground);
-  }
-
-  // 5. Create Communities
+  console.log('Creating communities...');
   const communities = [];
-  for (let i = 0; i < 5; i++) {
-    const owner = faker.helpers.arrayElement(players);
+  const numberOfCommunities = 5; 
+
+  const communityNames = ['Hyderabad Strikers', 'Gachibowli FC', 'Deccan Hoopers', 'Madhapur Smashers', 'Cyberabad United'];
+
+  for (let i = 0; i < numberOfCommunities; i++) {
+    const owner = faker.helpers.arrayElement(users);
     const community = await prisma.community.create({
       data: {
-        name: `${faker.helpers.arrayElement(LOCATIONS).split(',')[0]} ${faker.helpers.arrayElement(SPORTS)} Club`,
-        description: faker.lorem.paragraph(),
-        location: faker.helpers.arrayElement(LOCATIONS),
+        name: communityNames[i],
+        description: `A community for sports enthusiasts in ${hyderabadLocations[i % hyderabadLocations.length]} and surrounding areas. Join us for regular games and tournaments!`,
+        location: hyderabadLocations[i % hyderabadLocations.length],
         status: CommunityStatus.VERIFIED,
         ownerId: owner.id,
-        members: {
-          create: faker.helpers.arrayElements(players, 5).map((p) => ({
-            userId: p.id,
-          })),
-        },
       },
     });
     communities.push(community);
+
+    // Add random members to the community
+    const memberCount = faker.number.int({ min: 3, max: 12 });
+    const members = faker.helpers.arrayElements(users, memberCount);
+    for (const member of members) {
+      if (member.id !== owner.id) {
+        // Prevent duplicate membership
+        const existing = await prisma.communityMember.findUnique({ where: { userId_communityId: { userId: member.id, communityId: community.id } } });
+        if (!existing) {
+          await prisma.communityMember.create({
+            data: {
+              userId: member.id,
+              communityId: community.id,
+            },
+          });
+        }
+      }
+    }
   }
 
-  // 6. Create Matches
-  for (let i = 0; i < 15; i++) {
-    const creator = faker.helpers.arrayElement(players);
-    const sport = faker.helpers.arrayElement(SPORTS);
-    const date = faker.date.soon({ days: 10 });
-    const maxPlayers = faker.number.int({ min: 4, max: 14 });
-    
-    await prisma.match.create({
+  console.log('Creating matches...');
+  const matches = [];
+  const matchTitles = ['Weekend Cricket', 'Evening Football', 'Morning Hoops', 'Casual Badminton', 'Sunday Tennis'];
+  const sportsList = ['Cricket', 'Football', 'Basketball', 'Badminton', 'Tennis'];
+
+  for (let i = 0; i < 30; i++) { 
+    const creator = faker.helpers.arrayElement(users);
+    const sport = faker.helpers.arrayElement(sportsList);
+    const match = await prisma.match.create({
       data: {
-        title: `Weekend ${sport} Match`,
+        title: `${faker.helpers.arrayElement(['Weekend', 'Evening', 'Morning'])} ${sport} at ${faker.helpers.arrayElement(hyderabadLocations)}`,
         sport: sport,
-        date: date,
-        location: faker.helpers.arrayElement(LOCATIONS),
-        latitude: faker.location.latitude({ min: 12.8, max: 13.1 }),
-        longitude: faker.location.longitude({ min: 77.5, max: 77.8 }),
-        maxPlayers: maxPlayers,
-        costPerPerson: faker.number.int({ min: 100, max: 300 }),
-        skillLevel: faker.helpers.arrayElement([MatchSkillLevel.BEGINNER, MatchSkillLevel.INTERMEDIATE, MatchSkillLevel.ALL]),
+        date: faker.date.soon({ days: 7 }),
+        location: `${faker.helpers.arrayElement(hyderabadLocations)}, Hyderabad`,
+        latitude: 17.3850 + faker.number.float({ min: -0.1, max: 0.1 }), // Approx Hyderabad lat
+        longitude: 78.4867 + faker.number.float({ min: -0.1, max: 0.1 }), // Approx Hyderabad lng
+        maxPlayers: sport === 'Cricket' ? 22 : sport === 'Football' ? 14 : sport === 'Basketball' ? 10 : 4,
+        costPerPerson: faker.helpers.arrayElement([100, 150, 200, 250, 300, 500]),
+        skillLevel: faker.helpers.arrayElement([MatchSkillLevel.ALL, MatchSkillLevel.BEGINNER, MatchSkillLevel.INTERMEDIATE, MatchSkillLevel.ADVANCED]),
         status: MatchStatus.OPEN,
         creatorId: creator.id,
-        players: {
-          create: faker.helpers.arrayElements(players, { min: 1, max: maxPlayers - 1 }).map((p) => ({
-            userId: p.id,
-            status: 'APPROVED',
-          })),
-        },
+        communityId: faker.datatype.boolean() ? faker.helpers.arrayElement(communities).id : null,
       },
     });
-  }
+    matches.push(match);
 
-  // 7. Create Feed Posts
-  for (let i = 0; i < 30; i++) {
-    const author = faker.helpers.arrayElement(users);
-    const type = faker.helpers.arrayElement([PostType.GENERAL, PostType.LOOKING_FOR_PLAYERS, PostType.QUESTION]);
-    
-    await prisma.post.create({
-      data: {
-        content: faker.lorem.sentences(2),
-        type: type,
-        location: faker.helpers.arrayElement(LOCATIONS),
-        authorId: author.id,
-        tags: [faker.helpers.arrayElement(SPORTS).toLowerCase()],
-        replies: {
-          create: faker.helpers.arrayElements(users, { min: 0, max: 3 }).map((u) => ({
-            content: faker.lorem.sentence(),
-            authorId: u.id,
-          })),
+    // Add players to match
+    const playersCount = faker.number.int({ min: 0, max: 4 });
+    const matchPlayers = faker.helpers.arrayElements(users, playersCount);
+    for (const player of matchPlayers) {
+      if (player.id !== creator.id) {
+        const existing = await prisma.matchPlayer.findUnique({ where: { matchId_userId: { matchId: match.id, userId: player.id } } });
+        if (!existing) {
+          await prisma.matchPlayer.create({
+            data: {
+              userId: player.id,
+              matchId: match.id,
+              status: faker.helpers.arrayElement(['PENDING', 'APPROVED']),
+            },
+          });
         }
+      }
+    }
+  }
+
+  console.log('Creating posts...');
+  const posts = [];
+  for (let i = 0; i < 40; i++) { 
+    const author = faker.helpers.arrayElement(users);
+    const isCommunityPost = faker.datatype.boolean();
+    
+    const post = await prisma.post.create({
+      data: {
+        content: faker.helpers.arrayElement([
+          `Anyone up for a game of Cricket this weekend in ${faker.helpers.arrayElement(hyderabadLocations)}?`,
+          `Looking for a football team to join near ${faker.helpers.arrayElement(hyderabadLocations)}.`,
+          `Great match today! The weather in Hyderabad was perfect for it.`,
+          `Does anyone know good badminton courts in ${faker.helpers.arrayElement(hyderabadLocations)}?`,
+          `Need 2 more players for our basketball match tomorrow evening.`
+        ]),
+        type: faker.helpers.arrayElement([PostType.GENERAL, PostType.LOOKING_FOR_PLAYERS, PostType.QUESTION]),
+        location: `${faker.helpers.arrayElement(hyderabadLocations)}, Hyderabad`,
+        latitude: 17.3850 + faker.number.float({ min: -0.1, max: 0.1 }),
+        longitude: 78.4867 + faker.number.float({ min: -0.1, max: 0.1 }),
+        authorId: author.id,
+        communityId: isCommunityPost ? faker.helpers.arrayElement(communities).id : null,
+        tags: faker.helpers.arrayElements(['football', 'cricket', 'hyderabad', 'weekend', 'help'], { min: 1, max: 3 }),
       },
+    });
+    posts.push(post);
+
+    // Add random likes
+    const likers = faker.helpers.arrayElements(users, faker.number.int({ min: 0, max: 5 }));
+    for (const liker of likers) {
+      const existing = await prisma.postLike.findUnique({ where: { userId_postId: { userId: liker.id, postId: post.id } } });
+      if (!existing) {
+        await prisma.postLike.create({
+          data: {
+            userId: liker.id,
+            postId: post.id,
+          },
+        });
+      }
+    }
+
+    // Add random replies
+    const replyCount = faker.number.int({ min: 0, max: 3 });
+    for (let j = 0; j < replyCount; j++) {
+      const replier = faker.helpers.arrayElement(users);
+      await prisma.reply.create({
+        data: {
+          content: faker.helpers.arrayElement(['I am in!', 'Count me in.', 'Where exactly?', 'Check DM.', 'Great game!']),
+          postId: post.id,
+          authorId: replier.id,
+        },
+      });
+    }
+  }
+
+  console.log('Creating reports...');
+  // Create some fake reports so Admin dashboard isn't empty
+  for (let i = 0; i < 15; i++) {
+    const submitter = faker.helpers.arrayElement(users);
+    const type = faker.helpers.arrayElement(['POST', 'USER']);
+    let targetId = '';
+    
+    if (type === 'POST') {
+      targetId = faker.helpers.arrayElement(posts).id;
+    } else {
+      targetId = faker.helpers.arrayElement(users).id;
+    }
+
+    await prisma.report.create({
+      data: {
+        submitterId: submitter.id,
+        targetType: type as any,
+        targetId,
+        reason: faker.helpers.arrayElement(['Inappropriate content', 'Spam', 'Harassment', 'Fake profile']),
+        status: faker.helpers.arrayElement(['PENDING', 'PENDING', 'PENDING', 'REVIEWED', 'ACTION_TAKEN'])
+      }
     });
   }
 
-  console.log('✅ Seeding completed successfully.');
+  console.log('Seed completed successfully!');
 }
 
-main()
-  .catch((e) => {
-    console.error('❌ Seeding failed:');
+const run = async () => {
+  try {
+    await main();
+  } catch (e) {
     console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  }
+  await prisma.$disconnect();
+};
+
+run();

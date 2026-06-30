@@ -35,7 +35,6 @@ class AdminService {
             include: { owner: { select: { name: true, email: true } } },
             orderBy: { createdAt: 'asc' }
         });
-        // In a real app we'd also pull flagged posts/reports here
         return {
             pendingCommunities,
             pendingGrounds
@@ -60,7 +59,36 @@ class AdminService {
             }
         });
     }
+    async getReports() {
+        // Fetch pending reports
+        return db_1.default.report.findMany({
+            where: { status: 'PENDING' },
+            orderBy: { createdAt: 'asc' },
+            include: {
+                submitter: { select: { name: true, email: true } }
+            }
+        });
+    }
+    async resolveReport(id, action) {
+        return db_1.default.report.update({
+            where: { id },
+            data: { status: action }
+        });
+    }
+    async toggleBlockUser(id) {
+        const user = await db_1.default.user.findUnique({ where: { id } });
+        if (!user)
+            throw new Error('User not found');
+        return db_1.default.user.update({
+            where: { id },
+            data: { isBlocked: !user.isBlocked }
+        });
+    }
+    async deletePost(id) {
+        return db_1.default.post.delete({
+            where: { id }
+        });
+    }
 }
 exports.AdminService = AdminService;
 exports.adminService = new AdminService();
-//# sourceMappingURL=admin.service.js.map

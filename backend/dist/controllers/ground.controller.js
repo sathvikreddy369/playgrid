@@ -81,4 +81,3 @@ class GroundController {
 }
 exports.GroundController = GroundController;
 exports.groundController = new GroundController();
-//# sourceMappingURL=ground.controller.js.map

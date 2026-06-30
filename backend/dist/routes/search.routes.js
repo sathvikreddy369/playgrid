@@ -9,4 +9,3 @@ router.get('/', rateLimiter_1.apiLimiter, search_controller_1.searchController.s
 // AI search might be expensive, protect it heavily
 router.post('/ai', auth_middleware_1.requireAuth, rateLimiter_1.apiLimiter, search_controller_1.searchController.aiSearch);
 exports.default = router;
-//# sourceMappingURL=search.routes.js.map

@@ -21,4 +21,3 @@ exports.postLimiter = (0, express_rate_limit_1.default)({
     legacyHeaders: false,
     message: 'You are posting too frequently. Please slow down to prevent spam.',
 });
-//# sourceMappingURL=rateLimiter.js.map

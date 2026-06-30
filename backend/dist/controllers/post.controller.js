@@ -119,4 +119,3 @@ class PostController {
 }
 exports.PostController = PostController;
 exports.postController = new PostController();
-//# sourceMappingURL=post.controller.js.map

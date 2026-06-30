@@ -77,6 +77,8 @@ class PostService {
                 content: data.content,
                 type: data.type || client_1.PostType.GENERAL,
                 location: data.location,
+                latitude: data.latitude,
+                longitude: data.longitude,
                 tags: data.tags || [],
             },
         });
@@ -96,10 +98,16 @@ class PostService {
         });
     }
     async deletePost(postId, userId, userRole) {
-        const post = await db_1.default.post.findUnique({ where: { id: postId } });
+        const post = await db_1.default.post.findUnique({
+            where: { id: postId },
+            include: { community: true }
+        });
         if (!post)
             throw new Error('Post not found');
-        if (post.authorId !== userId && userRole !== 'ADMIN') {
+        const isAuthor = post.authorId === userId;
+        const isAdmin = userRole === 'ADMIN';
+        const isCommunityOwner = post.community?.ownerId === userId;
+        if (!isAuthor && !isAdmin && !isCommunityOwner) {
             throw new Error('Unauthorized to delete this post');
         }
         return db_1.default.post.delete({ where: { id: postId } });
@@ -133,4 +141,3 @@ class PostService {
 }
 exports.PostService = PostService;
 exports.postService = new PostService();
-//# sourceMappingURL=post.service.js.map

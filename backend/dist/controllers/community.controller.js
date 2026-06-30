@@ -85,4 +85,3 @@ class CommunityController {
 }
 exports.CommunityController = CommunityController;
 exports.communityController = new CommunityController();
-//# sourceMappingURL=community.controller.js.map

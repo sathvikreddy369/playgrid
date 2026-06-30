@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { requireAuth } from '../middlewares/auth.middleware';
-import { uploadImage } from '../controllers/upload.controller';
+import { reportController } from '../controllers/report.controller';
 
 const router = Router();
 
-router.post('/', requireAuth, uploadImage);
+router.post('/', requireAuth, reportController.createReport);
 
 export default router;

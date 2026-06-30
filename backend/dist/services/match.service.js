@@ -61,6 +61,12 @@ class MatchService {
                     include: {
                         user: { select: { id: true, name: true, reputation: true, profile: { select: { avatarUrl: true } } } }
                     }
+                },
+                comments: {
+                    include: {
+                        user: { select: { id: true, name: true, profile: { select: { avatarUrl: true } } } }
+                    },
+                    orderBy: { createdAt: 'asc' }
                 }
             }
         });
@@ -152,7 +158,28 @@ class MatchService {
         }
         return updated;
     }
+    async addComment(matchId, userId, content) {
+        const match = await db_1.default.match.findUnique({
+            where: { id: matchId },
+            include: { players: true }
+        });
+        if (!match)
+            throw new Error('Match not found');
+        const isParticipant = match.creatorId === userId || match.players.some(p => p.userId === userId && (p.status === 'APPROVED' || p.status === 'ATTENDED'));
+        if (!isParticipant) {
+            throw new Error('Only participants can comment on a match');
+        }
+        return db_1.default.matchComment.create({
+            data: {
+                matchId,
+                userId,
+                content
+            },
+            include: {
+                user: { select: { id: true, name: true, profile: { select: { avatarUrl: true } } } }
+            }
+        });
+    }
 }
 exports.MatchService = MatchService;
 exports.matchService = new MatchService();
-//# sourceMappingURL=match.service.js.map

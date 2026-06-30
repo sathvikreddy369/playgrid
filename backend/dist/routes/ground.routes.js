@@ -15,4 +15,3 @@ router.put('/:id', auth_middleware_1.requireAuth, rateLimiter_1.apiLimiter, grou
 router.post('/:id/reviews', auth_middleware_1.requireAuth, rateLimiter_1.apiLimiter, ground_controller_1.groundController.addReview);
 router.delete('/:id/reviews/:reviewId', auth_middleware_1.requireAuth, rateLimiter_1.apiLimiter, ground_controller_1.groundController.deleteReview);
 exports.default = router;
-//# sourceMappingURL=ground.routes.js.map

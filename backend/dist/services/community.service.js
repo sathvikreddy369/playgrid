@@ -97,4 +97,3 @@ class CommunityService {
 }
 exports.CommunityService = CommunityService;
 exports.communityService = new CommunityService();
-//# sourceMappingURL=community.service.js.map

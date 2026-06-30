@@ -39,4 +39,3 @@ class MessageController {
 }
 exports.MessageController = MessageController;
 exports.messageController = new MessageController();
-//# sourceMappingURL=message.controller.js.map
