@@ -33,7 +33,15 @@ export const usePostDetail = (postId: string) => {
 export const useCreatePost = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (postData: { content: string; type?: string; tags?: string[] }) => {
+    mutationFn: async (postData: { 
+      content: string; 
+      type?: string; 
+      tags?: string[]; 
+      location?: string;
+      latitude?: number | null;
+      longitude?: number | null;
+      communityId?: string | null;
+    }) => {
       const { data } = await api.post('/posts', postData);
       return data;
     },

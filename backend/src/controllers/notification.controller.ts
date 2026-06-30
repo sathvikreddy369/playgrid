@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { notificationService } from '../services/notification.service';
 
 export class NotificationController {
-  async getNotifications(req: Request, res: Response) {
+  async getNotifications(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.id;
       const unreadOnly = req.query.unread === 'true';
@@ -12,28 +12,28 @@ export class NotificationController {
         : await notificationService.getAllNotifications(userId);
         
       res.json(notifications);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 
-  async markAsRead(req: Request, res: Response) {
+  async markAsRead(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.id;
       const notification = await notificationService.markAsRead((req.params.id as string), userId);
       res.json(notification);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 
-  async markAllAsRead(req: Request, res: Response) {
+  async markAllAsRead(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.id;
       const result = await notificationService.markAllAsRead(userId);
       res.json(result);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 }

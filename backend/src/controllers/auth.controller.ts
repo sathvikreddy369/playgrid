@@ -1,13 +1,13 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import prisma from '../utils/db';
+import { AppError } from '../utils/AppError';
 
 export class AuthController {
-  static async sync(req: Request, res: Response) {
+  static async sync(req: Request, res: Response, next: NextFunction) {
     try {
-      const firebaseUid = (req as any).firebaseUid;
+      const firebaseUid = req.firebaseUid;
       if (!firebaseUid) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
+        throw AppError.unauthorized('Unauthorized');
       }
 
       // Check if user exists
@@ -33,65 +33,40 @@ export class AuthController {
       }
 
       res.status(200).json(user);
-    } catch (error: any) {
-      console.error('Sync error:', error);
-      res.status(500).json({ error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 
-  static async me(req: Request, res: Response) {
+  static async me(req: Request, res: Response, next: NextFunction) {
     try {
-      const firebaseUid = (req as any).firebaseUid;
-      const user = await prisma.user.findUnique({
-        where: { firebaseUid },
+      const user = req.user;
+      if (!user) {
+        throw AppError.unauthorized('User not found');
+      }
+
+      const fullUser = await prisma.user.findUnique({
+        where: { id: user.id },
         include: { profile: true, badges: { include: { badge: true } }, communityMemberships: { include: { community: true } } }
       });
-      if (!user) {
-        res.status(404).json({ error: 'User not found' });
-        return;
+      if (!fullUser) {
+        throw AppError.notFound('User not found');
       }
-      res.status(200).json(user);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(200).json(fullUser);
+    } catch (error) {
+      next(error);
     }
   }
 
-  static async upgradeToOrganizer(req: Request, res: Response) {
+  static async updateProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const firebaseUid = (req as any).firebaseUid;
-      const user = await prisma.user.update({
-        where: { firebaseUid },
-        data: { role: 'ORGANIZER' }
-      });
-      res.status(200).json(user);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  }
+      const user = req.user;
+      if (!user) {
+        throw AppError.unauthorized('User not found');
+      }
 
-  static async makeMeAdmin(req: Request, res: Response) {
-    try {
-      const firebaseUid = (req as any).firebaseUid;
-      const user = await prisma.user.update({
-        where: { firebaseUid },
-        data: { role: 'ADMIN' }
-      });
-      res.status(200).json(user);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  }
-
-  static async updateProfile(req: Request, res: Response) {
-    try {
-      const firebaseUid = (req as any).firebaseUid;
+      // req.body is already validated and stripped by Zod middleware
       const data = req.body;
-      
-      const user = await prisma.user.findUnique({ where: { firebaseUid } });
-      if (!user) {
-        res.status(404).json({ error: 'User not found' });
-        return;
-      }
 
       const updatedProfile = await prisma.profile.upsert({
         where: { userId: user.id },
@@ -102,8 +77,8 @@ export class AuthController {
         }
       });
       res.status(200).json(updatedProfile);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 }

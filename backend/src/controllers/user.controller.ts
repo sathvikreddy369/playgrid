@@ -1,31 +1,31 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import prisma from '../utils/db';
+import { AppError } from '../utils/AppError';
 
 export class UserController {
-  async getUserProfile(req: Request, res: Response) {
+  async getUserProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const user = await prisma.user.findUnique({
-        where: { id: id as string },
+        where: { id },
         include: {
           profile: true,
           badges: { include: { badge: true } },
         }
       });
       if (!user) {
-        res.status(404).json({ error: 'User not found' });
-        return;
+        throw AppError.notFound('User not found');
       }
       res.json(user);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
-  async getUserPosts(req: Request, res: Response) {
+  async getUserPosts(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const posts = await prisma.post.findMany({
-        where: { authorId: id as string },
+        where: { authorId: id },
         include: {
           author: { select: { id: true, name: true, profile: { select: { avatarUrl: true } } } },
           community: { select: { id: true, name: true } },
@@ -34,16 +34,16 @@ export class UserController {
         orderBy: { createdAt: 'desc' }
       });
       res.json(posts);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 
-  async getUserLikes(req: Request, res: Response) {
+  async getUserLikes(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const likes = await prisma.postLike.findMany({
-        where: { userId: id as string },
+        where: { userId: id },
         include: {
           post: {
             include: {
@@ -56,35 +56,35 @@ export class UserController {
         orderBy: { createdAt: 'desc' }
       });
       res.json(likes.map(like => like.post));
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 
-  async getUserReplies(req: Request, res: Response) {
+  async getUserReplies(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const replies = await prisma.reply.findMany({
-        where: { authorId: id as string },
+        where: { authorId: id },
         include: {
           post: { select: { id: true, content: true } }
         },
         orderBy: { createdAt: 'desc' }
       });
       res.json(replies);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 
-  async getUserMatches(req: Request, res: Response) {
+  async getUserMatches(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const matches = await prisma.match.findMany({
         where: {
           OR: [
-            { creatorId: id as string },
-            { players: { some: { userId: id as string } } }
+            { creatorId: id },
+            { players: { some: { userId: id } } }
           ]
         },
         orderBy: { date: 'desc' },
@@ -94,8 +94,8 @@ export class UserController {
         }
       });
       res.json(matches);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 }

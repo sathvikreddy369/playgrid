@@ -3,7 +3,6 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
 import authRoutes from './routes/auth.routes';
 import postRoutes from './routes/post.routes';
 import communityRoutes from './routes/community.routes';
@@ -18,19 +17,24 @@ import userRoutes from './routes/user.routes';
 import uploadRoutes from './routes/upload.routes';
 import http from 'http';
 import { initializeSocket } from './socket';
-
-dotenv.config();
+import { errorHandler } from './middlewares/errorHandler';
 
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 5001;
 
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',');
+
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ALLOWED_ORIGINS,
+  credentials: true,
+}));
 app.use(helmet());
 app.use(morgan('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -54,11 +58,8 @@ app.get('/health', (req: Request, res: Response) => {
 // Initialize Socket.IO
 initializeSocket(server);
 
-// Error handling middleware
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
+// Centralized error handling middleware (must be after routes)
+app.use(errorHandler);
 
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

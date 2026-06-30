@@ -2,8 +2,8 @@ import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import { NotificationBell } from './NotificationBell';
-import { Home, Search, Users, MapPin, Calendar, MessageSquare, User } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Home, Search, Users, MapPin, Calendar, MessageSquare, User, Compass } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const Layout = () => {
   const { user } = useAuth();
@@ -12,56 +12,106 @@ export const Layout = () => {
   const navItems = [
     { path: '/', icon: Home, label: 'Home' },
     { path: '/search', icon: Search, label: 'Search' },
-    { path: '/communities', icon: Users, label: 'Groups' },
+    { path: '/communities', icon: Users, label: 'Communities' },
     { path: '/matches', icon: Calendar, label: 'Matches' },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col font-sans transition-colors duration-200">
       {/* Top Header - Glassmorphic */}
-      <header className="backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-40 transition-colors">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Playgrid</Link>
+      <header className="glass sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <Link 
+            to="/" 
+            className="text-2xl font-black tracking-tighter text-foreground flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
+            <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center text-white">
+              <Compass className="w-5 h-5" />
+            </div>
+            Playgrid
+          </Link>
           
           {/* Desktop Nav */}
-          <nav className="hidden md:flex gap-8 items-center">
-            <Link to="/search" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Search</Link>
-            <Link to="/feed" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Feed</Link>
-            <Link to="/communities" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Communities</Link>
-            <Link to="/grounds" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Venues</Link>
-            <Link to="/matches" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Matches</Link>
-            {user && <Link to="/messages" className="text-gray-600 hover:text-blue-600 font-medium transition-colors">Messages</Link>}
+          <nav className="hidden md:flex gap-1 bg-surface/50 border border-border p-1 rounded-full shadow-sm">
+            {[
+              { path: '/feed', label: 'Feed' },
+              { path: '/communities', label: 'Communities' },
+              { path: '/grounds', label: 'Venues' },
+              { path: '/matches', label: 'Matches' },
+            ].map(item => {
+              const isActive = location.pathname.startsWith(item.path);
+              return (
+                <Link 
+                  key={item.path}
+                  to={item.path} 
+                  className={`relative px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                    isActive 
+                      ? 'text-foreground' 
+                      : 'text-muted hover:text-foreground'
+                  }`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="nav-pill"
+                      className="absolute inset-0 bg-border rounded-full -z-10"
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    />
+                  )}
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <Link to="/search" className="hidden md:flex w-9 h-9 items-center justify-center rounded-full text-muted hover:bg-border transition-colors">
+              <Search className="w-5 h-5" />
+            </Link>
+            
             {user ? (
               <>
+                {/* Ensure NotificationBell inherits clean styling if needed */}
                 <NotificationBell />
-                <Link to="/profile" className="hidden md:block">
-                  <motion.img 
-                    whileHover={{ scale: 1.1 }}
-                    src={`https://ui-avatars.com/api/?name=${user.name}&background=random`} 
-                    className="w-9 h-9 rounded-full shadow-sm" 
-                    alt="Profile" 
-                  />
+                <Link to="/messages" className="hidden md:flex w-9 h-9 items-center justify-center rounded-full text-muted hover:bg-border transition-colors relative">
+                  <MessageSquare className="w-5 h-5" />
+                </Link>
+                <Link to="/profile" className="hidden md:block ml-2 group">
+                  <div className="p-0.5 rounded-full ring-2 ring-transparent group-hover:ring-primary-500 transition-all">
+                    <img 
+                      src={user.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}&background=random`} 
+                      className="w-8 h-8 rounded-full object-cover" 
+                      alt="Profile" 
+                    />
+                  </div>
                 </Link>
               </>
             ) : (
-              <Link to="/login" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-2 rounded-full font-medium hover:shadow-lg hover:-translate-y-0.5 transition-all">Sign In</Link>
+              <Link to="/login" className="bg-foreground text-background px-5 py-2 rounded-full text-sm font-medium hover:bg-foreground/90 active:scale-95 transition-all shadow-soft">
+                Sign In
+              </Link>
             )}
           </div>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 pb-20 md:pb-0">
-        {/* We use location.pathname as key to trigger animations on route change if we wrap Outlet in AnimatePresence. 
-            For now, just simple rendering is optimal for performance. */}
-        <Outlet />
+      <main className="flex-1 pb-20 md:pb-8 pt-6">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="h-full"
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-50 px-2 pb-safe">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t-0 border-t border-border z-50 px-2 pb-safe">
         <div className="flex justify-around items-center h-16">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -70,28 +120,25 @@ export const Layout = () => {
               <Link 
                 key={item.path} 
                 to={item.path} 
-                className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive ? 'text-blue-600' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'}`}
+                className="relative flex flex-col items-center justify-center w-full h-full"
               >
-                <Icon className={`w-6 h-6 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <div className={`p-2 rounded-xl transition-all ${isActive ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/30' : 'text-muted hover:text-foreground'}`}>
+                  <Icon className={`w-6 h-6 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+                </div>
               </Link>
             );
           })}
           {user ? (
-            <Link 
-              to="/profile" 
-              className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${location.pathname.startsWith('/profile') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'}`}
-            >
-              <User className={`w-6 h-6 ${location.pathname.startsWith('/profile') ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-              <span className="text-[10px] font-medium">Profile</span>
+            <Link to="/profile" className="relative flex flex-col items-center justify-center w-full h-full">
+              <div className={`p-2 rounded-xl transition-all ${location.pathname.startsWith('/profile') ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/30' : 'text-muted hover:text-foreground'}`}>
+                <User className={`w-6 h-6 ${location.pathname.startsWith('/profile') ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+              </div>
             </Link>
           ) : (
-            <Link 
-              to="/login" 
-              className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${location.pathname === '/login' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'}`}
-            >
-              <User className="w-6 h-6 stroke-2" />
-              <span className="text-[10px] font-medium">Sign In</span>
+            <Link to="/login" className="relative flex flex-col items-center justify-center w-full h-full">
+              <div className={`p-2 rounded-xl transition-all ${location.pathname === '/login' ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/30' : 'text-muted hover:text-foreground'}`}>
+                <User className="w-6 h-6 stroke-2" />
+              </div>
             </Link>
           )}
         </div>

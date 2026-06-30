@@ -2,76 +2,78 @@ import prisma from '../utils/db';
 
 export class MessageService {
   async getConversations(userId: string) {
-    // A query to find all users this user has messaged.
-    // In Prisma, we can find distinct senderId/receiverId where one is the current user.
-    // However, finding the "latest message" for each conversation is tricky in Prisma natively.
-    // We'll fetch all messages involving the user, ordered by date desc, and manually group them.
-    
-    const messages = await prisma.message.findMany({
-      where: {
-        OR: [
-          { senderId: userId },
-          { receiverId: userId }
-        ]
-      },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        sender: { select: { id: true, name: true, profile: { select: { avatarUrl: true } } } },
-        receiver: { select: { id: true, name: true, profile: { select: { avatarUrl: true } } } }
-      }
-    });
+    // Efficient raw query to get the latest message per conversation (H2)
+    // We use DISTINCT ON (partner_id) to get exactly one row per conversation partner
+    const latestMessages = await prisma.$queryRaw`
+      WITH user_messages AS (
+        SELECT 
+          id, content, "senderId", "receiverId", "createdAt", "isRead",
+          CASE WHEN "senderId" = ${userId} THEN "receiverId" ELSE "senderId" END as partner_id
+        FROM "Message"
+        WHERE "senderId" = ${userId} OR "receiverId" = ${userId}
+      ),
+      latest_per_partner AS (
+        SELECT DISTINCT ON (partner_id) *
+        FROM user_messages
+        ORDER BY partner_id, "createdAt" DESC
+      )
+      SELECT * FROM latest_per_partner
+      ORDER BY "createdAt" DESC;
+    `;
 
-    const conversationsMap = new Map();
+    // Fetch user details for the partners
+    const conversations = [];
+    for (const msg of (latestMessages as any[])) {
+      const partner = await prisma.user.findUnique({
+        where: { id: msg.partner_id },
+        select: { id: true, name: true, profile: { select: { avatarUrl: true } } }
+      });
 
-    for (const msg of messages) {
-      const otherUser = msg.senderId === userId ? msg.receiver : msg.sender;
-      if (!conversationsMap.has(otherUser.id)) {
-        conversationsMap.set(otherUser.id, {
-          user: otherUser,
-          lastMessage: msg,
-          unreadCount: 0
-        });
-      }
+      // Calculate unread count efficiently
+      const unreadCount = await prisma.message.count({
+        where: {
+          senderId: msg.partner_id,
+          receiverId: userId,
+          isRead: false
+        }
+      });
 
-      // Count unread messages sent TO the current user
-      if (msg.receiverId === userId && !msg.isRead) {
-        const conv = conversationsMap.get(otherUser.id);
-        conv.unreadCount += 1;
-      }
+      conversations.push({
+        user: partner,
+        lastMessage: {
+          id: msg.id,
+          content: msg.content,
+          senderId: msg.senderId,
+          receiverId: msg.receiverId,
+          createdAt: msg.createdAt,
+          isRead: msg.isRead
+        },
+        unreadCount
+      });
     }
 
-    return Array.from(conversationsMap.values());
+    return conversations;
   }
 
   async getMessagesWithUser(userId: string, otherUserId: string, cursor?: string) {
-    const take = 50;
-    
-    const where = {
-      OR: [
-        { senderId: userId, receiverId: otherUserId },
-        { senderId: otherUserId, receiverId: userId }
-      ]
-    };
-
+    const limit = 50;
     const messages = await prisma.message.findMany({
-      where,
-      take,
-      skip: cursor ? 1 : 0,
-      cursor: cursor ? { id: cursor } : undefined,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        sender: { select: { id: true, name: true, profile: { select: { avatarUrl: true } } } },
-      }
+      where: {
+        OR: [
+          { senderId: userId, receiverId: otherUserId },
+          { senderId: otherUserId, receiverId: userId }
+        ]
+      },
+      orderBy: { createdAt: 'asc' }, // usually you want 'desc' with cursor, but frontend expects chronological
+      take: limit,
+      ...(cursor && { cursor: { id: cursor }, skip: 1 })
     });
 
-    return {
-      messages: messages.reverse(), // Return chronological order
-      nextCursor: messages.length === take ? messages[messages.length - 1].id : null
-    };
+    return { messages, nextCursor: messages.length === limit ? messages[messages.length - 1].id : null };
   }
 
   async markAsRead(userId: string, otherUserId: string) {
-    return prisma.message.updateMany({
+    return await prisma.message.updateMany({
       where: {
         senderId: otherUserId,
         receiverId: userId,

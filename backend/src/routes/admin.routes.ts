@@ -3,6 +3,8 @@ import { requireAuth, requireRole } from '../middlewares/auth.middleware';
 import { communityController } from '../controllers/community.controller';
 import { groundController } from '../controllers/ground.controller';
 import { adminController } from '../controllers/admin.controller';
+import { validate } from '../middlewares/validate';
+import { verifyCommunitySchema, verifyGroundSchema, resolveReportSchema } from '../validators';
 
 const router = Router();
 
@@ -16,14 +18,14 @@ router.get('/users', adminController.getUsers);
 router.get('/matches', adminController.getMatches);
 
 // Community Verification
-router.put('/communities/:id/verify', communityController.verifyCommunity);
+router.put('/communities/:id/verify', validate(verifyCommunitySchema), communityController.verifyCommunity);
 
 // Ground Verification
-router.put('/grounds/:id/verify', groundController.verifyGround);
+router.put('/grounds/:id/verify', validate(verifyGroundSchema), groundController.verifyGround);
 
 // Moderation & Reports
 router.get('/reports', adminController.getReports);
-router.put('/reports/:id/resolve', adminController.resolveReport);
+router.put('/reports/:id/resolve', validate(resolveReportSchema), adminController.resolveReport);
 router.put('/users/:id/block', adminController.toggleBlockUser);
 router.delete('/posts/:id', adminController.deletePost);
 

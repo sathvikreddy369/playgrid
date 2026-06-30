@@ -1,8 +1,9 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { searchService } from '../services/search.service';
+import { AppError } from '../utils/AppError';
 
 export class SearchController {
-  async search(req: Request, res: Response) {
+  async search(req: Request, res: Response, next: NextFunction) {
     try {
       const { q = '', type = 'ALL', lat, lng, radius = '10' } = req.query;
 
@@ -20,15 +21,14 @@ export class SearchController {
       // Standard Global Search
       const results = await searchService.globalSearch(q as string, type as string);
       res.json(results);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 
-  async aiSearch(req: Request, res: Response) {
+  async aiSearch(req: Request, res: Response, next: NextFunction) {
     try {
       const { q } = req.body;
-      if (!q) return res.status(400).json({ error: 'Query string is required' });
 
       // 1. Parse natural language into JSON filters using Gemini
       const filters = await searchService.parseQueryWithAI(q);
@@ -37,8 +37,8 @@ export class SearchController {
       const results = await searchService.applyAIFilters(filters);
 
       res.json(results);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+    } catch (error) {
+      next(error);
     }
   }
 }

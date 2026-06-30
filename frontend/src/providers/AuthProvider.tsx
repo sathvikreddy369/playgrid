@@ -10,6 +10,9 @@ interface UserData {
   name: string;
   role: string;
   reputation: number;
+  badges?: any[];
+  communityMemberships?: any[];
+  profile?: ProfileData;
 }
 
 interface ProfileData {
@@ -18,6 +21,12 @@ interface ProfileData {
   location: string | null;
   avatarUrl: string | null;
   sports: string[];
+  homeLatitude: number | null;
+  homeLongitude: number | null;
+  age: number | null;
+  favoriteGames: string[];
+  preferredPlayTimes: string[];
+  skillLevels: Record<string, string> | null;
 }
 
 interface AuthContextType {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Heart, MessageCircle, Bookmark, Share2, Trash2, Navigation } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, Share2, Trash2, Navigation, MoreHorizontal } from 'lucide-react';
 import { useToggleLike, useToggleSave, useDeletePost } from '../hooks/usePosts';
 import { useAuth } from '../providers/AuthProvider';
 import { Link, useNavigate } from 'react-router-dom';
@@ -78,106 +78,32 @@ export const PostCard = ({ post, isCommunityOwner = false }: { post: any, isComm
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-4 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+      transition={{ duration: 0.2 }}
+      className="card p-5 mb-5 cursor-pointer"
       onClick={() => navigate(`/posts/${post.id}`)}
     >
       <div className="flex items-start gap-4">
         <img 
           src={post.author.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${post.author.name}`} 
           alt={post.author.name}
-          className="w-12 h-12 rounded-full object-cover ring-2 ring-gray-50 dark:ring-gray-700"
+          className="w-11 h-11 rounded-full object-cover shrink-0 bg-border"
         />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 overflow-hidden flex-wrap">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate hover:underline" onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.authorId || post.author.id}`); }}>{post.author.name}</h3>
-              {post.community && (
-                <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-md" onClick={(e) => { e.stopPropagation(); navigate(`/communities/${post.community.id}`); }}>
-                  in {post.community.name}
-                </span>
-              )}
-              <span className="text-sm text-gray-400 flex-shrink-0">
-                • {formatDistanceToNow(new Date(post.createdAt))} ago
-                {post.isEdited && ' (edited)'}
-              </span>
-            </div>
-          </div>
-          
-          <div className="mt-1.5 flex flex-wrap items-center gap-2">
-             <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-full">
-               {post.type.replace(/_/g, ' ')}
-             </span>
-             {post.location && (
-               <span className="text-xs text-gray-500 font-medium">{post.location}</span>
-             )}
-             {distanceStr && (
-               <span className="text-xs text-green-600 dark:text-green-400 font-semibold bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">{distanceStr}</span>
-             )}
-          </div>
-
-          <p className="mt-3 text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
-            {post.content}
-          </p>
-
-          {post.tags?.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {post.tags.map((tag: string) => (
-                <span key={tag} className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md hover:bg-blue-100 transition-colors">
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-
-          <div className="mt-5 flex items-center justify-between text-gray-500 pt-3 border-t border-gray-50 dark:border-gray-700/50">
-            <div className="flex items-center gap-6">
-              <button 
-                onClick={handleLike}
-                className={`flex items-center gap-1.5 group transition-colors ${isLiked ? 'text-pink-600' : 'hover:text-pink-600'}`}
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-baseline gap-2 overflow-hidden flex-wrap leading-tight">
+              <h3 
+                className="font-semibold text-foreground truncate hover:underline cursor-pointer" 
+                onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.authorId || post.author.id}`); }}
               >
-                <div className={`p-1.5 rounded-full transition-colors ${isLiked ? 'bg-pink-50 dark:bg-pink-900/20' : 'group-hover:bg-pink-50 dark:group-hover:bg-pink-900/20'}`}>
-                  <Heart className={`w-[18px] h-[18px] transition-transform ${isLiked ? 'fill-current scale-110' : ''}`} />
-                </div>
-                <span className="text-sm font-medium">{likesCount}</span>
-              </button>
-
-              <button className="flex items-center gap-1.5 hover:text-blue-600 group transition-colors">
-                <div className="p-1.5 rounded-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
-                  <MessageCircle className="w-[18px] h-[18px]" />
-                </div>
-                <span className="text-sm font-medium">{post._count?.replies || 0}</span>
-              </button>
-
-              <button 
-                onClick={handleSave}
-                className={`flex items-center gap-1.5 group transition-colors ${isSaved ? 'text-yellow-600' : 'hover:text-yellow-600'}`}
-              >
-                <div className={`p-1.5 rounded-full transition-colors ${isSaved ? 'bg-yellow-50 dark:bg-yellow-900/20' : 'group-hover:bg-yellow-50 dark:group-hover:bg-yellow-900/20'}`}>
-                  <Bookmark className={`w-[18px] h-[18px] transition-transform ${isSaved ? 'fill-current scale-110' : ''}`} />
-                </div>
-              </button>
-
-              <button onClick={handleShare} className="flex items-center gap-1.5 hover:text-green-600 group transition-colors">
-                <div className="p-1.5 rounded-full group-hover:bg-green-50 dark:group-hover:bg-green-900/20 transition-colors">
-                  <Share2 className="w-[18px] h-[18px]" />
-                </div>
-              </button>
+                {post.author.name}
+              </h3>
               
-              {post.latitude && post.longitude && (
-                <a 
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${post.latitude},${post.longitude}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-1.5 hover:text-blue-600 group transition-colors text-xs font-medium bg-gray-50 dark:bg-gray-800 px-2 py-1.5 rounded-md border border-gray-200 dark:border-gray-700"
-                >
-                  <Navigation className="w-3.5 h-3.5" />
-                  Directions
-                </a>
-              )}
+              <span className="text-[13px] text-muted">
+                {formatDistanceToNow(new Date(post.createdAt))} ago
+                {post.isEdited && ' • edited'}
+              </span>
             </div>
             
             {(user?.id === post.authorId || user?.role === 'ADMIN' || isCommunityOwner) && (
@@ -189,12 +115,100 @@ export const PostCard = ({ post, isCommunityOwner = false }: { post: any, isComm
                   }
                 }}
                 disabled={deletePost.isPending}
-                className="flex items-center gap-1.5 hover:text-red-600 group transition-colors"
+                className="p-1.5 text-muted hover:text-red-500 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors ml-2 shrink-0"
               >
-                <div className="p-1.5 rounded-full group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition-colors">
-                  <Trash2 className="w-[18px] h-[18px]" />
-                </div>
+                <Trash2 className="w-4 h-4" />
               </button>
+            )}
+          </div>
+
+          {(post.community || post.type || post.location) && (
+            <div className="flex flex-wrap items-center gap-1.5 mb-3">
+              {post.community && (
+                <span 
+                  className="text-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 px-2 py-0.5 rounded-md hover:bg-primary-100 transition-colors cursor-pointer" 
+                  onClick={(e) => { e.stopPropagation(); navigate(`/communities/${post.community.id}`); }}
+                >
+                  {post.community.name}
+                </span>
+              )}
+              {post.type && post.type !== 'GENERAL' && (
+                <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-surface border border-border text-foreground rounded-md">
+                  {post.type.replace(/_/g, ' ')}
+                </span>
+              )}
+              {post.location && (
+                <span className="text-xs text-muted font-medium ml-1">
+                  in {post.location}
+                </span>
+              )}
+              {distanceStr && (
+                <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                  • {distanceStr}
+                </span>
+              )}
+            </div>
+          )}
+
+          <p className="text-foreground whitespace-pre-wrap leading-relaxed text-[15px]">
+            {post.content}
+          </p>
+
+          {post.tags?.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {post.tags.map((tag: string) => (
+                <span key={tag} className="text-[13px] text-muted hover:text-primary-500 transition-colors cursor-pointer">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-4 flex items-center justify-between text-muted max-w-sm">
+            <button 
+              onClick={handleLike}
+              className={`flex items-center gap-1.5 group transition-colors active:scale-95 ${isLiked ? 'text-pink-500' : 'hover:text-pink-500'}`}
+            >
+              <div className={`p-1.5 rounded-full transition-colors ${isLiked ? 'bg-pink-500/10' : 'group-hover:bg-pink-500/10'}`}>
+                <Heart className={`w-4 h-4 transition-transform ${isLiked ? 'fill-current scale-110' : ''}`} />
+              </div>
+              <span className="text-[13px] font-medium">{likesCount > 0 ? likesCount : ''}</span>
+            </button>
+
+            <button className="flex items-center gap-1.5 hover:text-primary-500 group transition-colors active:scale-95">
+              <div className="p-1.5 rounded-full group-hover:bg-primary-500/10 transition-colors">
+                <MessageCircle className="w-4 h-4" />
+              </div>
+              <span className="text-[13px] font-medium">{post._count?.replies > 0 ? post._count.replies : ''}</span>
+            </button>
+
+            <button 
+              onClick={handleSave}
+              className={`flex items-center gap-1.5 group transition-colors active:scale-95 ${isSaved ? 'text-yellow-500' : 'hover:text-yellow-500'}`}
+            >
+              <div className={`p-1.5 rounded-full transition-colors ${isSaved ? 'bg-yellow-500/10' : 'group-hover:bg-yellow-500/10'}`}>
+                <Bookmark className={`w-4 h-4 transition-transform ${isSaved ? 'fill-current scale-110' : ''}`} />
+              </div>
+            </button>
+
+            <button onClick={handleShare} className="flex items-center gap-1.5 hover:text-green-500 group transition-colors active:scale-95">
+              <div className="p-1.5 rounded-full group-hover:bg-green-500/10 transition-colors">
+                <Share2 className="w-4 h-4" />
+              </div>
+            </button>
+            
+            {post.latitude && post.longitude && (
+              <a 
+                href={`https://www.google.com/maps/dir/?api=1&destination=${post.latitude},${post.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1.5 text-muted hover:text-foreground group transition-colors active:scale-95"
+              >
+                <div className="p-1.5 rounded-full group-hover:bg-border transition-colors">
+                  <Navigation className="w-4 h-4" />
+                </div>
+              </a>
             )}
           </div>
         </div>

@@ -1,24 +1,36 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
-import path from 'path';
-import fs from 'fs';
+import { getAuth, Auth } from 'firebase-admin/auth';
 
-const serviceAccountPath = '/Users/sathvikreddy/Documents/gemini/sports-b5755-firebase-adminsdk-fbsvc-7121a451a0.json';
+let auth: Auth | null = null;
 
 try {
   if (!getApps().length) {
-    if (fs.existsSync(serviceAccountPath)) {
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+
+    if (projectId && privateKey && clientEmail) {
       initializeApp({
-        credential: cert(require(serviceAccountPath))
+        credential: cert({
+          projectId,
+          // Private key from env may have escaped newlines
+          privateKey: privateKey.replace(/\\n/g, '\n'),
+          clientEmail,
+        }),
       });
+      auth = getAuth();
+      console.log('Firebase Admin initialized with env credentials.');
     } else {
-      console.warn('Firebase service account not found, using default env credentials');
-      initializeApp();
+      console.warn(
+        'Firebase Admin SDK credentials not fully configured. ' +
+        'Set FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, and FIREBASE_CLIENT_EMAIL in .env'
+      );
     }
-    console.log('Firebase Admin initialized.');
+  } else {
+    auth = getAuth();
   }
 } catch (error) {
-  console.error('Firebase Admin initialization error', error);
+  console.error('Firebase Admin initialization error:', error);
 }
 
-export const auth = getAuth();
+export { auth };

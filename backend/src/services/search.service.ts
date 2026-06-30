@@ -1,13 +1,25 @@
 import prisma from '../utils/db';
 import { GoogleGenAI } from '@google/genai';
+import { AppError } from '../utils/AppError';
 
 // Initialize Gemini if key exists
 const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
 
+/**
+ * Sanitizes user input before inserting into LLM prompts.
+ * Prevents basic prompt injection by escaping and truncating.
+ */
+function sanitizeForPrompt(input: string, maxLength: number = 500): string {
+  return input
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, ' ')
+    .slice(0, maxLength)
+    .trim();
+}
+
 export class SearchService {
   async globalSearch(query: string, type: string) {
     const results: any = {};
-    const searchStr = `%${query}%`;
 
     // 1. Matches
     if (type === 'ALL' || type === 'MATCHES') {
@@ -69,20 +81,29 @@ export class SearchService {
   }
 
   async nearbySearch(lat: number, lng: number, radiusKm: number, type: 'MATCHES' | 'GROUNDS' = 'MATCHES') {
-    // Haversine formula in Postgres
+    // Use a CTE (Common Table Expression) to calculate distance once and filter with WHERE
     if (type === 'GROUNDS') {
       const grounds = await prisma.$queryRaw`
-        SELECT id, name, location, latitude, longitude,
-        (6371 * acos(cos(radians(${lat})) * cos(radians(latitude)) * cos(radians(longitude) - radians(${lng})) + sin(radians(${lat})) * sin(radians(latitude)))) AS distance
-        FROM "Ground"
-        WHERE status = 'VERIFIED' AND latitude IS NOT NULL AND longitude IS NOT NULL
-        HAVING (6371 * acos(cos(radians(${lat})) * cos(radians(latitude)) * cos(radians(longitude) - radians(${lng})) + sin(radians(${lat})) * sin(radians(latitude)))) < ${radiusKm}
+        WITH ground_distances AS (
+          SELECT id, name, location, latitude, longitude,
+            (6371 * acos(
+              LEAST(1.0, GREATEST(-1.0,
+                cos(radians(${lat})) * cos(radians(latitude)) * cos(radians(longitude) - radians(${lng}))
+                + sin(radians(${lat})) * sin(radians(latitude))
+              ))
+            )) AS distance
+          FROM "Ground"
+          WHERE status = 'VERIFIED' AND latitude IS NOT NULL AND longitude IS NOT NULL
+        )
+        SELECT * FROM ground_distances
+        WHERE distance < ${radiusKm}
         ORDER BY distance ASC
         LIMIT 20;
       `;
-      // To hydrate with Prisma relations if needed, we can map IDs, but raw gives us distance.
-      // We will fetch full objects using the IDs returned.
+
       const groundIds = (grounds as any[]).map(g => g.id);
+      if (groundIds.length === 0) return [];
+
       const fullGrounds = await prisma.ground.findMany({ where: { id: { in: groundIds } } });
       
       // Merge distance
@@ -94,15 +115,26 @@ export class SearchService {
 
     if (type === 'MATCHES') {
       const matches = await prisma.$queryRaw`
-        SELECT id, title, location, latitude, longitude,
-        (6371 * acos(cos(radians(${lat})) * cos(radians(latitude)) * cos(radians(longitude) - radians(${lng})) + sin(radians(${lat})) * sin(radians(latitude)))) AS distance
-        FROM "Match"
-        WHERE status = 'OPEN' AND latitude IS NOT NULL AND longitude IS NOT NULL
-        HAVING (6371 * acos(cos(radians(${lat})) * cos(radians(latitude)) * cos(radians(longitude) - radians(${lng})) + sin(radians(${lat})) * sin(radians(latitude)))) < ${radiusKm}
+        WITH match_distances AS (
+          SELECT id, title, location, latitude, longitude,
+            (6371 * acos(
+              LEAST(1.0, GREATEST(-1.0,
+                cos(radians(${lat})) * cos(radians(latitude)) * cos(radians(longitude) - radians(${lng}))
+                + sin(radians(${lat})) * sin(radians(latitude))
+              ))
+            )) AS distance
+          FROM "Match"
+          WHERE status = 'OPEN' AND latitude IS NOT NULL AND longitude IS NOT NULL
+        )
+        SELECT * FROM match_distances
+        WHERE distance < ${radiusKm}
         ORDER BY distance ASC
         LIMIT 20;
       `;
+
       const matchIds = (matches as any[]).map(m => m.id);
+      if (matchIds.length === 0) return [];
+
       const fullMatches = await prisma.match.findMany({ 
         where: { id: { in: matchIds } },
         include: { creator: { select: { name: true } }, _count: { select: { players: true } } }
@@ -119,23 +151,24 @@ export class SearchService {
 
   async parseQueryWithAI(query: string) {
     if (!ai) {
-      throw new Error('GEMINI_API_KEY is not configured on the server.');
+      throw new AppError('AI search is not available. GEMINI_API_KEY is not configured.', 503);
     }
 
-    const prompt = `
-      You are an AI assistant for a sports matchmaking and venue discovery platform called Playgrid.
-      The user typed the following search query: "${query}"
+    // Sanitize input to prevent prompt injection (H11)
+    const sanitizedQuery = sanitizeForPrompt(query, 500);
 
-      Parse this query and return ONLY a strict JSON object with the following optional keys (do not include markdown wrapping):
-      - "type": ONE OF ["MATCHES", "GROUNDS", "COMMUNITIES", "USERS", "ALL"] (determine the intent).
-      - "sport": string (if a specific sport is mentioned).
-      - "maxCost": number (if a price or "free" is mentioned. "free" = 0).
-      - "dateKeyword": string (e.g. "today", "tomorrow", "weekend").
-      - "locationQuery": string (if a specific city/place is mentioned).
+    const prompt = `You are an AI assistant for a sports matchmaking platform called Playgrid.
+Parse the following user search query and return ONLY a strict JSON object with these optional keys (no markdown wrapping):
+- "type": ONE OF ["MATCHES", "GROUNDS", "COMMUNITIES", "USERS", "ALL"]
+- "sport": string (if a specific sport is mentioned)
+- "maxCost": number (if a price or "free" is mentioned; "free" = 0)
+- "dateKeyword": string (e.g. "today", "tomorrow", "weekend")
+- "locationQuery": string (if a specific city/place is mentioned)
 
-      If no specific filter is found for a key, omit the key.
-      Return ONLY valid JSON.
-    `;
+If no specific filter is found for a key, omit the key.
+Return ONLY valid JSON.
+
+User query: "${sanitizedQuery}"`;
 
     try {
       const response = await ai.models.generateContent({
@@ -145,26 +178,32 @@ export class SearchService {
 
       let jsonStr = response.text || "{}";
       // Clean markdown formatting if AI included it despite instructions
-      jsonStr = jsonStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+      jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
 
       const parsed = JSON.parse(jsonStr);
-      return parsed;
+
+      // Validate output shape — only allow expected keys
+      const allowedKeys = ['type', 'sport', 'maxCost', 'dateKeyword', 'locationQuery'];
+      const filtered: Record<string, any> = {};
+      for (const key of allowedKeys) {
+        if (parsed[key] !== undefined) {
+          filtered[key] = parsed[key];
+        }
+      }
+
+      return filtered;
     } catch (error) {
       console.error('AI Parsing Error:', error);
-      throw new Error('Failed to parse query with AI.');
+      throw new AppError('Failed to parse query with AI.', 500);
     }
   }
 
   async applyAIFilters(filters: any) {
-    // Take the AI JSON and convert it to Prisma queries.
-    // For simplicity, we just return the raw query params to let the controller fetch standard globalSearch,
-    // or we can build a dynamic Prisma query here.
     const where: any = {};
-    if (filters.sport) where.sport = { contains: filters.sport, mode: 'insensitive' };
-    if (filters.maxCost !== undefined) where.costPerPerson = { lte: filters.maxCost };
-    if (filters.locationQuery) where.location = { contains: filters.locationQuery, mode: 'insensitive' };
+    if (filters.sport) where.sport = { contains: String(filters.sport).slice(0, 100), mode: 'insensitive' };
+    if (filters.maxCost !== undefined) where.costPerPerson = { lte: Number(filters.maxCost) || 0 };
+    if (filters.locationQuery) where.location = { contains: String(filters.locationQuery).slice(0, 200), mode: 'insensitive' };
     
-    // Quick example logic for matches based on AI filters
     if (filters.type === 'MATCHES' || !filters.type) {
       where.status = 'OPEN';
       const matches = await prisma.match.findMany({
@@ -175,7 +214,6 @@ export class SearchService {
       return { matches, aiFiltersApplied: filters };
     }
     
-    // Fallback if AI requested something else (Grounds, etc)
     return { error: "AI specific filtering only fully implemented for MATCHES in MVP", aiFiltersApplied: filters };
   }
 }

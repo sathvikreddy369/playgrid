@@ -71,6 +71,19 @@ enum ReportStatus {
   ACTION_TAKEN
 }
 
+enum MatchPlayerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ATTENDED
+}
+
+enum TournamentParticipantStatus {
+  PENDING
+  APPROVED
+  ELIMINATED
+}
+
 enum NotificationType {
   MATCH_REMINDER
   JOIN_REQUEST
@@ -227,6 +240,7 @@ model Match {
 
   @@index([date, sport])
   @@index([status])
+  @@index([status, date])
   @@index([latitude, longitude])
 }
 
@@ -247,7 +261,7 @@ model MatchPlayer {
   id                String   @id @default(uuid())
   matchId           String
   userId            String
-  status            String // PENDING, APPROVED, REJECTED, ATTENDED
+  status            MatchPlayerStatus @default(PENDING)
   performanceRating Int? // 1-5 rating given by organizer post-match
   joinedAt          DateTime @default(now())
 
@@ -283,7 +297,7 @@ model TournamentParticipant {
   tournamentId String
   userId       String
   teamName     String?
-  status       String // PENDING, APPROVED, ELIMINATED
+  status       TournamentParticipantStatus @default(PENDING)
   joinedAt     DateTime @default(now())
 
   tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
@@ -313,8 +327,10 @@ model Post {
   savedBy   SavedPost[]
 
   @@index([createdAt])
+  @@index([createdAt, type])
   @@index([type])
   @@index([communityId])
+  @@index([authorId])
 }
 
 model Reply {
