@@ -1,5 +1,4 @@
 <div align="center">
-  <img src="docs/playgrid_ui_mockup.png" alt="PlayGrid Dashboard" width="100%" />
   
   <h1>PlayGrid ⚽🏀🎾</h1>
   
