@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { auth } from '../lib/firebase';
@@ -69,6 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryClient]);
 
   const syncUser = async (userObj?: FirebaseUser) => {

@@ -1,11 +1,14 @@
 import prisma from '../utils/db';
 import { PostType } from '@prisma/client';
 import { FraudDetection } from '../utils/fraudDetection';
+import { aiService } from './ai.service';
+import { activityService } from './activity.service';
 
 export class PostService {
-  async getPosts(filters: { type?: string; communityId?: string; authorId?: string }, cursor?: string, limit: number = 10) {
+  async getPosts(filters: { type?: string; location?: string; communityId?: string; authorId?: string }, cursor?: string, limit: number = 10) {
     const where: any = {};
     if (filters.type) where.type = filters.type as PostType;
+    if (filters.location) where.location = { contains: filters.location, mode: 'insensitive' };
     if (filters.communityId) where.communityId = filters.communityId;
     if (filters.authorId) where.authorId = filters.authorId;
 
@@ -61,11 +64,17 @@ export class PostService {
     if (FraudDetection.containsProfanityOrSpam(data.content)) {
       throw new Error('Content flagged as spam or contains profanity.');
     }
+
+    const aiModeration = await aiService.moderateContent(data.content);
+    if (!aiModeration.isSafe) {
+      throw new Error(`Content flagged by AI moderation: ${aiModeration.reason}`);
+    }
+
     if (await FraudDetection.isDuplicatePost(userId, data.content)) {
       throw new Error('Duplicate post detected. Please wait before posting again.');
     }
 
-    return prisma.post.create({
+    const post = await prisma.post.create({
       data: {
         authorId: userId,
         content: data.content,
@@ -76,6 +85,10 @@ export class PostService {
         tags: data.tags || [],
       },
     });
+
+    await activityService.logActivity(userId, 'POST_CREATED', post.id, 'Post', { type: post.type });
+
+    return post;
   }
 
   async updatePost(postId: string, userId: string, content: string) {

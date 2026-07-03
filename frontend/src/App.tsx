@@ -1,10 +1,11 @@
 import React, { Suspense } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
-import { AuthProvider, useAuth } from './providers/AuthProvider';
+import { Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './providers/AuthProvider';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Loader2 } from 'lucide-react';
+import { Toaster } from 'react-hot-toast';
 
 const Home = React.lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
 const Login = React.lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
@@ -22,6 +23,8 @@ const Matches = React.lazy(() => import('./pages/Matches').then(m => ({ default:
 const CreateMatch = React.lazy(() => import('./pages/CreateMatch').then(m => ({ default: m.CreateMatch })));
 const MatchDetail = React.lazy(() => import('./pages/MatchDetail').then(m => ({ default: m.MatchDetail })));
 const Messages = React.lazy(() => import('./pages/Messages').then(m => ({ default: m.Messages })));
+const Tournaments = React.lazy(() => import('./pages/Tournaments').then(m => ({ default: m.Tournaments })));
+const Settings = React.lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 const Search = React.lazy(() => import('./pages/Search').then(m => ({ default: m.Search })));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 
@@ -51,14 +54,17 @@ function App() {
               <Route path="/matches" element={<Matches />} />
               <Route path="/matches/:id" element={<MatchDetail />} />
               <Route path="/matches/create" element={<ProtectedRoute><CreateMatch /></ProtectedRoute>} />
+              <Route path="/tournaments" element={<Tournaments />} />
               <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
               <Route path="/search" element={<Search />} />
               <Route path="/admin" element={<ProtectedRoute requireRole={['ADMIN']}><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/profile/:id" element={<ProtectedRoute><UserPublicProfile /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             </Route>
           </Routes>
         </Suspense>
+        <Toaster position="bottom-center" />
       </ErrorBoundary>
     </AuthProvider>
   );

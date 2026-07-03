@@ -10,6 +10,9 @@ describe('PostService', () => {
   let testCommunityId: string;
 
   beforeAll(async () => {
+    // Mock AI moderation to prevent external API timeouts and make tests fast
+    vi.spyOn(aiService, 'moderateContent').mockResolvedValue({ isSafe: true });
+
     // Create a test user to satisfy foreign key constraints
     const user = await prisma.user.create({
       data: {

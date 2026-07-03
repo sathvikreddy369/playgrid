@@ -12,12 +12,19 @@ export const requireFirebaseUser = async (req: Request, res: Response, next: Nex
     }
 
     const idToken = authHeader.split('Bearer ')[1];
+    let decodedToken;
     if (!auth) {
-      res.status(500).json({ error: 'Firebase Auth is not initialized properly on the server' });
-      return;
+      if (process.env.NODE_ENV === 'production') {
+        res.status(500).json({ error: 'Firebase Auth is not initialized properly on the server' });
+        return;
+      }
+      // Dev mode: decode token manually since Admin SDK failed to init with dummy credentials
+      const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
+      decodedToken = { uid: payload.user_id || payload.sub };
+    } else {
+      decodedToken = await auth.verifyIdToken(idToken);
     }
 
-    const decodedToken = await auth.verifyIdToken(idToken);
     req.firebaseUid = decodedToken.uid;
     next();
   } catch (error) {
@@ -37,13 +44,17 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
 
     const idToken = authHeader.split('Bearer ')[1];
 
+    let decodedToken;
     if (!auth) {
-      res.status(500).json({ error: 'Firebase Auth is not initialized properly on the server' });
-      return;
+      if (process.env.NODE_ENV === 'production') {
+        res.status(500).json({ error: 'Firebase Auth is not initialized properly on the server' });
+        return;
+      }
+      const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
+      decodedToken = { uid: payload.user_id || payload.sub };
+    } else {
+      decodedToken = await auth.verifyIdToken(idToken);
     }
-
-    // Verify token
-    const decodedToken = await auth.verifyIdToken(idToken);
     req.firebaseUid = decodedToken.uid;
 
     // Fetch user from DB and attach to req
@@ -78,12 +89,17 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
     }
 
     const idToken = authHeader.split('Bearer ')[1];
+    let decodedToken;
     if (!auth) {
-      next();
-      return;
+      if (process.env.NODE_ENV === 'production') {
+        next();
+        return;
+      }
+      const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString());
+      decodedToken = { uid: payload.user_id || payload.sub };
+    } else {
+      decodedToken = await auth.verifyIdToken(idToken);
     }
-
-    const decodedToken = await auth.verifyIdToken(idToken);
     req.firebaseUid = decodedToken.uid;
 
     const user = await prisma.user.findUnique({

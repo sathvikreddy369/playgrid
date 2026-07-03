@@ -1,9 +1,10 @@
 import prisma from '../utils/db';
 import { CommunityStatus } from '@prisma/client';
+import { activityService } from './activity.service';
 
 export class CommunityService {
   async createCommunity(userId: string, data: { name: string; description: string; location?: string }) {
-    return prisma.community.create({
+    const community = await prisma.community.create({
       data: {
         name: data.name,
         description: data.description,
@@ -15,6 +16,10 @@ export class CommunityService {
         }
       },
     });
+
+    await activityService.logActivity(userId, 'COMMUNITY_CREATED', community.id, 'Community', { name: community.name });
+
+    return community;
   }
 
   async getCommunities(status?: CommunityStatus) {
@@ -53,9 +58,13 @@ export class CommunityService {
 
     if (existing) throw new Error('Already a member');
 
-    return prisma.communityMember.create({
+    const member = await prisma.communityMember.create({
       data: { userId, communityId }
     });
+
+    await activityService.logActivity(userId, 'COMMUNITY_JOINED', community.id, 'Community', { name: community.name });
+
+    return member;
   }
 
   async leaveCommunity(communityId: string, userId: string) {

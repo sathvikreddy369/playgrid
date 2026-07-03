@@ -1,5 +1,6 @@
 import prisma from '../utils/db';
 import { FraudDetection } from '../utils/fraudDetection';
+import { activityService } from './activity.service';
 
 export class ReplyService {
   async createReply(userId: string, postId: string, content: string, parentId?: string) {
@@ -19,7 +20,7 @@ export class ReplyService {
       }
     }
 
-    return prisma.reply.create({
+    const reply = await prisma.reply.create({
       data: {
         content,
         postId,
@@ -27,6 +28,10 @@ export class ReplyService {
         parentId,
       },
     });
+
+    await activityService.logActivity(userId, 'COMMENT_ADDED', reply.id, 'Reply', { postId });
+
+    return reply;
   }
 
   async deleteReply(replyId: string, userId: string, userRole: string) {

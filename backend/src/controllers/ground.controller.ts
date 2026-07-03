@@ -21,7 +21,11 @@ export class GroundController {
   async getGrounds(req: Request, res: Response, next: NextFunction) {
     try {
       const status = req.query.status as GroundStatus;
-      const grounds = await groundService.getGrounds(status);
+      const sport = req.query.sport as string;
+      const location = req.query.location as string;
+      const minRating = req.query.minRating ? parseFloat(req.query.minRating as string) : undefined;
+      
+      const grounds = await groundService.getGrounds({ status, sport, location, minRating });
       res.json(grounds);
     } catch (error) {
       next(error);

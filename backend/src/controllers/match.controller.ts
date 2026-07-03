@@ -27,7 +27,7 @@ export class MatchController {
       const userId = req.user!.id;
       const match = await matchService.createMatch(userId, req.body);
       
-      StructuredLogger.audit('CREATE_MATCH', userId, match.id, 'SUCCESS', req.id);
+      StructuredLogger.audit('CREATE_MATCH', userId, match.id, 'SUCCESS', req.id as string);
       
       res.status(201).json(match);
     } catch (error) {
@@ -71,7 +71,7 @@ export class MatchController {
       const playerId = req.params.userId as string;
       const result = await matchService.handleJoinRequest(matchId, creatorId, playerId, 'APPROVED');
       
-      StructuredLogger.audit('APPROVE_PLAYER', creatorId, matchId, 'SUCCESS', req.id, { playerId });
+      StructuredLogger.audit('APPROVE_PLAYER', creatorId, matchId, 'SUCCESS', req.id as string, { playerId });
       
       res.json(result);
     } catch (error) {
@@ -86,8 +86,32 @@ export class MatchController {
       const playerId = req.params.userId as string;
       const result = await matchService.handleJoinRequest(matchId, creatorId, playerId, 'REJECTED');
       
-      StructuredLogger.audit('REJECT_PLAYER', creatorId, matchId, 'SUCCESS', req.id, { playerId });
+      StructuredLogger.audit('REJECT_PLAYER', creatorId, matchId, 'SUCCESS', req.id as string, { playerId });
       
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async leaveMatch(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user!.id;
+      const result = await matchService.leaveMatch((req.params.id as string), userId);
+      StructuredLogger.audit('LEAVE_MATCH', userId, (req.params.id as string), 'SUCCESS', req.id as string);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async kickPlayer(req: Request, res: Response, next: NextFunction) {
+    try {
+      const creatorId = req.user!.id;
+      const matchId = req.params.id as string;
+      const playerId = req.params.userId as string;
+      const result = await matchService.kickPlayer(matchId, creatorId, playerId);
+      StructuredLogger.audit('KICK_PLAYER', creatorId, matchId, 'SUCCESS', req.id as string, { playerId });
       res.json(result);
     } catch (error) {
       next(error);
@@ -116,7 +140,7 @@ export class MatchController {
       const matchId = req.params.id as string;
       const result = await matchService.cancelMatch(matchId, creatorId);
       
-      StructuredLogger.audit('CANCEL_MATCH', creatorId, matchId, 'SUCCESS', req.id);
+      StructuredLogger.audit('CANCEL_MATCH', creatorId, matchId, 'SUCCESS', req.id as string);
       
       res.json(result);
     } catch (error) {

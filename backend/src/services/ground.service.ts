@@ -1,6 +1,7 @@
 import prisma from '../utils/db';
 import { GroundStatus } from '@prisma/client';
 import { aiService } from './ai.service';
+import { activityService } from './activity.service';
 
 export class GroundService {
   async createGround(userId: string, data: any) {
@@ -21,15 +22,42 @@ export class GroundService {
     });
   }
 
-  async getGrounds(status?: GroundStatus) {
-    return prisma.ground.findMany({
-      where: status ? { status } : { status: GroundStatus.VERIFIED },
+  async getGrounds(filters?: { status?: GroundStatus; sport?: string; location?: string; minRating?: number }) {
+    const where: any = { status: filters?.status || GroundStatus.VERIFIED };
+    
+    if (filters?.sport) {
+      where.sports = { has: filters.sport };
+    }
+    if (filters?.location) {
+      where.OR = [
+        { location: { contains: filters.location, mode: 'insensitive' } },
+        { city: { contains: filters.location, mode: 'insensitive' } }
+      ];
+    }
+
+    const grounds = await prisma.ground.findMany({
+      where,
       include: {
         owner: { select: { id: true, name: true } },
-        _count: { select: { reviews: true } }
+        _count: { select: { reviews: true } },
+        reviews: { select: { rating: true } }
       },
       orderBy: { createdAt: 'desc' }
     });
+
+    const formatted = grounds.map(g => {
+      const totalRating = g.reviews.reduce((sum, rev) => sum + rev.rating, 0);
+      const avgRating = g.reviews.length > 0 ? parseFloat((totalRating / g.reviews.length).toFixed(1)) : 0;
+      
+      const { reviews, ...groundWithoutReviews } = g;
+      return { ...groundWithoutReviews, avgRating };
+    });
+
+    if (filters?.minRating) {
+      return formatted.filter(g => g.avgRating >= filters.minRating!);
+    }
+
+    return formatted;
   }
 
   async getGroundById(id: string) {
@@ -79,6 +107,8 @@ export class GroundService {
 
     // Fire and forget AI summary generation
     this.generateAiSummary(groundId).catch(err => console.error('Failed to generate AI summary:', err));
+
+    await activityService.logActivity(userId, 'GROUND_REVIEWED', groundId, 'Ground', { rating });
 
     return review;
   }

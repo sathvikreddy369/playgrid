@@ -2,6 +2,7 @@ import prisma from '../utils/db';
 import { MatchStatus } from '@prisma/client';
 import { notificationService } from './notification.service';
 import { FraudDetection } from '../utils/fraudDetection';
+import { activityService } from './activity.service';
 
 export class MatchService {
   async createMatch(userId: string, data: any) {
@@ -13,7 +14,7 @@ export class MatchService {
       throw new Error(`Match creation blocked: ${fraudCheck.reason}`);
     }
 
-    return prisma.match.create({
+    const match = await prisma.match.create({
       data: {
         title: data.title,
         sport: data.sport,
@@ -29,6 +30,10 @@ export class MatchService {
         status: MatchStatus.OPEN,
       },
     });
+
+    await activityService.logActivity(userId, 'MATCH_CREATED', match.id, 'Match', { title: match.title, sport: match.sport });
+
+    return match;
   }
 
   async getMatches(filters: any) {
@@ -154,6 +159,74 @@ export class MatchService {
       if (approvedCount >= match.maxPlayers) {
         await prisma.match.update({ where: { id: matchId }, data: { status: 'FULL' } });
       }
+      
+      // Log activity for joining
+      await activityService.logActivity(targetUserId, 'MATCH_JOINED', match.id, 'Match', { title: match.title });
+    }
+
+    return updated;
+  }
+
+  async leaveMatch(matchId: string, userId: string) {
+    const match = await prisma.match.findUnique({ where: { id: matchId } });
+    if (!match) throw new Error('Match not found');
+
+    const player = await prisma.matchPlayer.findUnique({
+      where: { matchId_userId: { matchId, userId } }
+    });
+
+    if (!player) throw new Error('Player not found in this match');
+    if (player.status === 'WITHDRAWN' || player.status === 'KICKED') throw new Error('Already left or removed from match');
+
+    const updated = await prisma.matchPlayer.update({
+      where: { matchId_userId: { matchId, userId } },
+      data: { status: 'WITHDRAWN' }
+    });
+
+    // If the match was FULL and an APPROVED player leaves, make it OPEN again
+    if (player.status === 'APPROVED' && match.status === 'FULL') {
+      await prisma.match.update({
+        where: { id: matchId },
+        data: { status: 'OPEN' }
+      });
+    }
+
+    if (player.status === 'APPROVED') {
+      await activityService.logActivity(userId, 'MATCH_LEFT', match.id, 'Match', { title: match.title });
+    }
+
+    return updated;
+  }
+
+  async kickPlayer(matchId: string, creatorId: string, targetUserId: string) {
+    const match = await prisma.match.findUnique({ where: { id: matchId } });
+    if (!match || match.creatorId !== creatorId) throw new Error('Unauthorized');
+
+    const player = await prisma.matchPlayer.findUnique({
+      where: { matchId_userId: { matchId, userId: targetUserId } }
+    });
+
+    if (!player) throw new Error('Player not found in this match');
+
+    const updated = await prisma.matchPlayer.update({
+      where: { matchId_userId: { matchId, userId: targetUserId } },
+      data: { status: 'KICKED' }
+    });
+
+    // Notify user
+    await notificationService.createNotification({
+      userId: targetUserId,
+      type: 'SYSTEM_ALERT',
+      content: `You have been removed from the match: ${match.title}.`,
+      link: `/matches/${matchId}`
+    });
+
+    // If the match was FULL and the kicked player was APPROVED, make it OPEN
+    if (player.status === 'APPROVED' && match.status === 'FULL') {
+      await prisma.match.update({
+        where: { id: matchId },
+        data: { status: 'OPEN' }
+      });
     }
 
     return updated;

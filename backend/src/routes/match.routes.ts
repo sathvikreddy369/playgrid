@@ -15,10 +15,12 @@ router.get('/', apiLimiter, matchController.getMatches);
 router.get('/:id', apiLimiter, matchController.getMatchById);
 router.post('/', requireAuth, apiLimiter, validate(createMatchSchema), matchController.createMatch);
 router.post('/:id/join', requireAuth, apiLimiter, matchController.requestToJoin);
+router.put('/:id/leave', requireAuth, apiLimiter, matchController.leaveMatch);
 router.put('/:id/cancel', requireAuth, apiLimiter, matchController.cancelMatch);
 
 // Organizer actions
 router.put('/:id/players/:userId/approve', requireAuth, apiLimiter, matchController.approvePlayer);
+router.put('/:id/players/:userId/kick', requireAuth, apiLimiter, matchController.kickPlayer);
 router.put('/:id/players/:userId/reject', requireAuth, apiLimiter, matchController.rejectPlayer);
 router.post('/:id/players/:userId/attend', requireAuth, apiLimiter, validate(markAttendanceSchema), matchController.markAttendance);
 

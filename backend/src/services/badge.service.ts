@@ -1,4 +1,5 @@
 import prisma from '../utils/db';
+import { activityService } from './activity.service';
 
 export class BadgeService {
   // Pre-defined badge templates
@@ -52,6 +53,8 @@ export class BadgeService {
           content: `You've earned a new badge: ${badge.icon} ${badge.description}!`,
         }
       });
+      
+      await activityService.logActivity(userId, 'BADGE_EARNED', badge.id, 'Badge', { name: badge.name, icon: badge.icon });
     }
   }
 

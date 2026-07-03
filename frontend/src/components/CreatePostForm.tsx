@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useCreatePost } from '../hooks/usePosts';
 import { Send, Image as ImageIcon, MapPin, Tag, X, Navigation, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 export const CreatePostForm = () => {
   const [content, setContent] = useState('');
@@ -15,6 +16,19 @@ export const CreatePostForm = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const createPost = useCreatePost();
 
+  const getPlaceholder = (type: string) => {
+    switch (type) {
+      case 'LOOKING_FOR_PLAYERS': return 'Need players? Describe what you\'re looking for...';
+      case 'LOOKING_FOR_TEAM': return 'Looking for a team? Share your skills...';
+      case 'QUESTION': return 'Have a question? Ask the community...';
+      case 'EQUIPMENT': return 'Buying, selling, or discussing gear?';
+      case 'TRAINING': return 'Share training tips or ask for advice...';
+      case 'TOURNAMENT_ANNOUNCEMENT': return 'Announce your upcoming tournament...';
+      case 'GROUND_PROMOTION': return 'Promote your venue or ground...';
+      default: return "What's happening in your sports world?";
+    }
+  };
+
   const handleAddTag = (tag: string) => {
     if (tag && !tags.includes(tag.toLowerCase())) {
       setTags([...tags, tag.toLowerCase()]);
@@ -23,7 +37,7 @@ export const CreatePostForm = () => {
   };
 
   const handleUseLocation = () => {
-    if (!navigator.geolocation) return alert('Geolocation is not supported');
+    if (!navigator.geolocation) return toast.error('Geolocation is not supported');
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(async (position) => {
       const lat = position.coords.latitude;
@@ -42,7 +56,7 @@ export const CreatePostForm = () => {
         setIsLocating(false);
       }
     }, () => {
-      alert('Unable to retrieve location');
+      toast.error('Unable to retrieve location');
       setIsLocating(false);
     });
   };
@@ -61,19 +75,20 @@ export const CreatePostForm = () => {
           setLongitude(null);
           setTags([]);
           setIsExpanded(false);
+          toast.success('Posted successfully');
         },
-        onError: (err: any) => alert(err.response?.data?.error || 'Failed to post'),
+        onError: (err: any) => toast.error(err.response?.data?.error || 'Failed to post'),
       }
     );
   };
 
   return (
-    <div className="card p-5 mb-6 transition-all duration-300 focus-within:shadow-md focus-within:border-primary-200 dark:focus-within:border-primary-900/50">
+    <div className="card-premium p-5 mb-6 bg-surface">
       <form onSubmit={handleSubmit}>
         <textarea
-          className="w-full bg-transparent resize-none border-none focus:ring-0 text-foreground placeholder-muted text-lg outline-none min-h-[60px]"
+          className="w-full bg-transparent resize-none border-none focus:ring-0 text-foreground placeholder-muted text-base font-semibold outline-none min-h-[60px]"
           rows={isExpanded || content ? 3 : 1}
-          placeholder="What's happening in your sports world?"
+          placeholder={getPlaceholder(postType)}
           aria-label="Write a post content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -89,7 +104,7 @@ export const CreatePostForm = () => {
               className="overflow-hidden"
             >
               <div className="py-2 space-y-3">
-                <div className="flex items-center gap-2 bg-background border border-border rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2 bg-background border border-border rounded-xl px-3 py-2">
                   <MapPin className="w-4 h-4 text-muted shrink-0" />
                   <input 
                     type="text" 
@@ -97,21 +112,21 @@ export const CreatePostForm = () => {
                     aria-label="Add location query"
                     value={location} 
                     onChange={e => setLocation(e.target.value)}
-                    className="flex-1 bg-transparent text-sm border-none focus:ring-0 p-0 text-foreground outline-none"
+                    className="flex-1 bg-transparent text-sm border-none focus:ring-0 p-0 text-foreground outline-none font-semibold"
                   />
                   <button 
                     type="button" 
                     onClick={handleUseLocation} 
                     disabled={isLocating} 
                     aria-label="Detect my location automatically"
-                    className="text-[11px] font-medium flex items-center gap-1 bg-surface border border-border px-2 py-1 rounded-md hover:bg-border transition-colors text-muted hover:text-foreground"
+                    className="text-[10px] font-bold flex items-center gap-1 bg-surface border border-border px-2 py-1 rounded-lg hover:bg-border transition-colors text-muted hover:text-foreground cursor-pointer"
                   >
                     {isLocating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Navigation className="w-3 h-3" />}
                     Auto
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-2 bg-background border border-border rounded-lg px-3 py-2">
+                <div className="flex flex-col gap-2 bg-background border border-border rounded-xl px-3 py-2">
                   <div className="flex items-center gap-2">
                     <Tag className="w-4 h-4 text-muted shrink-0" />
                     <input 
@@ -126,13 +141,13 @@ export const CreatePostForm = () => {
                           handleAddTag(tagInput);
                         }
                       }}
-                      className="flex-1 bg-transparent text-sm border-none focus:ring-0 p-0 text-foreground outline-none"
+                      className="flex-1 bg-transparent text-sm border-none focus:ring-0 p-0 text-foreground outline-none font-semibold"
                     />
                     <select 
                       onChange={e => handleAddTag(e.target.value)} 
                       value="" 
                       aria-label="Add popular tag"
-                      className="text-[11px] font-medium bg-surface border border-border rounded-md px-2 py-1 text-muted focus:outline-none cursor-pointer"
+                      className="text-[10px] font-bold bg-surface border border-border rounded-lg px-2 py-1 text-muted focus:outline-none cursor-pointer"
                     >
                       <option value="" disabled>Popular</option>
                       <option value="cricket">Cricket</option>
@@ -144,9 +159,9 @@ export const CreatePostForm = () => {
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 pt-2 border-t border-border mt-1">
                       {tags.map(tag => (
-                        <span key={tag} className="flex items-center gap-1 bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400 px-2 py-1 rounded-md text-xs font-medium">
+                        <span key={tag} className="flex items-center gap-1 badge-premium bg-zinc-100 text-foreground">
                           #{tag}
-                          <button type="button" onClick={() => setTags(tags.filter(t => t !== tag))} aria-label={`Remove tag ${tag}`} className="hover:text-primary-800 dark:hover:text-primary-200"><X className="w-3 h-3" /></button>
+                          <button type="button" onClick={() => setTags(tags.filter(t => t !== tag))} aria-label={`Remove tag ${tag}`} className="hover:text-red-500 cursor-pointer"><X className="w-3 h-3" /></button>
                         </span>
                       ))}
                     </div>
@@ -163,14 +178,18 @@ export const CreatePostForm = () => {
               value={postType}
               onChange={(e) => setPostType(e.target.value)}
               aria-label="Select post type filter"
-              className="text-xs font-medium bg-background border border-border rounded-full px-3 py-1.5 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-foreground cursor-pointer outline-none transition-all"
+              className="text-xs font-bold bg-background border border-border rounded-full px-3 py-1.5 focus:ring-1 focus:ring-zinc-950 text-foreground cursor-pointer outline-none transition-all"
             >
               <option value="GENERAL">General</option>
               <option value="LOOKING_FOR_PLAYERS">Looking for Players</option>
               <option value="LOOKING_FOR_TEAM">Looking for Team</option>
               <option value="QUESTION">Question</option>
+              <option value="EQUIPMENT">Equipment</option>
+              <option value="TRAINING">Training</option>
+              <option value="TOURNAMENT_ANNOUNCEMENT">Tournament Announcement</option>
+              <option value="GROUND_PROMOTION">Ground Promotion</option>
             </select>
-            <button type="button" aria-label="Attach sports images" className="p-1.5 text-muted hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-full transition-colors">
+            <button type="button" aria-label="Attach sports images" className="p-1.5 text-muted hover:text-foreground rounded-full transition-colors cursor-pointer">
               <ImageIcon className="w-4 h-4" />
             </button>
           </div>
@@ -178,10 +197,10 @@ export const CreatePostForm = () => {
           <button
             type="submit"
             disabled={!content.trim() || createPost.isPending}
-            className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2 rounded-full text-sm font-medium transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-primary-600/20"
+            className="btn-primary inline-flex items-center gap-2"
           >
             {createPost.isPending ? 'Posting...' : 'Post'}
-            <Send className="w-4 h-4" />
+            <Send className="w-3.5 h-3.5" />
           </button>
         </div>
       </form>

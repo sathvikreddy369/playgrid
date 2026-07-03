@@ -37,7 +37,10 @@ describe('Post API', () => {
     testUserId = user.id;
 
     // 2. Mock Firebase Auth middleware
-    vi.spyOn(auth, 'verifyIdToken').mockResolvedValue({ uid: firebaseUid } as any);
+    vi.spyOn(auth as any, 'verifyIdToken').mockResolvedValue({ uid: firebaseUid } as any);
+    
+    // Mock AI moderation to prevent external API requests and speed up tests
+    vi.spyOn(aiService, 'moderateContent').mockResolvedValue({ isSafe: true });
   });
 
   afterAll(async () => {

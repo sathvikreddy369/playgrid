@@ -2,7 +2,6 @@ import type { ReactElement } from 'react';
 import type { RenderOptions } from '@testing-library/react';
 import { render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../providers/AuthProvider';
 
 const queryClient = new QueryClient({
@@ -13,6 +12,7 @@ const queryClient = new QueryClient({
   },
 });
 
+/* eslint-disable react-refresh/only-export-components */
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>

@@ -12,6 +12,7 @@ import notificationRoutes from './routes/notification.routes';
 import messageRoutes from './routes/message.routes';
 import adminRoutes from './routes/admin.routes';
 import reportRoutes from './routes/report.routes';
+import tournamentRoutes from './routes/tournament.routes';
 import searchRoutes from './routes/search.routes';
 import userRoutes from './routes/user.routes';
 import uploadRoutes from './routes/upload.routes';
@@ -20,17 +21,18 @@ import { initializeSocket } from './socket';
 import { errorHandler } from './middlewares/errorHandler';
 import prisma from './utils/db';
 import { StructuredLogger } from './utils/logger';
+import { badgeService } from './services/badge.service';
+import { startMatchLifecycleWorker } from './workers/matchLifecycle.worker';
 
 import { apiLimiter } from './middlewares/rateLimiter';
-// @ts-ignore - xss-clean has no types, but we'll try with types or ignore it
-import xss from 'xss-clean';
+import { xssClean } from './middlewares/xss.middleware';
 
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 5001;
 
 // Allowed origins for CORS
-const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',');
+const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || 'http://localhost:5173,http://localhost:5174').split(',');
 
 // Middleware
 app.use(cors({
@@ -43,7 +45,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Global Security Protections
-app.use(xss()); // Sanitize req.body, req.query, req.params
+app.use(xssClean); // Sanitize req.body, req.query, req.params
 app.use('/api', apiLimiter); // Apply general rate limit to all /api routes
 
 // Routes
@@ -57,6 +59,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/upload', uploadRoutes);
 
@@ -87,8 +90,16 @@ initializeSocket(server);
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
-  server.listen(PORT, () => {
+  server.listen(PORT, async () => {
     StructuredLogger.info(`Server is running on port ${PORT}`);
+    try {
+      await badgeService.initializeBadges();
+      StructuredLogger.info('Default badges initialized.');
+      startMatchLifecycleWorker();
+      StructuredLogger.info('Match lifecycle worker started.');
+    } catch (err) {
+      StructuredLogger.error('Failed to initialize badges:', undefined, err);
+    }
   });
 }
 

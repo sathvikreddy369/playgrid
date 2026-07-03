@@ -9,6 +9,17 @@ vi.mock('../hooks/usePosts', () => ({
   useCreatePost: vi.fn(),
 }));
 
+vi.mock('../providers/AuthProvider', () => ({
+  useAuth: vi.fn(() => ({
+    firebaseUser: { uid: '123' },
+    user: { id: 'user-123', name: 'Test User' },
+    profile: { avatarUrl: null },
+    isLoading: false,
+    syncUser: vi.fn(),
+  })),
+  AuthProvider: ({ children }: any) => <>{children}</>,
+}));
+
 describe('CreatePostForm', () => {
   const mockMutate = vi.fn();
 

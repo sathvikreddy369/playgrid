@@ -15,7 +15,7 @@ const firebaseConfig = {
 let app;
 try {
   app = initializeApp(firebaseConfig);
-} catch (error) {
+} catch {
   console.warn('Firebase config missing or invalid. App will run without auth capabilities.');
 }
 

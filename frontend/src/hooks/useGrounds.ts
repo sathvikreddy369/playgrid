@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 
-export const useGrounds = (status?: string) => {
+export const useGrounds = (filters?: { status?: string; sport?: string; location?: string; minRating?: number }) => {
   return useQuery({
-    queryKey: ['grounds', status],
+    queryKey: ['grounds', filters],
     queryFn: async () => {
-      const { data } = await api.get('/grounds', { params: { status } });
+      const { data } = await api.get('/grounds', { params: filters });
       return data;
     },
   });

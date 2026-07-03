@@ -11,6 +11,7 @@ describe('Socket.IO Events', () => {
   let clientSocket: ClientSocket;
   let httpServer: Server;
   let testUserId: string;
+  let testReceiverId: string;
 
   beforeAll(async () => {
     httpServer = createServer();
@@ -30,8 +31,18 @@ describe('Socket.IO Events', () => {
         });
         testUserId = user.id;
 
+        // Create a test receiver in DB to prevent foreign key errors
+        const receiver = await prisma.user.create({
+          data: {
+            firebaseUid: `socket-test-recv-${Date.now()}`,
+            email: `socket-test-recv-${Date.now()}@example.com`,
+            name: 'Socket Test Receiver',
+          }
+        });
+        testReceiverId = receiver.id;
+
         // 2. Mock Firebase Auth middleware inside socket auth
-        vi.spyOn(auth, 'verifyIdToken').mockResolvedValue({ uid: user.firebaseUid } as any);
+        vi.spyOn(auth as any, 'verifyIdToken').mockResolvedValue({ uid: user.firebaseUid } as any);
 
         // Connect client
         clientSocket = Client(`http://localhost:${port}`, {
@@ -58,6 +69,7 @@ describe('Socket.IO Events', () => {
       httpServer.close(() => resolve());
     });
     await prisma.user.delete({ where: { id: testUserId } });
+    await prisma.user.delete({ where: { id: testReceiverId } });
     vi.restoreAllMocks();
   });
 
@@ -68,9 +80,9 @@ describe('Socket.IO Events', () => {
 
   it('should handle send_message event', () => {
     return new Promise<void>((resolve) => {
-      clientSocket.emit('send_message', { to: 'some-other-user', content: 'Hello' });
+      clientSocket.emit('send_message', { to: testReceiverId, content: 'Hello' });
       
-      // We expect the server to emit either message_sent or an error, since 'some-other-user' doesn't exist
+      // We expect the server to emit either message_sent or an error
       // but the test is just checking if it listens to the event.
       setTimeout(() => {
         resolve();

@@ -9,5 +9,8 @@ router.get('/:id/posts', requireAuth, userController.getUserPosts);
 router.get('/:id/likes', requireAuth, userController.getUserLikes);
 router.get('/:id/replies', requireAuth, userController.getUserReplies);
 router.get('/:id/matches', requireAuth, userController.getUserMatches);
+router.get('/:id/activities', requireAuth, userController.getUserActivities);
+router.post('/:id/reviews', requireAuth, userController.addUserReview);
+router.post('/:id/connect', requireAuth, userController.connectUser);
 
 export default router;

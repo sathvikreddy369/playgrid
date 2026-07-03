@@ -4,11 +4,10 @@ module.exports = {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  darkMode: 'class', // We'll rely on a dark class or media query, but let's stick to the default media query or explicitly 'class' if needed. Since index.css uses media queries, we can just leave it default or 'media'.
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Outfit', 'system-ui', 'sans-serif'],
       },
       colors: {
         // Modern semantic colors

@@ -21,6 +21,32 @@ export class AIService {
       return '';
     }
   }
+  async moderateContent(content: string): Promise<{ isSafe: boolean; reason?: string }> {
+    if (!ai || !content) return { isSafe: true };
+
+    const prompt = `
+      You are an automated community moderator. Analyze the following user post content for hate speech, extreme toxicity, illegal activities, or severe spam. 
+      Return ONLY a strict JSON object (no markdown wrapping) with these keys:
+      - "isSafe": boolean (true if it's acceptable, false if it violates community guidelines)
+      - "reason": string (a short explanation if isSafe is false)
+      
+      Content: "${content}"
+    `;
+
+    try {
+      const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+      let jsonStr = response.text || "{}";
+      jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(jsonStr);
+      return {
+        isSafe: parsed.isSafe !== false,
+        reason: parsed.reason,
+      };
+    } catch (e) {
+      console.error('AI Moderation failed', e);
+      return { isSafe: true }; // Fail open
+    }
+  }
 }
 
 export const aiService = new AIService();

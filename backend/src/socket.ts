@@ -19,11 +19,16 @@ export const initializeSocket = (server: Server) => {
   io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth?.token;
-      if (!token || !auth) {
-        return next(new Error('Authentication required'));
+      let decodedToken;
+      if (!auth) {
+        if (process.env.NODE_ENV === 'production') {
+          return next(new Error('Authentication required: Firebase not initialized'));
+        }
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        decodedToken = { uid: payload.user_id || payload.sub };
+      } else {
+        decodedToken = await auth.verifyIdToken(token);
       }
-
-      const decodedToken = await auth.verifyIdToken(token);
       const user = await prisma.user.findUnique({
         where: { firebaseUid: decodedToken.uid },
       });

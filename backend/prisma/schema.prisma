@@ -18,10 +18,14 @@ enum Role {
 }
 
 enum MatchStatus {
+  DRAFT
   OPEN
   FULL
-  CANCELLED
+  ONGOING
   COMPLETED
+  ARCHIVED
+  CANCELLED
+  EXPIRED
 }
 
 enum MatchSkillLevel {
@@ -76,6 +80,9 @@ enum MatchPlayerStatus {
   APPROVED
   REJECTED
   ATTENDED
+  WITHDRAWN
+  KICKED
+  WAITLISTED
 }
 
 enum TournamentParticipantStatus {
@@ -93,6 +100,25 @@ enum NotificationType {
   NEW_MESSAGE
   SYSTEM_ALERT
   COMMUNITY_ANNOUNCEMENT
+}
+
+enum ActivityType {
+  MATCH_CREATED
+  MATCH_JOINED
+  MATCH_LEFT
+  COMMUNITY_CREATED
+  COMMUNITY_JOINED
+  POST_CREATED
+  COMMENT_ADDED
+  GROUND_REVIEWED
+  FRIEND_ADDED
+  BADGE_EARNED
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
 }
 
 // -----------------------------------------------------------------------------
@@ -115,7 +141,7 @@ model User {
   replies Reply[]
 
   // Relations
-  matchesCreated      Match[]       @relation("MatchCreator")
+  matchesCreated      Match[]        @relation("MatchCreator")
   matchParticipations MatchPlayer[]
   matchComments       MatchComment[]
 
@@ -136,28 +162,36 @@ model User {
 
   reportsSubmitted Report[] @relation("ReportSubmitter")
 
+  activities Activity[]
+
   postLikes     PostLike[]
   replyLikes    ReplyLike[]
   savedPosts    SavedPost[]
   groundReviews GroundReview[]
+  reviewsWritten UserReview[] @relation("Reviewer")
+  reviewsReceived UserReview[] @relation("ReviewedUser")
+
+  connectionsInitiated UserConnection[] @relation("ConnectionsInitiated")
+  connectionsReceived UserConnection[] @relation("ConnectionsReceived")
 
   @@index([firebaseUid])
   @@index([email])
 }
 
 model Profile {
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  bio       String?
-  avatarUrl String?
-  location  String?
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  bio                String?
+  avatarUrl          String?
+  location           String?
   sports             String[] // e.g. ["Cricket", "Football"]
   favoriteGames      String[]
   age                Int?
   homeLatitude       Float?
   homeLongitude      Float?
   preferredPlayTimes String[] // e.g. ["Weekdays", "Weekends"]
-  skillLevels        Json?    // e.g. { "Cricket": "PRO", "Football": "BEGINNER" }
+  skillLevels        Json? // e.g. { "Cricket": "PRO", "Football": "BEGINNER" }
+  privacySettings    Json? // e.g. { profileVisibility: "PUBLIC", showActivity: true }
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -194,21 +228,25 @@ model CommunityMember {
 }
 
 model Ground {
-  id           String       @id @default(uuid())
-  name         String
-  location     String
-  latitude     Float?
-  longitude    Float?
-  pricing      String?
-  amenities    String[]
-  sports       String[]
-  photos       String[]
-  contactPhone String?
-  status       GroundStatus @default(PENDING)
-  ownerId      String
-  aiSummary    String?      @db.Text
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id                String       @id @default(uuid())
+  name              String
+  location          String
+  formattedAddress  String?
+  city              String?
+  latitude          Float?
+  longitude         Float?
+  googleMapsUrl     String?
+  mapboxCoordinates Json?
+  pricing           String?
+  amenities         String[]
+  sports            String[]
+  photos            String[]
+  contactPhone      String?
+  status            GroundStatus @default(PENDING)
+  ownerId           String
+  aiSummary         String?      @db.Text
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
   owner   User           @relation("GroundOwner", fields: [ownerId], references: [id])
   reviews GroundReview[]
@@ -234,8 +272,8 @@ model Match {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
-  creator   User          @relation("MatchCreator", fields: [creatorId], references: [id])
-  community Community?    @relation(fields: [communityId], references: [id], onDelete: SetNull)
+  creator   User           @relation("MatchCreator", fields: [creatorId], references: [id])
+  community Community?     @relation(fields: [communityId], references: [id], onDelete: SetNull)
   players   MatchPlayer[]
   comments  MatchComment[]
 
@@ -260,12 +298,12 @@ model MatchComment {
 }
 
 model MatchPlayer {
-  id                String   @id @default(uuid())
+  id                String            @id @default(uuid())
   matchId           String
   userId            String
   status            MatchPlayerStatus @default(PENDING)
   performanceRating Int? // 1-5 rating given by organizer post-match
-  joinedAt          DateTime @default(now())
+  joinedAt          DateTime          @default(now())
 
   match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -296,12 +334,12 @@ model Tournament {
 }
 
 model TournamentParticipant {
-  id           String   @id @default(uuid())
+  id           String                      @id @default(uuid())
   tournamentId String
   userId       String
   teamName     String?
   status       TournamentParticipantStatus @default(PENDING)
-  joinedAt     DateTime @default(now())
+  joinedAt     DateTime                    @default(now())
 
   tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -470,4 +508,47 @@ model GroundReview {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groundId, userId]) // one review per user per ground
+}
+
+model Activity {
+  id         String       @id @default(uuid())
+  userId     String
+  type       ActivityType
+  entityId   String? // ID of the related entity
+  entityType String? // Type of entity (Match, Community, etc.)
+  metadata   Json? // Flexible metadata
+  createdAt  DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([type])
+}
+
+model UserReview {
+  id          String   @id @default(uuid())
+  reviewerId  String
+  targetId    String
+  rating      Int      // 1 to 5
+  comment     String?
+  createdAt   DateTime @default(now())
+
+  reviewer User @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  target   User @relation("ReviewedUser", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewerId, targetId])
+  @@index([targetId])
+}
+
+model UserConnection {
+  id         String   @id @default(uuid())
+  requesterId String
+  recipientId String
+  status     ConnectionStatus @default(PENDING) // PENDING, ACCEPTED, BLOCKED
+  createdAt  DateTime @default(now())
+  
+  requester User @relation("ConnectionsInitiated", fields: [requesterId], references: [id], onDelete: Cascade)
+  recipient User @relation("ConnectionsReceived", fields: [recipientId], references: [id], onDelete: Cascade)
+  
+  @@unique([requesterId, recipientId])
 }

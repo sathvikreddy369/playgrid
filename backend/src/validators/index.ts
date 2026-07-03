@@ -127,3 +127,16 @@ export const upgradeRoleSchema = z.object({
   userId: z.string().uuid(),
   role: z.enum(['PLAYER', 'ORGANIZER']),
 }).strict();
+
+// ─── Tournaments ────────────────────────────────────────────────────────
+export const createTournamentSchema = z.object({
+  name: z.string().min(1).max(200),
+  sport: z.string().min(1).max(100),
+  startDate: z.string().datetime({ offset: true }).or(z.string().min(1)),
+  endDate: z.string().datetime({ offset: true }).or(z.string().min(1)),
+  location: z.string().min(1).max(300),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+  entryFee: z.union([z.number().min(0), z.string().regex(/^\d+\.?\d*$/), z.null()]).optional(),
+  prizePool: z.string().max(200).optional().nullable(),
+}).strict();

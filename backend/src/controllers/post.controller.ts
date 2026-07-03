@@ -11,6 +11,7 @@ export class PostController {
       const result = await postService.getPosts(
         { 
           type: type as string, 
+          location: req.query.location as string,
           communityId: communityId as string,
           authorId: authorId as string 
         }, 

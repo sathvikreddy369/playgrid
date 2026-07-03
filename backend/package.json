@@ -8,7 +8,9 @@
     "build": "tsc",
     "start": "node -r dotenv/config dist/index.js",
     "test": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "seed:demo": "npx tsx prisma/seed-demo.ts",
+    "seed:stress": "npx tsx prisma/seed-stress.ts"
   },
   "keywords": [],
   "author": "",
@@ -25,6 +27,7 @@
     "firebase-admin": "^14.1.0",
     "helmet": "^8.2.0",
     "multer": "^2.2.0",
+    "node-cron": "^4.5.0",
     "pg": "^8.22.0",
     "socket.io": "^4.8.3",
     "xss-clean": "^0.1.4",
@@ -37,6 +40,7 @@
     "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0",
     "@types/node": "^26.0.1",
+    "@types/node-cron": "^3.0.11",
     "@types/pg": "^8.20.0",
     "@types/socket.io": "^3.0.2",
     "@types/supertest": "^7.2.0",
@@ -48,11 +52,12 @@
     "socket.io-client": "^4.8.3",
     "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9",
     "vitest-mock-extended": "^4.0.0"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "npx tsx prisma/seed-dev.ts"
   }
 }

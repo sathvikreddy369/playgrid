@@ -1,5 +1,4 @@
 <div align="center">
-  
   <h1>PlayGrid ⚽🏀🎾</h1>
   
   <p>
@@ -147,10 +146,4 @@ Deep dive into the architectural specifics and deployment procedures in the `doc
 
 ---
 
-## 💼 SDE-1 Highlights (Resume Bullet Points)
 
-- **Scalable Backend Architecture**: Engineered a Node.js/Express backend atop PostgreSQL using Prisma ORM. Implemented cursor-based pagination and spatial indexing, resolving full-table sequential scans and improving read throughput by **40%**.
-- **Real-Time Synchronicity**: Integrated Socket.IO for low-latency multi-room messaging, handling concurrent state synchronization across distributed clients.
-- **Production Observability**: Built custom middleware for structured JSON logging, standard tracing UUID headers (`X-Request-ID`), error ID mapping, and dynamic slow-query alerting, significantly reducing mean time to resolution (MTTR).
-- **Accessibility & Reliability**: Developed a fully WCAG 2.1 AA compliant UI using React 19 and Tailwind CSS. Hardened the frontend with comprehensive React Error Boundaries, achieving a **100/100 Lighthouse** accessibility score.
-- **Security Hardening**: Enforced robust Role-Based Access Control via Firebase Admin SDK, coupled with strict API rate limiting, XSS payload sanitization, and parameterized DB queries to prevent SQL injections.

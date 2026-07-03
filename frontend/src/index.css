@@ -4,44 +4,33 @@
 
 @layer base {
   :root {
-    --bg: #ffffff;
-    --surface: #ffffff;
-    --text: #4b5563; /* gray-600 (contrast >4.5:1 for light mode body text) */
-    --text-h: #09090b; /* zinc-950 */
-    --border: #e4e4e7; /* zinc-200 */
-    --code-bg: #f4f4f5; /* zinc-100 */
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #09090b; /* zinc-950 */
-      --surface: #18181b; /* zinc-900 */
-      --text: #a1a1aa; /* zinc-400 */
-      --text-h: #fafafa; /* zinc-50 */
-      --border: #27272a; /* zinc-800 */
-      --code-bg: #27272a; /* zinc-800 */
-    }
+    --bg: #FAFBFC; 
+    --surface: #FFFFFF;
+    --text: #6B7280; 
+    --text-h: #111827; 
+    --border: #E5E7EB; 
+    --code-bg: #F3F4F6;
   }
 
   body {
     background-color: var(--bg);
     color: var(--text-h);
-    @apply antialiased;
+    @apply antialiased font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;
+    overflow-x: hidden;
   }
 
   *:focus-visible {
-    outline: 2px solid #2563eb; /* Accessible high-contrast blue focus ring */
-    outline-offset: 2px;
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-background;
   }
-}
 
-@layer utilities {
-  .glass {
-    @apply bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border-b border-white/20 dark:border-zinc-800/50;
+  /* Fix for text visibility in light mode */
+  input, textarea, select {
+    @apply bg-surface text-foreground border-border;
+    color: var(--text-h);
   }
-  
-  .card {
-    @apply bg-surface border border-border rounded-2xl shadow-soft transition-all duration-200 hover:shadow-md;
+
+  input::placeholder, textarea::placeholder, select::placeholder {
+    color: var(--text);
   }
 }

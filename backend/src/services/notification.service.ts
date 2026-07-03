@@ -42,9 +42,19 @@ export class NotificationService {
 
   // Internal helper for other services to emit notifications
   async createNotification(data: { userId: string; type: NotificationType; content: string; link?: string }) {
-    return prisma.notification.create({
+    const notification = await prisma.notification.create({
       data
     });
+
+    try {
+      const { getIO } = await import('../socket');
+      const io = getIO();
+      io.to(`user:${data.userId}`).emit('new_notification', notification);
+    } catch (err) {
+      // Ignored if socket.io is not initialized (e.g., in test or seed environments)
+    }
+
+    return notification;
   }
 }
 

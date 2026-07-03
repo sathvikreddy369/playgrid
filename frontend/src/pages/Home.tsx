@@ -3,138 +3,224 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../providers/AuthProvider';
 import { useFeed } from '../hooks/usePosts';
+import { useMatches } from '../hooks/useMatches';
+import { useCommunities } from '../hooks/useCommunities';
 import { PostCard } from '../components/PostCard';
 import { PostSkeleton } from '../components/Skeleton';
-import { ArrowRight, Search, Users, Calendar, MapPin } from 'lucide-react';
+import { ArrowRight, Search, Users, Calendar, MapPin, Plus, Flame, Clock } from 'lucide-react';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
+import { Badge } from '../components/ui/Badge';
+import { format } from 'date-fns';
 
 export const Home = () => {
   const { user } = useAuth();
   
-  // Fetch latest posts for the "Activity Feed" preview
-  const { data, isLoading } = useFeed({});
+  // Data Fetching
+  const { data: feedData, isLoading: isLoadingFeed } = useFeed({});
+  const { data: matchesData, isLoading: isLoadingMatches } = useMatches({ status: 'OPEN', limit: 5 });
+  const { data: communitiesData, isLoading: isLoadingCommunities } = useCommunities('VERIFIED');
 
-  const posts = data?.pages[0]?.posts?.slice(0, 5) || [];
+  const posts = feedData?.pages[0]?.posts?.slice(0, 3) || [];
+  const matches = matchesData?.matches?.slice(0, 5) || [];
+  const communities = communitiesData?.slice(0, 5) || [];
 
-  const ActionButton = ({ to, icon: Icon, label, colorClass }: { to: string, icon: any, label: string, colorClass: string }) => (
-    <Link 
-      to={to} 
-      className={`group relative flex items-center justify-center gap-3 px-6 py-4 bg-surface border border-border rounded-2xl font-semibold transition-all hover:shadow-md hover:-translate-y-1 overflow-hidden w-full sm:w-auto`}
-    >
-      <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity ${colorClass}`} />
-      <Icon className={`w-5 h-5 ${colorClass.replace('bg-', 'text-')}`} />
-      <span className="text-foreground relative z-10">{label}</span>
+  const ActionCard = ({ to, icon: Icon, title, description, badge }: { to: string, icon: any, title: string, description: string, badge?: string }) => (
+    <Link to={to} className="block">
+      <Card className="group h-full flex flex-col p-5 hover:border-primary-300 transition-colors">
+        <div className="flex justify-between items-start mb-4">
+          <div className="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600 group-hover:scale-110 transition-transform duration-300">
+            <Icon className="w-6 h-6 stroke-[2px]" />
+          </div>
+          {badge && <Badge variant="success">{badge}</Badge>}
+        </div>
+        <div className="mt-auto">
+          <h3 className="text-base font-bold text-foreground flex items-center gap-1 group-hover:text-primary-600 transition-colors">
+            {title}
+            <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
+          </h3>
+          <p className="text-sm text-muted leading-snug mt-1">{description}</p>
+        </div>
+      </Card>
     </Link>
   );
 
   return (
-    <div className="w-full flex flex-col items-center overflow-x-hidden">
+    <div className="w-full max-w-5xl mx-auto px-4 md:px-6 flex flex-col gap-10 pb-8">
       
-      {/* Hero Section */}
-      <div className="relative w-full max-w-5xl mx-auto mt-12 md:mt-24 px-4 text-center">
-        {/* Decorative background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-primary-500/20 blur-[120px] rounded-full -z-10 pointer-events-none" />
-        
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="space-y-6"
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-sm font-semibold mb-2 border border-primary-100 dark:border-primary-900/50">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
-            </span>
-            Playgrid Beta is Live
-          </div>
-          
-          <h1 className="text-5xl md:text-7xl font-black text-foreground tracking-tighter leading-[1.1]">
-            Connect. Organize. <br className="hidden md:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-indigo-600">Play More.</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted max-w-2xl mx-auto leading-relaxed">
-            The modern platform to find local players, organize matches, and build sports communities.
-          </p>
-          
-          {user ? (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="flex justify-center gap-4 flex-wrap max-w-4xl mx-auto mt-12"
-            >
-              <ActionButton to="/search" icon={Search} label="Find Players" colorClass="bg-blue-500" />
-              <ActionButton to="/matches" icon={Calendar} label="Browse Matches" colorClass="bg-orange-500" />
-              <ActionButton to="/communities" icon={Users} label="Join Groups" colorClass="bg-purple-500" />
-              <ActionButton to="/grounds" icon={MapPin} label="Discover Venues" colorClass="bg-green-500" />
-            </motion.div>
-          ) : (
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="inline-block mt-8">
-              <Link to="/login" className="flex items-center gap-2 bg-primary-600 text-white px-8 py-4 rounded-full text-lg font-bold hover:bg-primary-700 transition-all shadow-lg shadow-primary-600/30 active:scale-95">
-                Get Started <ArrowRight className="w-5 h-5" />
+      {/* Hero Header */}
+      <div className="w-full pt-8 md:pt-12">
+        {user ? (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <p className="text-primary-600 font-bold mb-1 tracking-wide uppercase text-sm">Welcome back</p>
+              <h1 className="text-3xl md:text-5xl font-black tracking-tight text-foreground">
+                Ready to play, <span className="text-primary-600">{user.name?.split(' ')[0]}</span>?
+              </h1>
+            </div>
+            <div className="flex gap-2">
+              <Link to="/matches/create">
+                <Button variant="primary" className="rounded-full">
+                  <Plus className="w-4 h-4 mr-2" /> Host Match
+                </Button>
               </Link>
-            </motion.div>
-          )}
-        </motion.div>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center py-12">
+            <Badge variant="default" className="mb-6 px-4 py-1.5 border-primary-200 bg-primary-50 text-primary-700">
+              <span className="relative flex h-2 w-2 mr-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
+              </span>
+              The Social Sports Network
+            </Badge>
+            <h1 className="text-5xl md:text-7xl font-black text-foreground tracking-tight leading-[1.05] max-w-3xl mx-auto mb-6">
+              Connect. Play. <br className="hidden md:block"/>
+              <span className="text-primary-600">Compete.</span>
+            </h1>
+            <p className="text-lg text-muted max-w-xl mx-auto mb-8 leading-relaxed">
+              Find local matches, join communities, and discover players who share your passion for sports.
+            </p>
+            <Link to="/login">
+              <Button size="lg" className="rounded-full px-8">
+                Join the Ecosystem <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+          </motion.div>
+        )}
       </div>
 
-      {/* Activity Feed Section */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.8 }}
-        className="w-full max-w-3xl mx-auto mt-24 md:mt-32 px-4 pb-20"
-      >
-        <div className="flex items-end justify-between mb-8 pb-4 border-b border-border">
-          <div>
-            <h2 className="text-2xl font-bold text-foreground tracking-tight">Activity Stream</h2>
-            <p className="text-muted text-sm mt-1">See what's happening around you</p>
+      {user && (
+        <>
+          {/* Quick Actions (Mobile Horizontal, Desktop Grid) */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <ActionCard to="/search" icon={Search} title="Find Players" description="Match by skill & location" />
+            <ActionCard to="/matches" icon={Calendar} title="Matches" description="Join weekly games" badge="Live" />
+            <ActionCard to="/communities" icon={Users} title="Clubs" description="Join local groups" />
+            <ActionCard to="/grounds" icon={MapPin} title="Venues" description="Book turfs & courts" />
           </div>
-          {user && (
-            <Link to="/feed" className="hidden sm:flex items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors group">
-              View all <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          )}
-        </div>
 
-        <div className="space-y-4">
-          {isLoading ? (
-            <>
-              <PostSkeleton />
-              <PostSkeleton />
-            </>
-          ) : posts.length > 0 ? (
-            posts.map((post: any, index: number) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-              >
-                <PostCard post={post} />
-              </motion.div>
-            ))
-          ) : (
-            <div className="text-center py-16 bg-surface rounded-2xl border border-border border-dashed">
-              <div className="w-16 h-16 bg-muted/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-muted" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-1">It's quiet here</h3>
-              <p className="text-muted">No recent activity found. Check back later!</p>
+          <div className="grid md:grid-cols-12 gap-8 w-full mt-4">
+            
+            {/* Left Column (Main Feed & Matches) */}
+            <div className="md:col-span-8 flex flex-col gap-10">
+              
+              {/* Upcoming Matches Horizontal Scroll */}
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <Flame className="w-5 h-5 text-orange-500" /> Upcoming Matches
+                  </h2>
+                  <Link to="/matches" className="text-sm font-bold text-primary-600 hover:text-primary-700">See all</Link>
+                </div>
+                
+                {isLoadingMatches ? (
+                  <div className="flex gap-4 overflow-hidden">
+                    {[1, 2, 3].map(i => (
+                      <Card key={i} className="min-w-[280px] h-[160px] p-4 bg-zinc-50 animate-pulse border-transparent" />
+                    ))}
+                  </div>
+                ) : matches.length > 0 ? (
+                  <div className="flex overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 gap-4 snap-x hide-scrollbar">
+                    {matches.map((match: any) => (
+                      <Link key={match.id} to={`/matches/${match.id}`} className="snap-start shrink-0 w-[280px] md:w-[320px]">
+                        <Card className="p-4 h-full flex flex-col hover:border-primary-300 transition-colors">
+                          <div className="flex justify-between items-start mb-3">
+                            <Badge variant={match.sport.toLowerCase() as any} className="capitalize">
+                              {match.sport.replace('_', ' ')}
+                            </Badge>
+                            <span className="text-xs font-bold text-muted flex items-center gap-1">
+                              <Users className="w-3 h-3" /> {match._count?.players || 0}/{match.maxPlayers}
+                            </span>
+                          </div>
+                          <h3 className="font-bold text-base mb-1 truncate">{match.title}</h3>
+                          <div className="text-sm text-muted flex items-center gap-1.5 mt-auto pt-4">
+                            <Clock className="w-4 h-4" />
+                            {format(new Date(match.date), 'MMM d, h:mm a')}
+                          </div>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="p-8 text-center bg-zinc-50 border-dashed">
+                    <p className="text-foreground text-sm font-medium">No open matches found nearby.</p>
+                    <Link to="/matches/create" className="text-primary-600 text-sm font-bold mt-2 inline-block hover:underline">Host one</Link>
+                  </Card>
+                )}
+              </section>
+
+              {/* Activity Feed Snippet */}
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    Activity Feed
+                  </h2>
+                </div>
+                <div className="space-y-4">
+                  {isLoadingFeed ? (
+                    <PostSkeleton />
+                  ) : posts.length > 0 ? (
+                    posts.map((post: any) => (
+                      <PostCard key={post.id} post={post} />
+                    ))
+                  ) : (
+                    <Card className="p-8 text-center border-dashed">
+                      <p className="text-foreground text-sm font-medium">It's quiet here. Post something!</p>
+                    </Card>
+                  )}
+                  {posts.length > 0 && (
+                    <Link to="/feed">
+                      <Button variant="secondary" className="w-full mt-2">View Full Feed</Button>
+                    </Link>
+                  )}
+                </div>
+              </section>
+
             </div>
-          )}
-        </div>
-        
-        {user && posts.length > 0 && (
-          <div className="mt-8 text-center sm:hidden">
-            <Link to="/feed" className="inline-flex items-center gap-2 text-sm font-semibold text-primary-600 hover:bg-primary-50 px-6 py-3 rounded-full transition-colors">
-              View full feed <ArrowRight className="w-4 h-4" />
-            </Link>
+
+            {/* Right Column (Sidebar for Desktop) */}
+            <div className="md:col-span-4 flex flex-col gap-8">
+              
+              {/* Trending Communities */}
+              <section>
+                <h2 className="text-lg font-bold mb-4">Trending Clubs</h2>
+                <div className="flex flex-col gap-3">
+                  {isLoadingCommunities ? (
+                    Array(4).fill(0).map((_, i) => <Card key={i} className="h-16 animate-pulse bg-zinc-50" />)
+                  ) : communities.length > 0 ? (
+                    communities.map((community: any) => (
+                      <Link key={community.id} to={`/communities/${community.id}`}>
+                        <Card className="p-3 flex items-center gap-3 hover:bg-zinc-50 transition-colors">
+                          <div className="w-12 h-12 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center font-bold text-xl uppercase">
+                            {community.name.substring(0, 2)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-sm truncate text-foreground">{community.name}</h4>
+                            <p className="text-xs text-muted truncate">{community._count?.members || 0} members</p>
+                          </div>
+                        </Card>
+                      </Link>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted">No trending clubs.</p>
+                  )}
+                  <Link to="/communities">
+                    <Button variant="ghost" className="w-full text-sm mt-1">Explore all clubs</Button>
+                  </Link>
+                </div>
+              </section>
+
+            </div>
           </div>
-        )}
-      </motion.div>
+        </>
+      )}
+
+      <style dangerouslySetInnerHTML={{__html: `
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}} />
     </div>
   );
 };

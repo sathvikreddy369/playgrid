@@ -30,7 +30,7 @@ export const useSocket = () => {
         socket.current.disconnect();
       }
     };
-  }, [user]);
+  }, [user, firebaseUser]);
 
   return socket.current;
 };
