@@ -38,9 +38,10 @@ export async function runSeed(scale: 'dev' | 'demo' | 'stress') {
 
   try {
     console.log('[SEED] Generating and inserting Users...');
-    const { users, profiles } = generateUsers(c.users);
+    const { users, profiles, userTrusts } = generateUsers(c.users);
     for (const chunk of chunkArray(users, 2000)) await prisma.user.createMany({ data: chunk });
     for (const chunk of chunkArray(profiles, 2000)) await prisma.profile.createMany({ data: chunk });
+    for (const chunk of chunkArray(userTrusts, 2000)) await prisma.userTrust.createMany({ data: chunk });
 
     console.log('[SEED] Generating and inserting Communities...');
     const { communities, communityMembers } = generateCommunities(c.communities, users);
@@ -59,10 +60,13 @@ export async function runSeed(scale: 'dev' | 'demo' | 'stress') {
     for (const chunk of chunkArray(matchComments, 2000)) await prisma.matchComment.createMany({ data: chunk });
 
     console.log('[SEED] Generating and inserting Socials...');
-    const { posts, replies, postLikes } = generateSocials(c.posts, users, communities);
+    const { posts, replies, postLikes, connections: socialConnections, activities } = generateSocials(c.posts, users, communities);
     for (const chunk of chunkArray(posts, 2000)) await prisma.post.createMany({ data: chunk });
     for (const chunk of chunkArray(replies, 2000)) await prisma.reply.createMany({ data: chunk });
     for (const chunk of chunkArray(postLikes, 2000)) await prisma.postLike.createMany({ data: chunk });
+    for (const chunk of chunkArray(activities, 2000)) {
+      try { await prisma.activity.createMany({ data: chunk, skipDuplicates: true }); } catch (e) {}
+    }
 
     console.log('[SEED] Generating and inserting Interactions...');
     const { messages, notifications, reports, reviews, connections } = generateInteractions(users, matches);
@@ -75,6 +79,9 @@ export async function runSeed(scale: 'dev' | 'demo' | 'stress') {
       try { await prisma.userReview.createMany({ data: chunk, skipDuplicates: true }); } catch (e) {}
     }
     for (const chunk of chunkArray(connections, 2000)) {
+      try { await prisma.userConnection.createMany({ data: chunk, skipDuplicates: true }); } catch (e) {}
+    }
+    for (const chunk of chunkArray(socialConnections, 2000)) {
       try { await prisma.userConnection.createMany({ data: chunk, skipDuplicates: true }); } catch (e) {}
     }
 

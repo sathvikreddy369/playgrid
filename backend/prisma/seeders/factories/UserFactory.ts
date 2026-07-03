@@ -8,6 +8,7 @@ import { getWeightedRandom, getRandomElements, SPORTS, E_SPORTS } from '../utils
 export const generateUsers = (count: number) => {
   const users = [];
   const profiles = [];
+  const userTrusts = [];
 
   for (let i = 0; i < count; i++) {
     const userId = faker.string.uuid();
@@ -31,6 +32,8 @@ export const generateUsers = (count: number) => {
       role,
       reputation: faker.number.int({ min: 50, max: 500 }),
       isBlocked: Math.random() > 0.98, // 2% blocked
+      isOnline: Math.random() > 0.8, // 20% online
+      lastActive: faker.date.recent({ days: 7 }), // active in last 7 days
       createdAt,
       updatedAt: createdAt,
     });
@@ -67,7 +70,31 @@ export const generateUsers = (count: number) => {
       preferredPlayTimes: getRandomElements(['Weekdays Evening', 'Weekends Morning', 'Weekends Evening', 'Late Night'], 1, 2),
       skillLevels,
     });
+
+    const totalJoined = faker.number.int({ min: 0, max: 100 });
+    const totalAttended = Math.floor(totalJoined * faker.number.float({ min: 0.5, max: 1, fractionDigits: 2 }));
+    const totalNoShows = totalJoined - totalAttended - faker.number.int({ min: 0, max: Math.floor(totalJoined * 0.1) });
+    const hosted = faker.number.int({ min: 0, max: 50 });
+    const rating = faker.number.float({ min: 3, max: 5, fractionDigits: 2 });
+    const reviews = faker.number.int({ min: 0, max: 50 });
+
+    userTrusts.push({
+      id: faker.string.uuid(),
+      userId,
+      totalMatchesJoined: totalJoined,
+      totalMatchesAttended: totalAttended,
+      totalNoShows: Math.max(0, totalNoShows),
+      totalLateCancellations: faker.number.int({ min: 0, max: 5 }),
+      totalMatchesHosted: hosted,
+      totalMatchesCancelledByHost: faker.number.int({ min: 0, max: Math.floor(hosted * 0.1) }),
+      averagePlayerRating: rating,
+      totalPlayerReviews: reviews,
+      averageHostRating: faker.number.float({ min: 3, max: 5, fractionDigits: 2 }),
+      totalHostReviews: faker.number.int({ min: 0, max: 20 }),
+      internalTrustScore: faker.number.float({ min: 200, max: 900, fractionDigits: 2 }),
+      trustCategory: faker.helpers.arrayElement(['NEW', 'RELIABLE', 'NEEDS_IMPROVEMENT', 'EXCELLENT_HOST']),
+    });
   }
 
-  return { users, profiles };
+  return { users, profiles, userTrusts };
 };

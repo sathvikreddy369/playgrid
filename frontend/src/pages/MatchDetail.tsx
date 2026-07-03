@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMatchDetail, useJoinMatch, useMatchAction, useAddMatchComment, useUpdateMatchStatus, useBroadcastMessage, useAddMatchReview, useDeleteMatchComment } from '../hooks/useMatches';
 import { useAuth } from '../providers/AuthProvider';
-import { ArrowLeft, Calendar, MapPin, Users, IndianRupee, ShieldAlert, Check, Star, MessageSquare, Trash2, Edit3, Send, Clock, ImageIcon, Navigation } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, IndianRupee, ShieldAlert, Check, Star, MessageSquare, Trash2, Edit3, Send, Clock, ImageIcon, Navigation, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import { ShareDialog } from '../components/ShareDialog';
 import { Skeleton } from '../components/Skeleton';
 import { UserLink } from '../components/ui/UserLink';
 import { useSocket } from '../hooks/useSocket';
@@ -49,10 +50,12 @@ export const MatchDetail = () => {
  }, [socket, id, queryClient]);
 
  const [ratings, setRatings] = useState<Record<string, number>>({});
+ const [attendanceStatuses, setAttendanceStatuses] = useState<Record<string, 'ATTENDED' | 'ABSENT' | 'LATE'>>({});
  const [commentContent, setCommentContent] = useState('');
  const [broadcastContent, setBroadcastContent] = useState('');
  const [reviewRating, setReviewRating] = useState(5);
  const [reviewContent, setReviewContent] = useState('');
+ const [isShareOpen, setIsShareOpen] = useState(false);
 
  if (isLoading) return (
  <div className="max-w-5xl mx-auto py-10 px-4 space-y-6">
@@ -74,11 +77,12 @@ export const MatchDetail = () => {
 
  const handleAction = (userId: string | undefined, action: 'approve' | 'reject' | 'attend' | 'cancel' | 'leave' | 'kick') => {
  const rating = action === 'attend' && userId ? ratings[userId] || 3 : undefined;
- if (action === 'attend' && (!rating || rating < 1 || rating > 5)) {
+ const status = action === 'attend' && userId ? attendanceStatuses[userId] || 'ATTENDED' : undefined;
+ if (action === 'attend' && status !== 'ABSENT' && (!rating || rating < 1 || rating > 5)) {
  toast.error("Please provide a valid rating 1-5 before marking attendance.");
  return;
  }
- matchAction.mutate({ matchId: match.id, userId, action, rating });
+ matchAction.mutate({ matchId: match.id, userId, action, rating, status });
  };
 
  const isPast = new Date(match.date) < new Date();
@@ -148,6 +152,13 @@ export const MatchDetail = () => {
  <div className={`p-6 md:p-8 ${match.status !== 'OPEN' ? 'pt-10 md:pt-12' : ''}`}>
  <div className="flex justify-between items-center">
  <span className={`badge-premium ${getSportBadgeClass(match.sport)}`}>{match.sport}</span>
+ <button 
+   onClick={() => setIsShareOpen(true)}
+   className="p-2 text-muted hover:text-foreground bg-zinc-50 hover:bg-zinc-100 rounded-full transition-colors border border-border"
+   title="Share Match"
+ >
+   <Share2 className="w-4 h-4" />
+ </button>
  </div>
 
  <h1 className="text-2xl md:text-3xl font-black text-foreground mt-4 mb-3 leading-tight">{match.title}</h1>
@@ -410,24 +421,38 @@ export const MatchDetail = () => {
  </UserLink>
  {p.userId === match.creatorId && <span className="text-[9px] bg-zinc-100 border border-border px-1.5 py-0.5 rounded font-extrabold uppercase tracking-wider text-foreground">Host</span>}
  </p>
- <p className="text-[10px] text-muted font-bold">Reputation: {p.user?.reputation ?? 0}</p>
+ <p className="text-[10px] text-muted font-bold flex items-center gap-1">
+  <ShieldAlert className="w-3 h-3" /> Trust Score: {p.user?.trust ? `${p.user.trust.trustCategory} · ${Math.round(p.user.trust.internalTrustScore / 10)}/100` : 'N/A'}
+ </p>
  </div>
  </div>
  </div>
 
  {isCreator && ['ONGOING', 'COMPLETED'].includes(match.status) && p.userId !== match.creatorId && p.status === 'APPROVED' && (
  <div className="flex items-center gap-2 mt-1">
- <select 
- className="flex-1 text-xs border border-border rounded-lg px-2.5 py-1.5 bg-surface text-foreground font-semibold outline-none focus:ring-1 focus:ring-zinc-950"
- value={ratings[p.userId] || 3}
- onChange={(e) => setRatings(prev => ({...prev, [p.userId]: parseInt(e.target.value)}))}
- >
- <option value={1}>1 - Poor</option>
- <option value={2}>2 - Below Avg</option>
- <option value={3}>3 - Average</option>
- <option value={4}>4 - Good</option>
- <option value={5}>5 - Excellent</option>
- </select>
+  <select 
+  className="flex-1 text-xs border border-border rounded-lg px-2.5 py-1.5 bg-surface text-foreground font-semibold outline-none focus:ring-1 focus:ring-zinc-950"
+  value={attendanceStatuses[p.userId] || 'ATTENDED'}
+  onChange={(e) => setAttendanceStatuses(prev => ({...prev, [p.userId]: e.target.value as any}))}
+  >
+  <option value="ATTENDED">Attended</option>
+  <option value="LATE">Late</option>
+  <option value="ABSENT">Absent</option>
+  </select>
+
+  {attendanceStatuses[p.userId] !== 'ABSENT' && (
+  <select 
+  className="flex-1 text-xs border border-border rounded-lg px-2.5 py-1.5 bg-surface text-foreground font-semibold outline-none focus:ring-1 focus:ring-zinc-950"
+  value={ratings[p.userId] || 3}
+  onChange={(e) => setRatings(prev => ({...prev, [p.userId]: parseInt(e.target.value)}))}
+  >
+  <option value={1}>1 - Poor</option>
+  <option value={2}>2 - Below Avg</option>
+  <option value={3}>3 - Average</option>
+  <option value={4}>4 - Good</option>
+  <option value={5}>5 - Excellent</option>
+  </select>
+  )}
  <button onClick={() => handleAction(p.userId, 'attend')} className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg font-bold transition-all shadow-sm cursor-pointer">
  Confirm
  </button>
@@ -447,9 +472,15 @@ export const MatchDetail = () => {
  </button>
  )}
 
- {p.status === 'ATTENDED' && (
- <div className="text-[10px] bg-emerald-50 border border-emerald-200 text-emerald-700 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1.5 self-start mt-1">
- <Check className="w-3.5 h-3.5" /> Attended ({p.performanceRating} <Star className="w-3 h-3 inline fill-current"/>)
+ {['ATTENDED', 'LATE', 'ABSENT'].includes(p.status) && (
+ <div className={`text-[10px] border px-2.5 py-1 rounded-lg font-bold flex items-center gap-1.5 self-start mt-1 ${
+   p.status === 'ATTENDED' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
+   p.status === 'LATE' ? 'bg-amber-50 border-amber-200 text-amber-700' :
+   'bg-red-50 border-red-200 text-red-700'
+ }`}>
+ <Check className="w-3.5 h-3.5" /> {p.status} {p.status !== 'ABSENT' && p.performanceRating && `(${p.performanceRating} `}
+ {p.status !== 'ABSENT' && p.performanceRating && <Star className="w-3 h-3 inline fill-current"/>}
+ {p.status !== 'ABSENT' && p.performanceRating && ')'}
  </div>
  )}
  </div>
@@ -472,7 +503,9 @@ export const MatchDetail = () => {
  <UserLink userId={p.userId} className="hover:underline">
  <span className="font-bold text-foreground text-xs block">{p.user?.name || 'User'}</span>
  </UserLink>
- <span className="text-[10px] text-muted font-bold">Reputation: {p.user?.reputation ?? 0}</span>
+ <span className="text-[10px] text-muted font-bold flex items-center gap-1">
+   <ShieldAlert className="w-3 h-3" /> Trust Score: {p.user?.trust ? `${p.user.trust.trustCategory} · ${Math.round(p.user.trust.internalTrustScore / 10)}/100` : 'N/A'}
+ </span>
  </div>
  </div>
  <div className="flex gap-2">
@@ -499,7 +532,9 @@ export const MatchDetail = () => {
  <UserLink userId={p.userId} className="hover:underline">
  <span className="font-bold text-foreground text-xs block">{p.user?.name || 'User'}</span>
  </UserLink>
- <span className="text-[10px] text-muted font-bold">Reputation: {p.user?.reputation ?? 0}</span>
+ <span className="text-[10px] text-muted font-bold flex items-center gap-1">
+   <ShieldAlert className="w-3 h-3" /> Trust Score: {p.user?.trust ? `${p.user.trust.trustCategory} · ${Math.round(p.user.trust.internalTrustScore / 10)}/100` : 'N/A'}
+ </span>
  </div>
  </div>
  <div className="flex gap-2">
@@ -512,7 +547,13 @@ export const MatchDetail = () => {
  )}
 
  </div>
- </div>
+   </div>
+   <ShareDialog 
+     isOpen={isShareOpen} 
+     onClose={() => setIsShareOpen(false)} 
+     title={match?.title || 'Check out this match on PlayGrid'}
+     url={window.location.href}
+   />
  </div>
  );
 };

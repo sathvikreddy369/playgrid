@@ -143,8 +143,8 @@ export class MatchController {
   async markAttendance(req: Request, res: Response, next: NextFunction) {
     try {
       const creatorId = req.user!.id;
-      const { rating } = req.body;
-      const result = await matchService.markAttendance((req.params.id as string), creatorId, (req.params.userId as string), rating);
+      const { status, rating } = req.body;
+      const result = await matchService.markAttendance((req.params.id as string), creatorId, (req.params.userId as string), status, rating);
       
       // Evaluate badges after attendance
       const { badgeService } = await import('../services/badge.service');
@@ -244,6 +244,18 @@ export class MatchController {
       const { rating, comment } = req.body;
       const review = await matchService.addReview(req.params.id as string, userId, rating, comment);
       res.status(201).json(review);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async inviteUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const inviterId = req.user!.id;
+      const matchId = req.params.id as string;
+      const { targetUserId } = req.body;
+      const result = await matchService.inviteUser(matchId, inviterId, targetUserId);
+      res.status(201).json(result);
     } catch (error) {
       next(error);
     }

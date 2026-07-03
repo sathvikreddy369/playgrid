@@ -5,12 +5,45 @@ export interface User {
   avatarUrl?: string;
   role: 'GUEST' | 'PLAYER' | 'ORGANIZER' | 'ADMIN';
   isBlocked: boolean;
+  isOnline?: boolean;
+  lastActive?: string;
   reputation?: number;
   profile?: UserProfile;
+  trust?: UserTrust;
   _count?: {
     posts?: number;
     matchesCreated?: number;
   };
+}
+
+export interface UserConnection {
+  id: string;
+  requesterId: string;
+  recipientId: string;
+  status: 'PENDING' | 'ACCEPTED' | 'BLOCKED';
+  createdAt: string;
+  requester?: User;
+  recipient?: User;
+  friend?: User;
+  isRequester?: boolean;
+}
+
+export interface UserTrust {
+  id: string;
+  userId: string;
+  totalMatchesJoined: number;
+  totalMatchesAttended: number;
+  totalNoShows: number;
+  totalLateCancellations: number;
+  totalMatchesHosted: number;
+  totalMatchesCancelledByHost: number;
+  averagePlayerRating: number;
+  totalPlayerReviews: number;
+  averageHostRating: number;
+  totalHostReviews: number;
+  internalTrustScore: number; // 0–1000
+  trustCategory: string; // 'NEW' | 'RELIABLE' | 'AVERAGE' | 'NEEDS_IMPROVEMENT' | 'EXCELLENT'
+  updatedAt: string;
 }
 
 export interface UserProfile {
@@ -95,7 +128,7 @@ export interface MatchPlayer {
   id: string;
   matchId: string;
   userId: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ATTENDED' | 'WITHDRAWN' | 'KICKED' | 'WAITLISTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ATTENDED' | 'ABSENT' | 'LATE' | 'WITHDRAWN' | 'KICKED' | 'WAITLISTED' | 'INVITED';
   performanceRating?: number;
   user?: User;
 }
@@ -105,7 +138,7 @@ export interface CommunityMember {
   userId: string;
   communityId: string;
   role: 'OWNER' | 'ADMIN' | 'MODERATOR' | 'MEMBER';
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'BANNED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'BANNED' | 'INVITED';
   joinedAt: string;
   user?: User;
 }

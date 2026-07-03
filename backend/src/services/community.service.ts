@@ -1,6 +1,7 @@
 import prisma from '../utils/db';
 import { CommunityStatus, CommunityPrivacy, CommunityRole, CommunityMemberStatus, MatchType } from '@prisma/client';
 import { activityService } from './activity.service';
+import { notificationService } from './notification.service';
 import { getIO } from '../socket';
 
 interface CreateCommunityData {
@@ -142,6 +143,37 @@ export class CommunityService {
         console.error('Socket emit error', err);
       }
     }
+
+    return member;
+  }
+
+  async inviteUser(communityId: string, inviterId: string, targetUserId: string) {
+    const community = await prisma.community.findUnique({ where: { id: communityId } });
+    if (!community) throw new Error('Community not found');
+
+    const inviter = await prisma.user.findUnique({ where: { id: inviterId } });
+
+    const existing = await prisma.communityMember.findUnique({
+      where: { userId_communityId: { userId: targetUserId, communityId } }
+    });
+
+    if (existing) {
+      if (existing.status === CommunityMemberStatus.BANNED) throw new Error('User is banned');
+      throw new Error(`User already has status: ${existing.status}`);
+    }
+
+    const member = await prisma.communityMember.upsert({
+      where: { userId_communityId: { userId: targetUserId, communityId } },
+      update: { status: 'INVITED' },
+      create: { userId: targetUserId, communityId, role: 'MEMBER', status: 'INVITED' }
+    });
+
+    await notificationService.createNotification({
+      userId: targetUserId,
+      type: 'COMMUNITY_INVITE',
+      content: `${inviter?.name || 'Someone'} invited you to join ${community.name}.`,
+      link: `/communities/${communityId}`
+    });
 
     return member;
   }

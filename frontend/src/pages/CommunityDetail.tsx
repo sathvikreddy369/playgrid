@@ -4,11 +4,12 @@ import {
   useCommunityDetail, useJoinCommunity, useLeaveCommunity, 
   useKickMember, useApproveMember, useRejectMember, useUpdateMemberRole 
 } from '../hooks/useCommunities';
+import { ShareDialog } from '../components/ShareDialog';
 import { useFeed } from '../hooks/usePosts';
 import { PostCard } from '../components/PostCard';
 import { PostSkeleton, Skeleton } from '../components/Skeleton';
 import { useAuth } from '../providers/AuthProvider';
-import { ArrowLeft, Users, MapPin, CheckCircle, ShieldAlert, Lock, Settings } from 'lucide-react';
+import { ArrowLeft, Users, MapPin, CheckCircle, ShieldAlert, Lock, Settings, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserLink } from '../components/ui/UserLink';
 import { useSocket } from '../hooks/useSocket';
@@ -32,6 +33,7 @@ export const CommunityDetail = () => {
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'FEED' | 'MEMBERS' | 'EVENTS' | 'ADMIN'>('FEED');
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   React.useEffect(() => {
     if (socket && id) {
@@ -142,6 +144,13 @@ export const CommunityDetail = () => {
                   </button>
                 )
               )}
+              <button 
+                onClick={() => setIsShareOpen(true)}
+                className="p-3 bg-surface border border-border hover:bg-zinc-50 rounded-xl transition-colors text-muted hover:text-foreground"
+                title="Share Community"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
             </div>
           </div>
 
@@ -362,6 +371,12 @@ export const CommunityDetail = () => {
           </motion.div>
         </AnimatePresence>
       </div>
+      <ShareDialog 
+        isOpen={isShareOpen} 
+        onClose={() => setIsShareOpen(false)} 
+        title={community?.name || 'Check out this community on PlayGrid'}
+        url={window.location.href}
+      />
     </div>
   );
 };

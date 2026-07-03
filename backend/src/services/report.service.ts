@@ -1,8 +1,8 @@
 import prisma from '../utils/db';
-import { ReportType } from '@prisma/client';
+import { ReportType, ReportReason, ReportStatus } from '@prisma/client';
 
 export class ReportService {
-  async createReport(submitterId: string, data: { targetType: ReportType; targetId: string; reason: string }) {
+  async createReport(submitterId: string, data: { targetType: ReportType; targetId: string; reason: ReportReason; details?: string }) {
     // Validate target exists based on type
     let targetExists = false;
     switch (data.targetType) {
@@ -20,6 +20,9 @@ export class ReportService {
         break;
       case 'MESSAGE':
         targetExists = (await prisma.message.count({ where: { id: data.targetId } })) > 0;
+        break;
+      case 'MATCH':
+        targetExists = (await prisma.match.count({ where: { id: data.targetId } })) > 0;
         break;
     }
 
@@ -46,8 +49,26 @@ export class ReportService {
         submitterId,
         targetType: data.targetType,
         targetId: data.targetId,
-        reason: data.reason
+        reason: data.reason,
+        details: data.details
       }
+    });
+  }
+
+  async getReports(status?: ReportStatus) {
+    return prisma.report.findMany({
+      where: status ? { status } : undefined,
+      include: {
+        submitter: { select: { id: true, name: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async updateReportStatus(reportId: string, status: ReportStatus) {
+    return prisma.report.update({
+      where: { id: reportId },
+      data: { status }
     });
   }
 }

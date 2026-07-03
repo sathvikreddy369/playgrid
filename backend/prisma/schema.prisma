@@ -66,6 +66,17 @@ enum ReportType {
   COMMUNITY
   VENUE
   MESSAGE
+  MATCH
+}
+
+enum ReportReason {
+  SPAM
+  ABUSE
+  HARASSMENT
+  FAKE_EVENT
+  FRAUD
+  INAPPROPRIATE_BEHAVIOUR
+  OTHER
 }
 
 enum ReportStatus {
@@ -83,6 +94,9 @@ enum MatchPlayerStatus {
   WITHDRAWN
   KICKED
   WAITLISTED
+  ABSENT
+  LATE
+  INVITED
 }
 
 enum TournamentParticipantStatus {
@@ -100,6 +114,10 @@ enum NotificationType {
   NEW_MESSAGE
   SYSTEM_ALERT
   COMMUNITY_ANNOUNCEMENT
+  CONNECTION_REQUEST
+  CONNECTION_ACCEPTED
+  MATCH_INVITE
+  COMMUNITY_INVITE
 }
 
 enum ActivityType {
@@ -138,6 +156,7 @@ enum CommunityMemberStatus {
   APPROVED
   REJECTED
   BANNED
+  INVITED
 }
 
 enum MatchType {
@@ -147,6 +166,26 @@ enum MatchType {
   PRACTICE
   TOURNAMENT
   TRAINING
+}
+
+enum BadgeType {
+  PERMANENT
+  SEASONAL
+  EVENT
+  VERIFICATION
+  ACHIEVEMENT
+}
+
+enum ReviewType {
+  PLAYER
+  HOST
+}
+
+enum ModerationActionType {
+  WARNING
+  TEMP_RESTRICTION
+  BAN
+  CONTENT_REMOVAL
 }
 
 // -----------------------------------------------------------------------------
@@ -161,10 +200,13 @@ model User {
   role        Role     @default(PLAYER)
   reputation  Int      @default(100)
   isBlocked   Boolean  @default(false)
+  isOnline    Boolean  @default(false)
+  lastActive  DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   profile Profile?
+  trust   UserTrust?
   posts   Post[]
   replies Reply[]
 
@@ -205,6 +247,34 @@ model User {
 
   @@index([firebaseUid])
   @@index([email])
+}
+
+model UserTrust {
+  id             String @id @default(uuid())
+  userId         String @unique
+  
+  // Base metrics
+  totalMatchesJoined Int @default(0)
+  totalMatchesAttended Int @default(0)
+  totalNoShows Int @default(0)
+  totalLateCancellations Int @default(0)
+
+  // Host metrics
+  totalMatchesHosted Int @default(0)
+  totalMatchesCancelledByHost Int @default(0)
+  
+  // Review metrics
+  averagePlayerRating Float @default(0)
+  totalPlayerReviews Int @default(0)
+  averageHostRating Float @default(0)
+  totalHostReviews Int @default(0)
+  
+  // Core Trust calculations
+  internalTrustScore Float @default(500) // The internal score
+  trustCategory String @default("NEW") // "RELIABLE", "NEEDS_IMPROVEMENT", "EXCELLENT_HOST", "NEW"
+  
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Profile {
@@ -360,6 +430,7 @@ model MatchPlayer {
   status            MatchPlayerStatus @default(PENDING)
   performanceRating Int? // 1-5 rating given by organizer post-match
   joinedAt          DateTime          @default(now())
+  withdrawnAt       DateTime?
 
   match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -484,7 +555,8 @@ model Report {
   submitterId String
   targetType  ReportType
   targetId    String // UUID of the reported entity
-  reason      String
+  reason      ReportReason @default(OTHER)
+  details     String?
   status      ReportStatus @default(PENDING)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -500,6 +572,7 @@ model Badge {
   name        String  @unique // e.g. VERIFIED_PLAYER, TOURNAMENT_WINNER
   description String
   icon        String?
+  type        BadgeType @default(ACHIEVEMENT)
 
   users UserBadge[]
 }
@@ -582,17 +655,19 @@ model Activity {
 }
 
 model UserReview {
-  id          String   @id @default(uuid())
+  id          String     @id @default(uuid())
   reviewerId  String
   targetId    String
-  rating      Int      // 1 to 5
+  rating      Int        // 1 to 5
   comment     String?
-  createdAt   DateTime @default(now())
+  type        ReviewType @default(PLAYER)
+  matchId     String?
+  createdAt   DateTime   @default(now())
 
   reviewer User @relation("Reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
   target   User @relation("ReviewedUser", fields: [targetId], references: [id], onDelete: Cascade)
 
-  @@unique([reviewerId, targetId])
+  @@unique([reviewerId, targetId, matchId])
   @@index([targetId])
 }
 
@@ -621,4 +696,16 @@ model UserConnection {
   recipient User @relation("ConnectionsReceived", fields: [recipientId], references: [id], onDelete: Cascade)
   
   @@unique([requesterId, recipientId])
+}
+
+model ModerationAction {
+  id          String               @id @default(uuid())
+  userId      String
+  moderatorId String
+  actionType  ModerationActionType
+  reason      String
+  expiresAt   DateTime?
+  createdAt   DateTime             @default(now())
+
+  @@index([userId])
 }

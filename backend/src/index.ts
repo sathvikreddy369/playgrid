@@ -16,6 +16,7 @@ import tournamentRoutes from './routes/tournament.routes';
 import searchRoutes from './routes/search.routes';
 import userRoutes from './routes/user.routes';
 import uploadRoutes from './routes/upload.routes';
+import reviewRoutes from './routes/review.routes';
 import http from 'http';
 import { initializeSocket } from './socket';
 import { errorHandler } from './middlewares/errorHandler';
@@ -62,6 +63,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Health check
 app.get('/health', async (req: Request, res: Response) => {

@@ -26,6 +26,8 @@ export const generateSocials = (count: number, users: any[], communities: any[])
   const posts = [];
   const replies = [];
   const postLikes = [];
+  const connections = [];
+  const activities = [];
 
   for (let i = 0; i < count; i++) {
     const postId = faker.string.uuid();
@@ -89,7 +91,59 @@ export const generateSocials = (count: number, users: any[], communities: any[])
         updatedAt: getDateAfter(createdAt, 2)
       });
     }
+    // Random Connections
+    const numConnections = getRandomInt(0, 3);
+    const potentialFriends = [...users].sort(() => 0.5 - Math.random()).slice(0, numConnections);
+    for (const friend of potentialFriends) {
+      if (friend.id === author.id) continue;
+      
+      const status = getWeightedRandom([
+        { value: 'ACCEPTED', weight: 80 },
+        { value: 'PENDING', weight: 15 },
+        { value: 'BLOCKED', weight: 5 }
+      ]);
+      
+      connections.push({
+        id: faker.string.uuid(),
+        requesterId: author.id,
+        recipientId: friend.id,
+        status,
+        createdAt: getDateAfter(createdAt, 1)
+      });
+      
+      if (status === 'ACCEPTED') {
+        activities.push({
+          id: faker.string.uuid(),
+          userId: author.id,
+          type: 'FRIEND_ADDED',
+          entityId: friend.id,
+          entityType: 'User',
+          metadata: { friendName: friend.name },
+          createdAt: getDateAfter(createdAt, 2)
+        });
+        activities.push({
+          id: faker.string.uuid(),
+          userId: friend.id,
+          type: 'FRIEND_ADDED',
+          entityId: author.id,
+          entityType: 'User',
+          metadata: { friendName: author.name },
+          createdAt: getDateAfter(createdAt, 2)
+        });
+      }
+    }
+    
+    // Add Post to Activities
+    activities.push({
+      id: faker.string.uuid(),
+      userId: author.id,
+      type: 'POST_CREATED',
+      entityId: postId,
+      entityType: 'Post',
+      metadata: { content: content.substring(0, 30) },
+      createdAt
+    });
   }
 
-  return { posts, replies, postLikes };
+  return { posts, replies, postLikes, connections, activities };
 };

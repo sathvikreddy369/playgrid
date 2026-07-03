@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNotifications, useMarkAsRead, useMarkAllAsRead } from '../hooks/useNotifications';
-import { Bell, Check, ExternalLink } from 'lucide-react';
+import { Bell, Check, ExternalLink, UserPlus, ShieldAlert, Calendar, MessageSquare, Trophy, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -11,6 +11,15 @@ export const NotificationBell = () => {
  const markAllAsRead = useMarkAllAsRead();
 
  const count = notifications?.length || 0;
+
+ const getIcon = (type: string) => {
+   if (type?.includes('FRIEND')) return <UserPlus className="w-5 h-5 text-blue-500" />;
+   if (type?.includes('COMMUNITY')) return <ShieldAlert className="w-5 h-5 text-purple-500" />;
+   if (type?.includes('MATCH')) return <Calendar className="w-5 h-5 text-emerald-500" />;
+   if (type?.includes('MESSAGE')) return <MessageSquare className="w-5 h-5 text-orange-500" />;
+   if (type?.includes('REPUTATION') || type?.includes('TRUST')) return <Trophy className="w-5 h-5 text-yellow-500" />;
+   return <Bell className="w-5 h-5 text-zinc-500" />;
+ };
 
  return (
  <div className="relative">
@@ -47,35 +56,41 @@ export const NotificationBell = () => {
  You're all caught up!
  </div>
  ) : (
- <ul className="divide-y divide-gray-50 ">
+ <ul className="divide-y divide-border">
  {notifications.map((n: any) => (
- <li key={n.id} className="p-4 hover:bg-gray-50 transition-colors">
- <p className="text-sm text-gray-800 mb-2">{n.content}</p>
- <div className="flex items-center justify-between mt-2">
- <span className="text-xs text-gray-400">
- {formatDistanceToNow(new Date(n.createdAt))} ago
- </span>
- <div className="flex gap-2">
- {n.link && (
- <Link 
- to={n.link} 
- onClick={() => {
- markAsRead.mutate(n.id);
- setIsOpen(false);
- }}
- className="text-blue-600 p-1 hover:bg-blue-50 rounded"
- >
- <ExternalLink className="w-4 h-4" />
- </Link>
- )}
- <button 
- onClick={() => markAsRead.mutate(n.id)}
- className="text-green-600 p-1 hover:bg-green-50 rounded"
- title="Mark as read"
- >
- <Check className="w-4 h-4" />
- </button>
+ <li key={n.id} className="p-4 hover:bg-zinc-50 transition-colors flex gap-3 group">
+ <div className="mt-1 shrink-0 bg-white p-2 rounded-full border border-border shadow-sm">
+   {getIcon(n.type)}
  </div>
+ <div className="flex-1">
+   <p className="text-sm text-foreground font-semibold mb-1 leading-snug">{n.content}</p>
+   <div className="flex items-center justify-between mt-2">
+   <span className="text-xs text-muted font-bold flex items-center gap-1">
+     <Clock className="w-3 h-3" /> {formatDistanceToNow(new Date(n.createdAt))} ago
+   </span>
+   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+   {n.link && (
+   <Link 
+   to={n.link} 
+   onClick={() => {
+   markAsRead.mutate(n.id);
+   setIsOpen(false);
+   }}
+   className="text-blue-600 p-1.5 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-200"
+   title="View"
+   >
+   <ExternalLink className="w-4 h-4" />
+   </Link>
+   )}
+   <button 
+   onClick={() => markAsRead.mutate(n.id)}
+   className="text-emerald-600 p-1.5 hover:bg-emerald-50 rounded-lg transition-colors border border-transparent hover:border-emerald-200"
+   title="Mark as read"
+   >
+   <Check className="w-4 h-4" />
+   </button>
+   </div>
+   </div>
  </div>
  </li>
  ))}

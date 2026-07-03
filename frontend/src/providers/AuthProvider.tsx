@@ -14,6 +14,20 @@ interface UserData {
   badges?: any[];
   communityMemberships?: any[];
   profile?: ProfileData;
+  trust?: UserTrustData;
+}
+
+interface UserTrustData {
+  id: string;
+  internalTrustScore: number;
+  trustCategory: string;
+  totalMatchesJoined: number;
+  totalMatchesAttended: number;
+  totalNoShows: number;
+  totalMatchesHosted: number;
+  averagePlayerRating: number;
+  totalPlayerReviews: number;
+  updatedAt: string;
 }
 
 interface ProfileData {

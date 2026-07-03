@@ -60,7 +60,8 @@ export const matchCommentSchema = z.object({
 }).strict();
 
 export const markAttendanceSchema = z.object({
-  rating: z.number().int().min(1).max(5),
+  status: z.enum(['ATTENDED', 'ABSENT', 'LATE']),
+  rating: z.number().int().min(1).max(5).optional(),
 }).strict();
 
 // ─── Communities ──────────────────────────────────────────────────────
@@ -114,7 +115,7 @@ export const updateVenueSchema = z.object({
   operatingHours: z.record(z.string(), z.string()).optional().nullable(),
 }).strict();
 
-export const reviewSchema = z.object({
+export const venueReviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
   comment: z.string().max(1000).optional(),
 }).strict();
@@ -123,11 +124,19 @@ export const verifyVenueSchema = z.object({
   status: z.enum(['VERIFIED', 'REJECTED']),
 }).strict();
 
+// ─── Trust & Reputation ────────────────────────────────────────────────
+export const createReviewSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(1000).optional(),
+  type: z.enum(['PLAYER', 'HOST']),
+}).strict();
+
 // ─── Reports ──────────────────────────────────────────────────────────
 export const createReportSchema = z.object({
-  targetType: z.enum(['POST', 'USER', 'COMMUNITY', 'VENUE', 'MESSAGE']),
+  targetType: z.enum(['POST', 'USER', 'COMMUNITY', 'VENUE', 'MESSAGE', 'MATCH']),
   targetId: z.string().uuid(),
-  reason: z.string().min(1).max(1000),
+  reason: z.enum(['SPAM', 'ABUSE', 'HARASSMENT', 'FAKE_EVENT', 'FRAUD', 'INAPPROPRIATE_BEHAVIOUR', 'OTHER']),
+  details: z.string().max(2000).optional(),
 }).strict();
 
 export const resolveReportSchema = z.object({

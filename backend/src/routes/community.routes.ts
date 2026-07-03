@@ -14,6 +14,7 @@ router.get('/:id', apiLimiter, communityController.getCommunityById);
 // Protected Actions
 router.post('/', requireAuth, apiLimiter, validate(createCommunitySchema), communityController.createCommunity);
 router.post('/:id/join', requireAuth, apiLimiter, communityController.joinCommunity);
+router.post('/:id/invite', requireAuth, apiLimiter, communityController.inviteUser);
 router.delete('/:id/leave', requireAuth, apiLimiter, communityController.leaveCommunity);
 
 // Moderation

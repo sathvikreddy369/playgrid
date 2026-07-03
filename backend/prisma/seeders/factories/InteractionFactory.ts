@@ -64,7 +64,7 @@ export const generateInteractions = (users: any[], matches: any[]) => {
       submitterId: submitter.id,
       targetType: ReportType.USER,
       targetId: target.id,
-      reason: "No show for the match.",
+      reason: 'OTHER',
       status: ReportStatus.PENDING,
       createdAt: getRandomPastDate(1),
       updatedAt: getRandomPastDate(1)

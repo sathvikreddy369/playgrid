@@ -52,14 +52,14 @@ export const useJoinMatch = () => {
 export const useMatchAction = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ matchId, userId, action, rating }: { matchId: string; userId?: string; action: 'approve' | 'reject' | 'attend' | 'cancel' | 'leave' | 'kick'; rating?: number }) => {
+    mutationFn: async ({ matchId, userId, action, rating, status }: { matchId: string; userId?: string; action: 'approve' | 'reject' | 'attend' | 'cancel' | 'leave' | 'kick'; rating?: number; status?: 'ATTENDED' | 'ABSENT' | 'LATE' }) => {
       let res;
       if (action === 'cancel') {
         res = await api.put(`/matches/${matchId}/cancel`);
       } else if (action === 'leave') {
         res = await api.put(`/matches/${matchId}/leave`);
       } else if (action === 'attend') {
-        res = await api.post(`/matches/${matchId}/players/${userId}/attend`, { rating });
+        res = await api.post(`/matches/${matchId}/players/${userId}/attend`, { rating, status });
       } else {
         res = await api.put(`/matches/${matchId}/players/${userId}/${action}`);
       }

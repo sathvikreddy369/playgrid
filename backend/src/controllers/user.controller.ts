@@ -10,6 +10,7 @@ export class UserController {
         where: { id },
         include: {
           profile: true,
+          trust: true,
           badges: { include: { badge: true } },
           _count: {
             select: {
@@ -129,69 +130,29 @@ export class UserController {
     }
   }
 
-  async addUserReview(req: Request, res: Response, next: NextFunction) {
+  async getFeedActivities(req: Request, res: Response, next: NextFunction) {
     try {
-      const reviewerId = req.user!.id;
-      const targetId = req.params.id as string;
-      const { rating, comment } = req.body;
-
-      if (reviewerId === targetId) {
-        throw AppError.badRequest('You cannot review yourself');
-      }
-
-      // Check if they have played a match together
-      const sharedMatches = await prisma.matchPlayer.findFirst({
-        where: {
-          userId: reviewerId,
-          status: 'ATTENDED',
-          match: {
-            players: {
-              some: {
-                userId: targetId,
-                status: 'ATTENDED'
-              }
-            }
-          }
-        }
-      });
-
-      const hostedShared = await prisma.match.findFirst({
-        where: {
-          creatorId: targetId,
-          status: 'COMPLETED',
-          players: {
-            some: {
-              userId: reviewerId,
-              status: 'ATTENDED'
-            }
-          }
-        }
-      });
+      const id = req.params.id as string;
+      const { limit, cursor } = req.query;
+      const { activityService } = await import('../services/activity.service');
       
-      const guestShared = await prisma.match.findFirst({
-        where: {
-          creatorId: reviewerId,
-          status: 'COMPLETED',
-          players: {
-            some: {
-              userId: targetId,
-              status: 'ATTENDED'
-            }
-          }
-        }
-      });
+      const activities = await activityService.getFeedActivities(
+        id,
+        limit ? parseInt(limit as string) : 20,
+        cursor as string
+      );
+      res.json(activities);
+    } catch (error) {
+      next(error);
+    }
+  }
 
-      if (!sharedMatches && !hostedShared && !guestShared) {
-        throw AppError.badRequest('You can only review users you have played with');
-      }
-
-      const review = await prisma.userReview.upsert({
-        where: { reviewerId_targetId: { reviewerId, targetId } },
-        update: { rating, comment },
-        create: { reviewerId, targetId, rating, comment }
-      });
-
-      res.status(201).json(review);
+  async getConnections(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = req.params.id as string;
+      const { connectionService } = await import('../services/connection.service');
+      const connections = await connectionService.getConnections(id);
+      res.json(connections);
     } catch (error) {
       next(error);
     }
@@ -202,17 +163,45 @@ export class UserController {
       const requesterId = req.user!.id;
       const recipientId = req.params.id as string;
 
-      if (requesterId === recipientId) {
-        throw AppError.badRequest('You cannot connect with yourself');
-      }
-
-      const connection = await prisma.userConnection.upsert({
-        where: { requesterId_recipientId: { requesterId, recipientId } },
-        update: { status: 'PENDING' },
-        create: { requesterId, recipientId, status: 'PENDING' }
-      });
-
+      const { connectionService } = await import('../services/connection.service');
+      const connection = await connectionService.sendRequest(requesterId, recipientId);
       res.status(201).json(connection);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async acceptConnection(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user!.id;
+      const requesterId = req.params.id as string;
+      const { connectionService } = await import('../services/connection.service');
+      const result = await connectionService.acceptRequest(userId, requesterId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async rejectConnection(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user!.id;
+      const requesterId = req.params.id as string;
+      const { connectionService } = await import('../services/connection.service');
+      const result = await connectionService.rejectRequest(userId, requesterId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async removeConnection(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user!.id;
+      const otherUserId = req.params.id as string;
+      const { connectionService } = await import('../services/connection.service');
+      const result = await connectionService.removeConnection(userId, otherUserId);
+      res.json(result);
     } catch (error) {
       next(error);
     }

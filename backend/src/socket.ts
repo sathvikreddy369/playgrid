@@ -50,11 +50,23 @@ export const initializeSocket = (server: Server) => {
     }
   });
 
-  io.on('connection', (socket) => {
+  io.on('connection', async (socket) => {
     const userId = socket.data.userId;
 
     // Join a personal room for targeted messaging
     socket.join(`user:${userId}`);
+    
+    // Update presence
+    try {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { isOnline: true, lastActive: new Date() }
+      });
+      // Broadcast to all (or just friends, but for simplicity broadcast globally)
+      io.emit('presence_update', { userId, isOnline: true, lastActive: new Date() });
+    } catch (e) {
+      console.error('Failed to update presence on connect', e);
+    }
 
     // Handle sending messages
     socket.on('send_message', async (data: { to: string; content: string }) => {
@@ -140,8 +152,18 @@ export const initializeSocket = (server: Server) => {
       }
     });
 
-    socket.on('disconnect', () => {
-      // Cleanup if needed
+    socket.on('disconnect', async () => {
+      // Handle disconnected user
+      try {
+        const lastActive = new Date();
+        await prisma.user.update({
+          where: { id: userId },
+          data: { isOnline: false, lastActive }
+        });
+        io.emit('presence_update', { userId, isOnline: false, lastActive });
+      } catch (e) {
+        console.error('Failed to update presence on disconnect', e);
+      }
     });
   });
 

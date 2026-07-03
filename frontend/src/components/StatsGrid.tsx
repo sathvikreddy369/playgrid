@@ -7,9 +7,9 @@ export const StatsGrid = ({ user }: { user: any }) => {
   const matchesHosted = user._count?.matchesCreated || 0;
   const communitiesJoined = user._count?.communityMemberships || 0;
   
-  // Example heuristic: Completion % based on matches attended vs total joined
-  // In a real app this would be computed by backend accurately.
-  const completionRate = '95%'; 
+  const completionRate = user.trust?.totalMatchesJoined > 0
+    ? `${Math.round((user.trust.totalMatchesAttended / user.trust.totalMatchesJoined) * 100)}%`
+    : 'N/A';
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">

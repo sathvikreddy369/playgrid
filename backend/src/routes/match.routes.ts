@@ -15,6 +15,7 @@ router.get('/', apiLimiter, matchController.getMatches);
 router.get('/:id', apiLimiter, matchController.getMatchById);
 router.post('/', requireAuth, apiLimiter, validate(createMatchSchema), matchController.createMatch);
 router.post('/:id/join', requireAuth, apiLimiter, matchController.requestToJoin);
+router.post('/:id/invite', requireAuth, apiLimiter, matchController.inviteUser);
 router.put('/:id/leave', requireAuth, apiLimiter, matchController.leaveMatch);
 router.put('/:id/cancel', requireAuth, apiLimiter, matchController.cancelMatch);
 

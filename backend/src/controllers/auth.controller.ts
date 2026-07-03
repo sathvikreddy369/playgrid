@@ -14,7 +14,7 @@ export class AuthController {
       // Check if user exists
       let user = await prisma.user.findUnique({
         where: { firebaseUid },
-        include: { profile: true, badges: { include: { badge: true } }, communityMemberships: { include: { community: true } } }
+        include: { profile: true, trust: true, badges: { include: { badge: true } }, communityMemberships: { include: { community: true } } }
       });
 
         if (!user) {
@@ -29,7 +29,7 @@ export class AuthController {
                 create: {} // Create empty profile
               }
             },
-            include: { profile: true, badges: { include: { badge: true } }, communityMemberships: { include: { community: true } } }
+            include: { profile: true, trust: true, badges: { include: { badge: true } }, communityMemberships: { include: { community: true } } }
           });
           StructuredLogger.audit('USER_SIGNUP', user.id, user.id, 'SUCCESS', req.id);
         } else {
@@ -51,7 +51,7 @@ export class AuthController {
 
       const fullUser = await prisma.user.findUnique({
         where: { id: user.id },
-        include: { profile: true, badges: { include: { badge: true } }, communityMemberships: { include: { community: true } } }
+        include: { profile: true, trust: true, badges: { include: { badge: true } }, communityMemberships: { include: { community: true } } }
       });
       if (!fullUser) {
         throw AppError.notFound('User not found');

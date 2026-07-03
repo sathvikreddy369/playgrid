@@ -35,6 +35,28 @@ export class ActivityService {
       include: { user: { select: { name: true, profile: { select: { avatarUrl: true } } } } }
     });
   }
+
+  async getFeedActivities(userId: string, limit = 20, cursor?: string) {
+    // 1. Get user's connections
+    const connections = await prisma.userConnection.findMany({
+      where: {
+        OR: [{ requesterId: userId }, { recipientId: userId }],
+        status: 'ACCEPTED'
+      }
+    });
+
+    const friendIds = connections.map(c => c.requesterId === userId ? c.recipientId : c.requesterId);
+    friendIds.push(userId); // Include own activities
+
+    // 2. Fetch activities
+    return prisma.activity.findMany({
+      where: { userId: { in: friendIds } },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+      include: { user: { select: { id: true, name: true, profile: { select: { avatarUrl: true } } } } }
+    });
+  }
 }
 
 export const activityService = new ActivityService();

@@ -12,6 +12,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { format } from 'date-fns';
+import { ActivityFeed } from '../components/ActivityFeed';
 
 export const Home = () => {
   const { user } = useAuth();
@@ -151,11 +152,11 @@ export const Home = () => {
                 )}
               </section>
 
-              {/* Activity Feed Snippet */}
+              {/* Posts Snippet */}
               <section>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold flex items-center gap-2">
-                    Activity Feed
+                    Community Posts
                   </h2>
                 </div>
                 <div className="space-y-4">

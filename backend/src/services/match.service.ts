@@ -1,8 +1,9 @@
 import prisma from '../utils/db';
-import { MatchStatus } from '@prisma/client';
+import { MatchStatus, MatchPlayerStatus } from '@prisma/client';
 import { notificationService } from './notification.service';
 import { FraudDetection } from '../utils/fraudDetection';
 import { activityService } from './activity.service';
+import { trustService } from './trust.service';
 
 export class MatchService {
   async createMatch(userId: string, data: any) {
@@ -34,6 +35,9 @@ export class MatchService {
     });
 
     await activityService.logActivity(userId, 'MATCH_CREATED', match.id, 'Match', { title: match.title, sport: match.sport });
+
+    // Record match host trust event
+    await trustService.recordMatchHost(userId);
 
     return match;
   }
@@ -172,6 +176,39 @@ export class MatchService {
     return player;
   }
 
+  async inviteUser(matchId: string, inviterId: string, targetUserId: string) {
+    const match = await prisma.match.findUnique({ 
+      where: { id: matchId },
+      include: { creator: { select: { name: true } } }
+    });
+    if (!match) throw new Error('Match not found');
+
+    const inviter = await prisma.user.findUnique({ where: { id: inviterId } });
+
+    const existing = await prisma.matchPlayer.findUnique({
+      where: { matchId_userId: { matchId, userId: targetUserId } }
+    });
+    
+    if (existing && existing.status !== 'WITHDRAWN') {
+      throw new Error(`User already has status: ${existing.status}`);
+    }
+
+    const player = await prisma.matchPlayer.upsert({
+      where: { matchId_userId: { matchId, userId: targetUserId } },
+      update: { status: 'INVITED' },
+      create: { matchId, userId: targetUserId, status: 'INVITED' }
+    });
+
+    await notificationService.createNotification({
+      userId: targetUserId,
+      type: 'MATCH_INVITE',
+      content: `${inviter?.name || 'Someone'} invited you to join ${match.title}.`,
+      link: `/matches/${matchId}`
+    });
+
+    return player;
+  }
+
   async handleJoinRequest(matchId: string, creatorId: string, targetUserId: string, action: 'APPROVED' | 'REJECTED') {
     const match = await prisma.match.findUnique({ where: { id: matchId } });
     if (!match || match.creatorId !== creatorId) throw new Error('Unauthorized');
@@ -198,6 +235,9 @@ export class MatchService {
       
       // Log activity for joining
       await activityService.logActivity(targetUserId, 'MATCH_JOINED', match.id, 'Match', { title: match.title });
+
+      // Record in Trust Service
+      await trustService.recordMatchJoin(targetUserId);
     }
 
     return updated;
@@ -228,8 +268,16 @@ export class MatchService {
     // Otherwise, mark as withdrawn
     const updated = await prisma.matchPlayer.update({
       where: { matchId_userId: { matchId, userId } },
-      data: { status: 'WITHDRAWN' }
+      data: { 
+        status: 'WITHDRAWN',
+        withdrawnAt: new Date()
+      }
     });
+
+    // Check if it's a late cancellation (e.g. < 24h)
+    const hoursUntilMatch = (match.date.getTime() - new Date().getTime()) / (1000 * 60 * 60);
+    const isLate = hoursUntilMatch < 24;
+    await trustService.processCancellation(userId, matchId, isLate);
 
     // If the match was FULL and an APPROVED player leaves, make it OPEN again
     if (player.status === 'APPROVED' && match.status === 'FULL') {
@@ -281,23 +329,18 @@ export class MatchService {
     return updated;
   }
 
-  async markAttendance(matchId: string, creatorId: string, targetUserId: string, performanceRating: number) {
+  async markAttendance(matchId: string, creatorId: string, targetUserId: string, status: MatchPlayerStatus, performanceRating?: number) {
     const match = await prisma.match.findUnique({ where: { id: matchId } });
     if (!match || match.creatorId !== creatorId) throw new Error('Unauthorized');
 
-    if (performanceRating < 1 || performanceRating > 5) throw new Error('Rating must be 1-5');
+    if (performanceRating && (performanceRating < 1 || performanceRating > 5)) throw new Error('Rating must be 1-5');
 
     const player = await prisma.matchPlayer.update({
       where: { matchId_userId: { matchId, userId: targetUserId } },
-      data: { status: 'ATTENDED', performanceRating }
+      data: { status, performanceRating }
     });
 
-    // Boost reputation (e.g. base +5 for attending, plus rating bonus)
-    const reputationBoost = 5 + (performanceRating * 2); // max 15 points
-    await prisma.user.update({
-      where: { id: targetUserId },
-      data: { reputation: { increment: reputationBoost } }
-    });
+    await trustService.updateAttendance(targetUserId, matchId, status);
 
     return player;
   }
@@ -314,6 +357,8 @@ export class MatchService {
       where: { id: matchId },
       data: { status: 'CANCELLED' }
     });
+
+    await trustService.processHostCancellation(creatorId);
 
     // Notify all approved players
     for (const p of match.players) {

@@ -10,7 +10,11 @@ router.get('/:id/likes', requireAuth, userController.getUserLikes);
 router.get('/:id/replies', requireAuth, userController.getUserReplies);
 router.get('/:id/matches', requireAuth, userController.getUserMatches);
 router.get('/:id/activities', requireAuth, userController.getUserActivities);
-router.post('/:id/reviews', requireAuth, userController.addUserReview);
+router.get('/:id/feed', requireAuth, userController.getFeedActivities);
+router.get('/:id/connections', requireAuth, userController.getConnections);
 router.post('/:id/connect', requireAuth, userController.connectUser);
+router.put('/:id/accept', requireAuth, userController.acceptConnection);
+router.put('/:id/reject', requireAuth, userController.rejectConnection);
+router.delete('/:id/connection', requireAuth, userController.removeConnection);
 
 export default router;

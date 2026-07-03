@@ -133,6 +133,18 @@ export class CommunityController {
       next(error);
     }
   }
+
+  async inviteUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const inviterId = req.user!.id;
+      const communityId = req.params.id as string;
+      const { targetUserId } = req.body;
+      const result = await communityService.inviteUser(communityId, inviterId, targetUserId);
+      res.status(201).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const communityController = new CommunityController();

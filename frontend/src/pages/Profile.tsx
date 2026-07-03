@@ -12,11 +12,13 @@ import toast from 'react-hot-toast';
 import { StatsGrid } from '../components/StatsGrid';
 import { BadgeGrid } from '../components/BadgeGrid';
 import { ActivityTimeline } from '../components/ActivityTimeline';
+import { useConnections, useAcceptConnection, useRejectConnection, useRemoveConnection } from '../hooks/useConnections';
+import { UserCheck, UserMinus, UserX } from 'lucide-react';
 
 export const Profile = () => {
  const { user, profile, firebaseUser, syncUser } = useAuth();
  const [isUpgrading, setIsUpgrading] = useState(false);
- const [activeTab, setActiveTab] = useState<'activity' | 'posts' | 'communities' | 'matches'>('activity');
+ const [activeTab, setActiveTab] = useState<'activity' | 'posts' | 'communities' | 'matches' | 'friends'>('activity');
  const [isEditing, setIsEditing] = useState(false);
  
  const [formData, setFormData] = useState({
@@ -98,6 +100,11 @@ export const Profile = () => {
  enabled: activeTab === 'matches' && !!user
  });
 
+ const { data: connections } = useConnections(user?.id);
+ const acceptConnection = useAcceptConnection();
+ const rejectConnection = useRejectConnection();
+ const removeConnection = useRemoveConnection();
+
  if (!user || !profile) {
  return (
  <div className="max-w-4xl mx-auto w-full min-h-screen py-10 px-4">
@@ -143,9 +150,15 @@ export const Profile = () => {
  {user.role === 'ADMIN' ? <ShieldAlert className="w-3.5 h-3.5" /> : user.role === 'ORGANIZER' ? <Zap className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
  {user.role}
  </span>
- <span className="badge-premium bg-emerald-50 border-emerald-200 text-emerald-800 flex items-center gap-1.5">
- <Trophy className="w-3.5 h-3.5 text-emerald-600" />
- Reputation: {user.reputation}
+ <span className={`badge-premium border text-white flex items-center gap-1.5 ${
+    user.trust?.trustCategory === 'EXCELLENT' || user.trust?.trustCategory === 'RELIABLE'
+      ? 'bg-emerald-500 border-emerald-600'
+      : user.trust?.trustCategory === 'AVERAGE'
+      ? 'bg-yellow-500 border-yellow-600'
+      : user.trust ? 'bg-red-500 border-red-600' : 'bg-zinc-400 border-zinc-500'
+ }`}>
+ <ShieldAlert className="w-3.5 h-3.5" />
+ {user.trust ? `${user.trust.trustCategory} · ${Math.round(user.trust.internalTrustScore / 10)}/100` : 'Trust: Building...'}
  </span>
  </div>
  </div>
@@ -320,6 +333,7 @@ export const Profile = () => {
  { id: 'activity', label: 'Activity' },
  { id: 'matches', label: 'Matches' },
  { id: 'communities', label: 'Communities' },
+ { id: 'friends', label: 'Friends' },
  { id: 'posts', label: 'Posts' }
  ].map((tab) => (
  <button 
@@ -386,6 +400,50 @@ export const Profile = () => {
  </div>
  </Link>
  )) : <EmptyState text="No matches found." />
+ )}
+
+ {activeTab === 'friends' && (
+   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+     {connections && connections.length > 0 ? connections.map((c) => {
+       const friend = c.friend;
+       if (!friend) return null;
+       return (
+         <div key={c.id} className="card-premium p-4 flex items-center justify-between bg-surface">
+           <Link to={`/profile/${friend.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+             <div className="relative">
+               <img src={friend.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${friend.name}&background=random`} alt={friend.name} className="w-12 h-12 rounded-full border border-border" />
+               {friend.isOnline && <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>}
+             </div>
+             <div>
+               <h4 className="font-bold text-sm text-foreground">{friend.name}</h4>
+               {c.status === 'PENDING' ? (
+                 <p className="text-xs text-orange-500 font-bold">{c.isRequester ? 'Request Sent' : 'Pending Request'}</p>
+               ) : (
+                 <p className="text-xs text-muted font-bold">Friend</p>
+               )}
+             </div>
+           </Link>
+           <div className="flex items-center gap-2">
+             {c.status === 'PENDING' && !c.isRequester && (
+               <>
+                 <button onClick={() => acceptConnection.mutate({ userId: user!.id, requesterId: friend.id })} className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-full transition-colors" title="Accept">
+                   <UserCheck className="w-4 h-4" />
+                 </button>
+                 <button onClick={() => rejectConnection.mutate({ userId: user!.id, requesterId: friend.id })} className="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-full transition-colors" title="Reject">
+                   <UserX className="w-4 h-4" />
+                 </button>
+               </>
+             )}
+             {c.status === 'ACCEPTED' && (
+               <button onClick={() => removeConnection.mutate({ userId: user!.id, otherUserId: friend.id })} className="p-2 bg-zinc-50 text-muted hover:text-red-600 hover:bg-red-50 rounded-full transition-colors" title="Remove Friend">
+                 <UserMinus className="w-4 h-4" />
+               </button>
+             )}
+           </div>
+         </div>
+       );
+     }) : <EmptyState text="No friends yet." />}
+   </div>
  )}
  </motion.div>
  </AnimatePresence>

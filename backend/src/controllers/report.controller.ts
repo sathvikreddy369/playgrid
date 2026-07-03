@@ -10,12 +10,13 @@ export class ReportController {
       }
 
       // req.body is already validated by Zod middleware
-      const { targetType, targetId, reason } = req.body;
+      const { targetType, targetId, reason, details } = req.body;
 
       const report = await reportService.createReport(req.user.id, {
         targetType,
         targetId,
-        reason
+        reason,
+        details
       });
 
       res.status(201).json({ message: 'Report submitted successfully', report });
