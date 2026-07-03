@@ -1,125 +1,30 @@
-# PlayGrid Architecture & System Design
+# Architecture Overview
 
-PlayGrid is built using a modern decoupled architecture. The frontend is a React Single Page Application (SPA), while the backend is an Express Node.js REST API powered by PostgreSQL. 
+PlayGrid follows a modern, decoupled monolithic architecture separated into a distinct Frontend (React/Vite) and Backend (Express/Node.js).
 
-## High-Level Architecture
+## High-Level Diagram
 
 ```mermaid
 graph TD
-    Client[React Frontend / Web Browser]
-    
-    subgraph PlayGrid Infrastructure
-        API[Express API Server]
-        WSS[Socket.IO Server]
-        DB[(PostgreSQL)]
-        Worker[Background Tasks]
-    end
-    
-    subgraph Third-Party Integrations
-        Firebase[Firebase Auth]
-        Gemini[Google Gemini AI]
-        Cloudinary[Cloudinary CDN]
-    end
-
-    Client -- REST HTTP --> API
-    Client -- WebSockets --> WSS
-    Client -- Token Auth --> Firebase
-    
-    API -- Prisma ORM --> DB
-    WSS -- Session Status --> DB
-    API -- Review Processing --> Worker
-    
-    Worker -- Async Inference --> Gemini
-    API -- Image Uploads --> Cloudinary
+    Client[Web Client - React/Vite] -->|REST / JSON| Express[Backend API - Express]
+    Client -->|Socket.io / WSS| Sockets[Socket Layer]
+    Express --> DB[(PostgreSQL + Prisma)]
+    Sockets --> DB
+    Express --> Auth[Firebase Admin Auth]
+    Client --> Firebase[Firebase Client Auth]
+    Express --> Cloudinary[Cloudinary Media]
 ```
 
-## Backend Design Patterns
+## System Components
 
-### 1. Controller-Service Pattern
-The backend isolates business logic from HTTP transport logic. 
-- **Controllers** (`src/controllers/`) handle HTTP requests, request validation (via Zod), and JSON serialization.
-- **Services** (`src/services/`) hold the core business logic and Prisma ORM interactions.
+### Frontend (SPA)
+Built using React and Vite, the frontend operates as a Single Page Application. It uses `react-router-dom` for navigation, `react-query` for API state and caching, and `socket.io-client` for real-time capabilities.
 
-### 2. Observability & Logging
-Every request passes through the `observabilityMiddleware` which attaches a unique `X-Request-ID`. A `StructuredLogger` outputs strictly JSON-formatted logs for automated ingestion by systems like Datadog or ELK.
+### Backend (REST API + Sockets)
+The backend is a Node.js Express server structured in a classic Controller-Service-Repository pattern. It handles business logic, security, permissions, and communicates directly with PostgreSQL via Prisma. A concurrent Socket.io server handles real-time bidirectional communication.
 
-### 3. Asynchronous AI Processing
-Heavy tasks like AI review summarization using Gemini are handled outside the main request thread to prevent blocking the Node.js event loop.
+### Database
+PostgreSQL is used as the primary data store. The schema is highly relational, utilizing Prisma as the ORM to guarantee end-to-end type safety between the database and the backend services.
 
-## Database Entity-Relationship (ER) Diagram
-
-Below is the database schema mapping the relationships between Users, Matches, Communities, and Venues.
-
-```mermaid
-erDiagram
-    USER ||--o{ PROFILE : "has one"
-    USER ||--o{ POST : writes
-    USER ||--o{ MATCH : creates
-    USER ||--o{ MATCH_PLAYER : participates
-    USER ||--o{ COMMUNITY : owns
-    USER ||--o{ VENUE : owns
-
-    MATCH ||--o{ MATCH_PLAYER : "has many"
-    MATCH ||--o{ MATCH_COMMENT : "has many"
-    MATCH }|--o| COMMUNITY : "belongs to (optional)"
-
-    COMMUNITY ||--o{ COMMUNITY_MEMBER : "has many"
-    COMMUNITY ||--o{ POST : "contains"
-
-    VENUE ||--o{ GROUND_REVIEW : "receives"
-    USER ||--o{ GROUND_REVIEW : "writes"
-
-    POST ||--o{ REPLY : "has many"
-    POST ||--o{ POST_LIKE : "has many"
-
-    USER {
-        string id PK
-        string email UK
-        string name
-        enum role
-        int reputation
-        boolean isBlocked
-    }
-
-    PROFILE {
-        string id PK
-        string userId FK
-        string bio
-        string location
-        string avatarUrl
-        string[] sports
-    }
-
-    MATCH {
-        string id PK
-        string title
-        datetime date
-        string location
-        int maxPlayers
-        enum status
-        string creatorId FK
-        string communityId FK
-    }
-
-    COMMUNITY {
-        string id PK
-        string name
-        enum status
-        string ownerId FK
-    }
-
-    VENUE {
-        string id PK
-        string name
-        string location
-        enum status
-        string ownerId FK
-        string aiSummary
-    }
-```
-
-## Scalability Choices
-
-1. **Pagination**: Core list endpoints implement `skip/take` pagination to limit payload sizes and query times.
-2. **Indexing**: Spatial coordinates (`latitude`, `longitude`) and heavily filtered fields (`status`, `date`) are indexed in PostgreSQL.
-3. **Caching Strategy**: The frontend leverages React Query to aggressively cache immutable data (like static profiles or completed matches) while keeping real-time data fresh.
+### Real-time Layer
+The Socket.io layer allows real-time dispatch of notifications, direct messages, community group chats, and live updates to the activity feed. It uses rooms and direct user connections to route messages efficiently.

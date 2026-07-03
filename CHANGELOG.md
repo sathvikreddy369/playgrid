@@ -21,8 +21,13 @@ and this project adheres to Semantic Versioning.
 
 ### Changed
 - **UI/UX Aesthetics**: Repository completely overhauled into a modern, dark-mode focused, glassmorphic design system using Tailwind CSS, framer-motion micro-animations, and `shadcn/ui` components.
-- **Performance Improvements**: Codebase migrated from bloated initial setup to strict TypeScript interfaces. Image optimization via Cloudinary. Real-time connections managed aggressively to prevent socket leaks.
+
+### Refactored
 - **API Standardization**: Centralized error handling across all backend Express routes mapping to structured, standardized HTTP responses (`AppError`).
+
+### Performance
+- **Database & Media**: Codebase migrated from bloated initial setup to strict TypeScript interfaces. Image optimization via Cloudinary.
+- **Real-time Engine**: Real-time connections managed aggressively to prevent socket leaks and connection drops.
 
 ### Fixed
 - **Socket Multi-tab Presence**: Fixed premature offline presence status caused by single-tab closure when multi-tab sessions are active.
@@ -32,6 +37,13 @@ and this project adheres to Semantic Versioning.
 - **Strict Role-based Access Control (RBAC)**: Validations at every service layer to prevent users from interacting with communities they aren't part of, matches they haven't joined, or venues they don't own.
 - **Brute Force Mitigations**: Added `express-rate-limit` to authentication and sign-up API surfaces to prevent malicious signup automation.
 - **Private Sockets**: Hardened Socket.io room joins to require explicit database lookup ensuring private data remains invisible to bad actors.
+
+### Documentation
+- **Complete Re-architecture**: Deleted 35 redundant markdown files and established a strictly curated, professional `docs/` hierarchy documenting Architecture, Setup, and API systems.
+- **Environment Safety**: Generated root `.env.example` to detail required keys securely.
+
+### Accessibility
+- **WCAG Standards**: Integrated Radix primitives via `shadcn/ui` to guarantee ARIA-compliance and keyboard navigation support across all complex UI dialogs.
 
 ---
 
