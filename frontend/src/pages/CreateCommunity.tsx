@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useCreateCommunity } from '../hooks/useCommunities';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';

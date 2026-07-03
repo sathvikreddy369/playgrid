@@ -13,7 +13,7 @@ import { BadgeGrid } from '../components/BadgeGrid';
 import { ActivityTimeline } from '../components/ActivityTimeline';
 import { Link } from 'react-router-dom';
 import { useConnections, useSendConnectionRequest, useAcceptConnection, useRemoveConnection } from '../hooks/useConnections';
-import { UserPlus, UserCheck, UserMinus, UserX, Clock, Share2 } from 'lucide-react';
+import { UserPlus, UserCheck, UserMinus, Clock, Share2 } from 'lucide-react';
 import { ShareDialog } from '../components/ShareDialog';
 
 export const UserPublicProfile = () => {

@@ -18,7 +18,6 @@ export const useSocket = () => {
         });
 
         socket.current.on('connect', () => {
-          console.log('Socket connected');
         });
 
         socket.current.on('connect_error', (err: any) => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTournaments } from '../hooks/useTournaments';
 import { format } from 'date-fns';
-import { Trophy, Calendar, MapPin, Users, Plus } from 'lucide-react';
+import { Trophy, Calendar, MapPin, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '../components/ui/Button';
 

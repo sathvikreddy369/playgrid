@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../providers/AuthProvider';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import { Save, User, MapPin, Gamepad2, Activity, Clock, Shield, Upload, Loader2 } from 'lucide-react';
+import { Save, MapPin, Gamepad2, Activity, Clock, Shield, Upload, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { Input } from '../components/ui/Input';

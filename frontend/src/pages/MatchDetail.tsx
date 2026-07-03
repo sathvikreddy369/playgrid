@@ -85,7 +85,6 @@ export const MatchDetail = () => {
  matchAction.mutate({ matchId: match.id, userId, action, rating, status });
  };
 
- const isPast = new Date(match.date) < new Date();
  const isParticipant = isCreator || myRequest?.status === 'APPROVED' || myRequest?.status === 'ATTENDED';
 
  const handleCommentSubmit = (e: React.FormEvent) => {
