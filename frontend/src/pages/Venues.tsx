@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useGrounds } from '../hooks/useGrounds';
+import { useVenues } from '../hooks/useVenues';
 import { Link, useNavigate } from 'react-router-dom';
 import { MapPin, Star, Plus, Filter, Search } from 'lucide-react';
 import { useAuth } from '../providers/AuthProvider';
@@ -8,9 +8,9 @@ import { motion } from 'framer-motion';
 
 const MotionLink = motion.create(Link);
 
-export const Grounds = () => {
- const [filters, setFilters] = useState({ status: 'VERIFIED', sport: '', location: '', minRating: 0 });
- const { data: grounds, isLoading } = useGrounds(filters);
+export const Venues = () => {
+ const [filters, setFilters] = useState<{ status: string; sport: string; location: string; minRating: number; sortBy: string; lat?: number; lng?: number }>({ status: 'VERIFIED', sport: '', location: '', minRating: 0, sortBy: 'rating' });
+ const { data: venues, isLoading } = useVenues(filters);
  const navigate = useNavigate();
  const { user } = useAuth();
 
@@ -31,11 +31,11 @@ export const Grounds = () => {
  <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4 border-b border-border pb-6">
  <div>
  <h1 className="text-3xl font-black text-foreground tracking-tight">Sports Venues</h1>
- <p className="text-muted text-sm mt-1">Discover and book top-rated sports grounds near you.</p>
+ <p className="text-muted text-sm mt-1">Discover and book top-rated sports venues near you.</p>
  </div>
  {user && (user.role === 'ORGANIZER' || user.role === 'ADMIN') && (
  <button 
- onClick={() => navigate('/grounds/create')}
+ onClick={() => navigate('/venues/create')}
  className="btn-primary inline-flex items-center gap-2"
  >
  <Plus className="w-4 h-4" /> List Your Venue
@@ -83,6 +83,29 @@ export const Grounds = () => {
  <option value={4}>4+ Stars</option>
  <option value={4.5}>4.5+ Stars</option>
  </select>
+
+ <select
+ value={filters.sortBy}
+ onChange={(e) => {
+   const val = e.target.value;
+   if (val === 'nearby') {
+     if ('geolocation' in navigator) {
+       navigator.geolocation.getCurrentPosition((pos) => {
+         setFilters(prev => ({ ...prev, sortBy: val, lat: pos.coords.latitude, lng: pos.coords.longitude }));
+       }, () => {
+         alert('Could not get your location. Please enable location services.');
+         setFilters(prev => ({ ...prev, sortBy: 'rating' }));
+       });
+     }
+   } else {
+     setFilters(prev => ({ ...prev, sortBy: val, lat: undefined, lng: undefined }));
+   }
+ }}
+ className="bg-zinc-50 border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-950 font-medium"
+ >
+ <option value="rating">Highest Rated</option>
+ <option value="nearby">Nearby</option>
+ </select>
  </div>
 
  {isLoading ? (
@@ -101,7 +124,7 @@ export const Grounds = () => {
  </div>
  ))}
  </div>
- ) : grounds?.length > 0 ? (
+ ) : venues?.length > 0 ? (
  <motion.div 
  initial="hidden"
  animate="visible"
@@ -111,47 +134,47 @@ export const Grounds = () => {
  }}
  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
  >
- {grounds.map((ground: any) => (
+ {venues.map((venue: any) => (
  <MotionLink 
  variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
- key={ground.id} 
- to={`/grounds/${ground.id}`}
+ key={venue.id} 
+ to={`/venues/${venue.id}`}
  className="card-premium overflow-hidden group flex flex-col h-full hover:border-zinc-400 transition-all bg-surface"
  >
  <div className="h-52 bg-zinc-100 overflow-hidden relative">
- {ground.photos?.[0] ? (
- <img src={ground.photos[0]} alt={ground.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+ {venue.photos?.[0] ? (
+ <img src={venue.photos[0]} alt={venue.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
  ) : (
  <div className="w-full h-full flex flex-col items-center justify-center text-muted gap-2">
  <MapPin className="w-8 h-8 opacity-50" />
  <span className="text-xs font-semibold">No image uploaded</span>
  </div>
  )}
- {ground.pricing && (
+ {venue.pricing && (
  <div className="absolute top-4 right-4 bg-zinc-950/90 text-white backdrop-blur-md px-3 py-1.5 rounded-xl text-xs font-extrabold shadow-sm border border-white/10">
- {ground.pricing}
+ {venue.pricing}
  </div>
  )}
  </div>
  
  <div className="p-6 flex flex-col flex-1">
  <h3 className="text-lg font-bold text-foreground mb-1 line-clamp-1 group-hover:underline transition-colors">
- {ground.name}
+ {venue.name}
  </h3>
  <div className="flex items-center gap-1.5 text-muted text-xs font-bold mb-4">
  <MapPin className="w-3.5 h-3.5 shrink-0" />
- <span className="truncate">{ground.location}</span>
+ <span className="truncate">{venue.location}</span>
  </div>
  
  <div className="flex flex-wrap gap-1.5 mb-6">
- {ground.sports?.slice(0, 3).map((sport: string) => (
+ {venue.sports?.slice(0, 3).map((sport: string) => (
  <span key={sport} className={`badge-premium ${getSportBadgeClass(sport)}`}>
  {sport}
  </span>
  ))}
- {ground.sports?.length > 3 && (
+ {venue.sports?.length > 3 && (
  <span className="text-[10px] font-bold text-muted bg-zinc-150 px-2 py-0.5 rounded-full border border-border">
- +{ground.sports.length - 3} more
+ +{venue.sports.length - 3} more
  </span>
  )}
  </div>
@@ -160,10 +183,10 @@ export const Grounds = () => {
  <div className="flex items-center gap-1.5 text-amber-500">
  <Star className="w-4 h-4 fill-current text-amber-500" />
  <span className="text-foreground font-bold">
- {ground.avgRating > 0 ? ground.avgRating.toFixed(1) : 'New'}
+ {venue.avgRating > 0 ? venue.avgRating.toFixed(1) : 'New'}
  </span>
- {ground._count.reviews > 0 && (
- <span className="text-muted font-semibold">({ground._count.reviews} reviews)</span>
+ {venue._count.reviews > 0 && (
+ <span className="text-muted font-semibold">({venue._count.reviews} reviews)</span>
  )}
  </div>
  </div>
@@ -177,7 +200,7 @@ export const Grounds = () => {
  <MapPin className="w-8 h-8 text-muted" />
  </div>
  <h3 className="text-lg font-bold text-foreground mb-1">No venues found</h3>
- <p className="text-muted text-sm">Check back later for new ground listings.</p>
+ <p className="text-muted text-sm">Check back later for new venue listings.</p>
  </div>
  )}
  </div>

@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../middlewares/auth.middleware';
 import { communityController } from '../controllers/community.controller';
-import { groundController } from '../controllers/ground.controller';
+import { venueController } from '../controllers/venue.controller';
 import { adminController } from '../controllers/admin.controller';
 import { validate } from '../middlewares/validate';
-import { verifyCommunitySchema, verifyGroundSchema, resolveReportSchema } from '../validators';
+import { verifyCommunitySchema, verifyVenueSchema, resolveReportSchema } from '../validators';
 
 const router = Router();
 
@@ -20,8 +20,8 @@ router.get('/matches', adminController.getMatches);
 // Community Verification
 router.put('/communities/:id/verify', validate(verifyCommunitySchema), communityController.verifyCommunity);
 
-// Ground Verification
-router.put('/grounds/:id/verify', validate(verifyGroundSchema), groundController.verifyGround);
+// Venue Verification
+router.put('/venues/:id/verify', validate(verifyVenueSchema), venueController.verifyVenue);
 
 // Moderation & Reports
 router.get('/reports', adminController.getReports);

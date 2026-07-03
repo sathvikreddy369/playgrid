@@ -10,7 +10,8 @@
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "seed:demo": "npx tsx prisma/seed-demo.ts",
-    "seed:stress": "npx tsx prisma/seed-stress.ts"
+    "seed:stress": "npx tsx prisma/seed-stress.ts",
+    "seed": "npx tsx prisma/seed-dev.ts"
   },
   "keywords": [],
   "author": "",

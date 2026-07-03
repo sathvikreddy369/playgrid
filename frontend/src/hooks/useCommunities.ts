@@ -1,11 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 
-export const useCommunities = (status?: string) => {
+interface CommunityFilters {
+  lat?: number;
+  lng?: number;
+  radius?: number;
+  sport?: string;
+  search?: string;
+}
+
+export const useCommunities = (filters?: CommunityFilters) => {
   return useQuery({
-    queryKey: ['communities', status],
+    queryKey: ['communities', filters],
     queryFn: async () => {
-      const { data } = await api.get('/communities', { params: { status } });
+      const { data } = await api.get('/communities', { params: filters });
       return data;
     },
   });
@@ -25,7 +33,7 @@ export const useCommunityDetail = (id: string) => {
 export const useCreateCommunity = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { name: string; description: string; location?: string }) => {
+    mutationFn: async (payload: any) => {
       const { data } = await api.post('/communities', payload);
       return data;
     },
@@ -57,6 +65,45 @@ export const useLeaveCommunity = () => {
     },
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['communities', id] });
+    },
+  });
+};
+
+export const useApproveMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ communityId, userId }: { communityId: string; userId: string }) => {
+      const { data } = await api.post(`/communities/${communityId}/members/${userId}/approve`);
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['communities', variables.communityId] });
+    },
+  });
+};
+
+export const useRejectMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ communityId, userId }: { communityId: string; userId: string }) => {
+      const { data } = await api.post(`/communities/${communityId}/members/${userId}/reject`);
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['communities', variables.communityId] });
+    },
+  });
+};
+
+export const useUpdateMemberRole = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ communityId, userId, role }: { communityId: string; userId: string; role: string }) => {
+      const { data } = await api.patch(`/communities/${communityId}/members/${userId}/role`, { role });
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['communities', variables.communityId] });
     },
   });
 };

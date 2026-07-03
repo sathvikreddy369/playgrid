@@ -18,9 +18,9 @@
 | **POST** | `/matches/:id/join` | Request to join match. | Yes |
 | **PUT** | `/matches/:id/players/:userId/approve` | Approve join request. | Yes (Host) |
 | **POST** | `/matches/:id/players/:userId/attend` | Confirm attendance and rate. | Yes (Host) |
-| **GET** | `/grounds` | View venues. | No |
-| **POST** | `/grounds` | Register a new venue. | Yes |
-| **POST** | `/grounds/:id/reviews` | Write a venue review. | Yes |
+| **GET** | `/venues` | View venues. | No |
+| **POST** | `/venues` | Register a new venue. | Yes |
+| **POST** | `/venues/:id/reviews` | Write a venue review. | Yes |
 | **GET** | `/communities` | Browse list. | No |
 | **POST** | `/communities` | Register community. | Yes |
 | **GET** | `/search` | Global query. | No |

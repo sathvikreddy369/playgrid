@@ -81,10 +81,10 @@ export class BadgeService {
   }
 
   async evaluateVenueOwner(userId: string) {
-    const grounds = await prisma.ground.count({
+    const venues = await prisma.venue.count({
       where: { ownerId: userId, status: 'VERIFIED' }
     });
-    if (grounds > 0) {
+    if (venues > 0) {
       await this.awardBadge(userId, 'VENUE_OWNER');
     }
   }

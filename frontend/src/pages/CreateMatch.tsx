@@ -11,7 +11,7 @@ export const CreateMatch = () => {
  
  // To allow linking a match to a community if they manage/belong to one
  // We'll just fetch verified communities for simplicity, though real app would filter by user's communities
- const { data: communities } = useCommunities('VERIFIED');
+ const { data: communities } = useCommunities();
 
  const [formData, setFormData] = useState({
  title: '',
@@ -23,6 +23,7 @@ export const CreateMatch = () => {
  maxPlayers: 10,
  costPerPerson: '',
  skillLevel: 'ALL',
+ matchType: 'CASUAL',
  communityId: ''
  });
 
@@ -137,6 +138,18 @@ export const CreateMatch = () => {
  <option value="INTERMEDIATE">Intermediate</option>
  <option value="ADVANCED">Advanced</option>
  <option value="PRO">Pro</option>
+ </select>
+ </div>
+
+ <div>
+ <label htmlFor="matchType" className="block text-sm font-medium text-gray-700 mb-1">Match Type</label>
+ <select id="matchType" name="matchType" value={formData.matchType} onChange={handleChange} className="w-full border rounded-lg px-4 py-2 bg-white">
+ <option value="CASUAL">Casual Play</option>
+ <option value="COMPETITIVE">Competitive</option>
+ <option value="MEETUP">Community Meetup</option>
+ <option value="PRACTICE">Practice Session</option>
+ <option value="TRAINING">Training</option>
+ <option value="TOURNAMENT">Tournament Match</option>
  </select>
  </div>
 

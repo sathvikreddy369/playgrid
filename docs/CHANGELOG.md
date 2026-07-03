@@ -35,7 +35,7 @@
 - New Venue attributes (amenities, coordinates, rating, rules).
 - Multi-faceted Search capabilities for Venues (by sport, location, rating).
 - New specific UI elements for Venue Details with Google Maps integration and Photo galleries.
-- Standardized skeleton loaders across major pages (`Matches`, `Communities`, `UserPublicProfile`, `Feed`, `Grounds`).
+- Standardized skeleton loaders across major pages (`Matches`, `Communities`, `UserPublicProfile`, `Feed`, `Venues`).
 - Application-wide standard toast notifications utilizing `react-hot-toast` replacing native alerts.
 
 ### Changed

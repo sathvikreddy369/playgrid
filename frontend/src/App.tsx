@@ -16,9 +16,9 @@ const PostDetail = React.lazy(() => import('./pages/PostDetail').then(m => ({ de
 const Communities = React.lazy(() => import('./pages/Communities').then(m => ({ default: m.Communities })));
 const CreateCommunity = React.lazy(() => import('./pages/CreateCommunity').then(m => ({ default: m.CreateCommunity })));
 const CommunityDetail = React.lazy(() => import('./pages/CommunityDetail').then(m => ({ default: m.CommunityDetail })));
-const Grounds = React.lazy(() => import('./pages/Grounds').then(m => ({ default: m.Grounds })));
-const CreateGround = React.lazy(() => import('./pages/CreateGround').then(m => ({ default: m.CreateGround })));
-const GroundDetail = React.lazy(() => import('./pages/GroundDetail').then(m => ({ default: m.GroundDetail })));
+const Venues = React.lazy(() => import('./pages/Venues').then(m => ({ default: m.Venues })));
+const CreateVenue = React.lazy(() => import('./pages/CreateVenue').then(m => ({ default: m.CreateVenue })));
+const VenueDetail = React.lazy(() => import('./pages/VenueDetail').then(m => ({ default: m.VenueDetail })));
 const Matches = React.lazy(() => import('./pages/Matches').then(m => ({ default: m.Matches })));
 const CreateMatch = React.lazy(() => import('./pages/CreateMatch').then(m => ({ default: m.CreateMatch })));
 const MatchDetail = React.lazy(() => import('./pages/MatchDetail').then(m => ({ default: m.MatchDetail })));
@@ -48,9 +48,9 @@ function App() {
               <Route path="/communities" element={<Communities />} />
               <Route path="/communities/:id" element={<CommunityDetail />} />
               <Route path="/communities/create" element={<ProtectedRoute><CreateCommunity /></ProtectedRoute>} />
-              <Route path="/grounds" element={<Grounds />} />
-              <Route path="/grounds/:id" element={<GroundDetail />} />
-              <Route path="/grounds/create" element={<ProtectedRoute><CreateGround /></ProtectedRoute>} />
+              <Route path="/venues" element={<Venues />} />
+              <Route path="/venues/:id" element={<VenueDetail />} />
+              <Route path="/venues/create" element={<ProtectedRoute><CreateVenue /></ProtectedRoute>} />
               <Route path="/matches" element={<Matches />} />
               <Route path="/matches/:id" element={<MatchDetail />} />
               <Route path="/matches/create" element={<ProtectedRoute><CreateMatch /></ProtectedRoute>} />

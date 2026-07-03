@@ -48,7 +48,7 @@ Heavy tasks like AI review summarization using Gemini are handled outside the ma
 
 ## Database Entity-Relationship (ER) Diagram
 
-Below is the database schema mapping the relationships between Users, Matches, Communities, and Grounds.
+Below is the database schema mapping the relationships between Users, Matches, Communities, and Venues.
 
 ```mermaid
 erDiagram
@@ -57,7 +57,7 @@ erDiagram
     USER ||--o{ MATCH : creates
     USER ||--o{ MATCH_PLAYER : participates
     USER ||--o{ COMMUNITY : owns
-    USER ||--o{ GROUND : owns
+    USER ||--o{ VENUE : owns
 
     MATCH ||--o{ MATCH_PLAYER : "has many"
     MATCH ||--o{ MATCH_COMMENT : "has many"
@@ -66,7 +66,7 @@ erDiagram
     COMMUNITY ||--o{ COMMUNITY_MEMBER : "has many"
     COMMUNITY ||--o{ POST : "contains"
 
-    GROUND ||--o{ GROUND_REVIEW : "receives"
+    VENUE ||--o{ GROUND_REVIEW : "receives"
     USER ||--o{ GROUND_REVIEW : "writes"
 
     POST ||--o{ REPLY : "has many"
@@ -108,7 +108,7 @@ erDiagram
         string ownerId FK
     }
 
-    GROUND {
+    VENUE {
         string id PK
         string name
         string location

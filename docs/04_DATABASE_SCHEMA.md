@@ -11,7 +11,7 @@ erDiagram
   USER ||--o{ MATCHPLAYER : "joins"
   USER ||--o{ COMMUNITY : "owns"
   USER ||--o{ COMMUNITYMEMBER : "joins"
-  USER ||--o{ GROUND : "owns"
+  USER ||--o{ VENUE : "owns"
   USER ||--o{ MESSAGE : "sends/receives"
   USER ||--o{ NOTIFICATION : "receives"
   USER ||--o{ REPORT : "submits"
@@ -23,7 +23,7 @@ erDiagram
   COMMUNITY ||--o{ POST : "contains"
   COMMUNITY ||--o{ MATCH : "hosts"
   
-  GROUND ||--o{ GROUNDREVIEW : "contains"
+  VENUE ||--o{ GROUNDREVIEW : "contains"
 ```
 
 ## Schema Entities (Summary)
@@ -31,7 +31,7 @@ erDiagram
 - **Profile**: Extended metadata (bio, favorite sports, home coordinates for distance queries).
 - **Match**: Details of scheduled activities, cost per person, and max participant caps.
 - **MatchPlayer**: Maps users to matches with confirmation statuses (`PENDING`, `APPROVED`, `REJECTED`, `ATTENDED`).
-- **Ground**: Venue entities. Status checks (`PENDING`, `VERIFIED`, `REJECTED`), amenities, contact phone, and AI summarization cache.
+- **Venue**: Venue entities. Status checks (`PENDING`, `VERIFIED`, `REJECTED`), amenities, contact phone, and AI summarization cache.
 - **Post & Reply**: Community discussions supporting nested responses and likes.
 - **Message**: DM store with read flags.
 - **Notification**: Target redirect links, alert text, read states.

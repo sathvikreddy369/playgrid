@@ -1,7 +1,7 @@
 import prisma from '../../src/utils/db';
 import { generateUsers } from './factories/UserFactory';
 import { generateCommunities } from './factories/CommunityFactory';
-import { generateGrounds } from './factories/GroundFactory';
+import { generateVenues } from './factories/VenueFactory';
 import { generateMatches } from './factories/MatchFactory';
 import { generateSocials } from './factories/SocialFactory';
 import { generateInteractions } from './factories/InteractionFactory';
@@ -23,9 +23,9 @@ export async function runSeed(scale: 'dev' | 'demo' | 'stress') {
   }
 
   const counts = {
-    dev: { users: 30, communities: 5, grounds: 5, matches: 20, posts: 30 },
-    demo: { users: 400, communities: 40, grounds: 60, matches: 500, posts: 700 },
-    stress: { users: 5000, communities: 100, grounds: 200, matches: 5000, posts: 10000 }
+    dev: { users: 30, communities: 5, venues: 5, matches: 20, posts: 30 },
+    demo: { users: 400, communities: 40, venues: 60, matches: 500, posts: 700 },
+    stress: { users: 5000, communities: 100, venues: 200, matches: 5000, posts: 10000 }
   };
   
   const c = counts[scale];
@@ -47,10 +47,10 @@ export async function runSeed(scale: 'dev' | 'demo' | 'stress') {
     for (const chunk of chunkArray(communities, 2000)) await prisma.community.createMany({ data: chunk });
     for (const chunk of chunkArray(communityMembers, 2000)) await prisma.communityMember.createMany({ data: chunk });
 
-    console.log('[SEED] Generating and inserting Grounds...');
-    const { grounds, groundReviews } = generateGrounds(c.grounds, users);
-    for (const chunk of chunkArray(grounds, 2000)) await prisma.ground.createMany({ data: chunk });
-    for (const chunk of chunkArray(groundReviews, 2000)) await prisma.groundReview.createMany({ data: chunk });
+    console.log('[SEED] Generating and inserting Venues...');
+    const { venues, venueReviews } = generateVenues(c.venues, users);
+    for (const chunk of chunkArray(venues, 2000)) await prisma.venue.createMany({ data: chunk });
+    for (const chunk of chunkArray(venueReviews, 2000)) await prisma.venueReview.createMany({ data: chunk });
 
     console.log('[SEED] Generating and inserting Matches...');
     const { matches, matchPlayers, matchComments } = generateMatches(c.matches, users, communities);

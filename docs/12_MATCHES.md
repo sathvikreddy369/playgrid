@@ -1,7 +1,7 @@
 # 12. Matches
 
 ## Core Matches Model
-Matches represent scheduled games. They have a maximum player count and optional cost/location parameters.
+Matches represent scheduled games. They have a maximum player count, cost parameters, and a physical location. A match can optionally be linked to a registered `Venue` via `venueId`, which provides users with rich location details, directions via Google Maps, and venue photos directly on the match page.
 
 ## Flow: Join Requests and Roster Moderation
 1. **Request**: User requests to join. A `MatchPlayer` record is created as `PENDING`.

@@ -17,6 +17,9 @@ router.post('/:id/join', requireAuth, apiLimiter, communityController.joinCommun
 router.delete('/:id/leave', requireAuth, apiLimiter, communityController.leaveCommunity);
 
 // Moderation
+router.post('/:id/members/:userId/approve', requireAuth, apiLimiter, communityController.approveMember);
+router.post('/:id/members/:userId/reject', requireAuth, apiLimiter, communityController.rejectMember);
+router.patch('/:id/members/:userId/role', requireAuth, apiLimiter, communityController.updateMemberRole);
 router.delete('/:id/members/:userId', requireAuth, apiLimiter, communityController.kickMember);
 
 export default router;

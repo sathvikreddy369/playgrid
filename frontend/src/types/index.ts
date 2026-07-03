@@ -66,6 +66,7 @@ export interface Match {
   maxPlayers: number;
   costPerPerson?: number;
   skillLevel?: string;
+  matchType?: 'COMPETITIVE' | 'CASUAL' | 'MEETUP' | 'PRACTICE' | 'TOURNAMENT' | 'TRAINING';
   status: 'OPEN' | 'FULL' | 'ONGOING' | 'COMPLETED' | 'ARCHIVED' | 'CANCELLED' | 'EXPIRED';
   creatorId: string;
   communityId?: string;
@@ -94,17 +95,18 @@ export interface MatchPlayer {
   id: string;
   matchId: string;
   userId: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ATTENDED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ATTENDED' | 'WITHDRAWN' | 'KICKED' | 'WAITLISTED';
   performanceRating?: number;
   user?: User;
 }
 
-export interface MatchComment {
+export interface CommunityMember {
   id: string;
-  matchId: string;
   userId: string;
-  content: string;
-  createdAt: string;
+  communityId: string;
+  role: 'OWNER' | 'ADMIN' | 'MODERATOR' | 'MEMBER';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'BANNED';
+  joinedAt: string;
   user?: User;
 }
 
@@ -112,20 +114,50 @@ export interface Community {
   id: string;
   name: string;
   description: string;
+  rules?: string[];
+  coverImage?: string;
+  avatarUrl?: string;
+  sports?: string[];
+  tags?: string[];
+  location?: string;
+  primaryVenueId?: string;
+  privacy: 'PUBLIC' | 'PRIVATE';
   status: 'PENDING' | 'VERIFIED' | 'REJECTED';
   ownerId: string;
+  createdAt: string;
+  updatedAt: string;
   owner?: User;
-  members?: any[]; // Simplified for now
+  primaryVenue?: Venue;
+  members?: CommunityMember[];
+  _count?: {
+    members: number;
+    matches: number;
+  };
 }
 
-export interface Ground {
+export interface Venue {
   id: string;
   name: string;
   location: string;
   status: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  latitude?: number;
+  longitude?: number;
+  description?: string;
+  operatingHours?: Record<string, string>;
+  contactEmail?: string;
+  website?: string;
+  contactPhone?: string;
+  pricing?: string;
+  amenities?: string[];
+  sports?: string[];
   photos?: string[];
   ownerId: string;
   owner?: User;
+  matches?: Match[];
+  _count?: {
+    reviews: number;
+    matches: number;
+  };
 }
 
 export interface Report {

@@ -19,7 +19,7 @@ export const Home = () => {
   // Data Fetching
   const { data: feedData, isLoading: isLoadingFeed } = useFeed({});
   const { data: matchesData, isLoading: isLoadingMatches } = useMatches({ status: 'OPEN', limit: 5 });
-  const { data: communitiesData, isLoading: isLoadingCommunities } = useCommunities('VERIFIED');
+  const { data: communitiesData, isLoading: isLoadingCommunities } = useCommunities({});
 
   const posts = feedData?.pages[0]?.posts?.slice(0, 3) || [];
   const matches = matchesData?.matches?.slice(0, 5) || [];
@@ -98,7 +98,7 @@ export const Home = () => {
             <ActionCard to="/search" icon={Search} title="Find Players" description="Match by skill & location" />
             <ActionCard to="/matches" icon={Calendar} title="Matches" description="Join weekly games" badge="Live" />
             <ActionCard to="/communities" icon={Users} title="Clubs" description="Join local groups" />
-            <ActionCard to="/grounds" icon={MapPin} title="Venues" description="Book turfs & courts" />
+            <ActionCard to="/venues" icon={MapPin} title="Venues" description="Book turfs & courts" />
           </div>
 
           <div className="grid md:grid-cols-12 gap-8 w-full mt-4">

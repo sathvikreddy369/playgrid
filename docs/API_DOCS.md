@@ -19,11 +19,11 @@ All protected routes require a Bearer token issued by Firebase Authentication.
 - `POST /matches/:id/join` - Request to join a match.
 - `PUT /matches/:id/action` - Approve/reject a player, or mark attendance. (Creator only)
 
-### Grounds (`/grounds`)
-- `GET /grounds` - Fetch verified sports grounds.
-- `GET /grounds/:id` - Fetch ground details and user reviews.
-- `POST /grounds` - Submit a new ground for admin verification.
-- `POST /grounds/:id/review` - Post a review (1-5 rating) for a ground.
+### Venues (`/venues`)
+- `GET /venues` - Fetch verified sports venues.
+- `GET /venues/:id` - Fetch venue details and user reviews.
+- `POST /venues` - Submit a new venue for admin verification.
+- `POST /venues/:id/review` - Post a review (1-5 rating) for a venue.
 
 ### Communities (`/communities`)
 - `GET /communities` - Fetch verified communities.
@@ -33,7 +33,7 @@ All protected routes require a Bearer token issued by Firebase Authentication.
 ### Admin (`/admin`)
 *(Requires `ADMIN` role token)*
 - `GET /admin/stats` - Platform-wide analytics.
-- `GET /admin/queue` - Pending Grounds and Communities awaiting verification.
+- `GET /admin/queue` - Pending Venues and Communities awaiting verification.
 - `GET /admin/users` - Paginated user management list.
 - `PUT /admin/reports/:id/resolve` - Action on user-submitted moderation reports.
 

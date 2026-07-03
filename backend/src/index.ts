@@ -6,7 +6,7 @@ import { observabilityMiddleware } from './middlewares/observability.middleware'
 import authRoutes from './routes/auth.routes';
 import postRoutes from './routes/post.routes';
 import communityRoutes from './routes/community.routes';
-import groundRoutes from './routes/ground.routes';
+import groundRoutes from './routes/venue.routes';
 import matchRoutes from './routes/match.routes';
 import notificationRoutes from './routes/notification.routes';
 import messageRoutes from './routes/message.routes';
@@ -53,7 +53,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/communities', communityRoutes);
-app.use('/api/grounds', groundRoutes);
+app.use('/api/venues', groundRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);

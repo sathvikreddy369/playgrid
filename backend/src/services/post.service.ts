@@ -3,6 +3,7 @@ import { PostType } from '@prisma/client';
 import { FraudDetection } from '../utils/fraudDetection';
 import { aiService } from './ai.service';
 import { activityService } from './activity.service';
+import { getIO } from '../socket';
 
 export class PostService {
   async getPosts(filters: { type?: string; location?: string; communityId?: string; authorId?: string }, cursor?: string, limit: number = 10) {
@@ -60,7 +61,7 @@ export class PostService {
     return post;
   }
 
-  async createPost(userId: string, data: { content: string; type?: PostType; location?: string; latitude?: number; longitude?: number; tags?: string[] }) {
+  async createPost(userId: string, data: { content: string; type?: PostType; location?: string; latitude?: number; longitude?: number; tags?: string[]; communityId?: string }) {
     if (FraudDetection.containsProfanityOrSpam(data.content)) {
       throw new Error('Content flagged as spam or contains profanity.');
     }
@@ -83,10 +84,21 @@ export class PostService {
         latitude: data.latitude,
         longitude: data.longitude,
         tags: data.tags || [],
+        communityId: data.communityId,
       },
     });
 
     await activityService.logActivity(userId, 'POST_CREATED', post.id, 'Post', { type: post.type });
+
+    if (data.communityId) {
+      try {
+        const io = getIO();
+        io.to(`community:${data.communityId}`).emit('new_community_post', post);
+      } catch (err) {
+        // socket might not be initialized in some test envs
+        console.error('Failed to emit socket event', err);
+      }
+    }
 
     return post;
   }

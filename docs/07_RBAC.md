@@ -4,7 +4,7 @@
 PlayGrid supports four hierarchical roles configured in `Prisma`:
 1. **GUEST**: Unauthenticated visitor. Can discover matches, view communities, search venues.
 2. **PLAYER**: Standard user. Can sync profiles, join matches, comment, chat, like, review.
-3. **ORGANIZER**: Promoted user. Can host official tournaments and grounds.
+3. **ORGANIZER**: Promoted user. Can host official tournaments and venues.
 4. **ADMIN**: Platform administrator. Full access to block users, delete posts, and resolve moderation flags.
 
 ## Middleware Enforcements

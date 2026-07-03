@@ -25,8 +25,10 @@ export class MatchService {
         maxPlayers: parseInt(data.maxPlayers),
         costPerPerson: data.costPerPerson ? parseFloat(data.costPerPerson) : null,
         skillLevel: data.skillLevel || 'ALL',
+        matchType: data.matchType || 'CASUAL',
         creatorId: userId,
         communityId: data.communityId || null,
+        venueId: data.venueId || null,
         status: MatchStatus.OPEN,
       },
     });
@@ -72,6 +74,7 @@ export class MatchService {
       include: {
         creator: { select: { id: true, name: true } },
         community: { select: { id: true, name: true } },
+        venue: { select: { id: true, name: true, location: true } },
         _count: { select: { players: { where: { status: 'APPROVED' } } } }
       },
       orderBy: { date: 'asc' }
@@ -84,6 +87,7 @@ export class MatchService {
       include: {
         creator: { select: { id: true, name: true, profile: { select: { avatarUrl: true } } } },
         community: { select: { id: true, name: true } },
+        venue: { select: { id: true, name: true, location: true, latitude: true, longitude: true, photos: true } },
         players: {
           include: {
             user: { select: { id: true, name: true, reputation: true, profile: { select: { avatarUrl: true } } } }
@@ -112,6 +116,7 @@ export class MatchService {
       },
       include: { 
         creator: { select: { name: true } }, 
+        venue: { select: { id: true, name: true, location: true } },
         _count: { select: { players: true } } 
       },
       orderBy: { date: 'asc' },
@@ -389,8 +394,11 @@ export class MatchService {
         longitude: data.longitude,
         date: data.date ? new Date(data.date) : undefined,
         maxPlayers: data.maxPlayers ? parseInt(data.maxPlayers) : undefined,
-        costPerPerson: data.costPerPerson ? parseFloat(data.costPerPerson) : undefined,
-        skillLevel: data.skillLevel
+        costPerPerson: data.costPerPerson !== undefined ? (data.costPerPerson ? parseFloat(data.costPerPerson) : null) : undefined,
+        skillLevel: data.skillLevel,
+        matchType: data.matchType,
+        communityId: data.communityId,
+        venueId: data.venueId,
       }
     });
   }

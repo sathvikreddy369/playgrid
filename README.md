@@ -25,7 +25,7 @@ PlayGrid connects local players, sports organizers, and venue owners into a seam
 
 - 📍 **Local Matchmaking & Discovery**: Easily find games using geospatial approximations, skill-level filters, and real-time RSVP counts.
 - 💬 **Real-time WebSockets**: Low-latency multi-room chat via Socket.IO for coordinating game logistics.
-- 🏟️ **Venue Management & AI Summaries**: Owners can register grounds for verification. Background workers use Google Gemini AI to distill thousands of user reviews into succinct summaries.
+- 🏟️ **Venue Management & AI Summaries**: Owners can register venues for verification. Background workers use Google Gemini AI to distill thousands of user reviews into succinct summaries.
 - 🔐 **Robust Security & RBAC**: Fully integrated Firebase Auth with Role-Based Access Control (`GUEST`, `PLAYER`, `ORGANIZER`, `ADMIN`).
 - 📈 **Production-Grade Observability**: Structured JSON logging, unique request tracking, performance timers, dynamic DB health indicators, and slow-query alerting.
 - ♿ **WCAG 2.1 Compliant**: Fully accessible markup achieving 100/100 Lighthouse scores.

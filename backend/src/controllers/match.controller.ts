@@ -185,7 +185,7 @@ export class MatchController {
     try {
       const userId = req.user!.id;
       const { content } = req.body;
-      const comment = await matchService.editComment(req.params.commentId, userId, content);
+      const comment = await matchService.editComment(req.params.commentId as string, userId, content);
       res.json(comment);
     } catch (error) {
       next(error);
@@ -195,7 +195,7 @@ export class MatchController {
   async deleteComment(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.id;
-      const result = await matchService.deleteComment(req.params.commentId, userId);
+      const result = await matchService.deleteComment(req.params.commentId as string, userId);
       res.json(result);
     } catch (error) {
       next(error);
@@ -205,7 +205,7 @@ export class MatchController {
   async editMatch(req: Request, res: Response, next: NextFunction) {
     try {
       const creatorId = req.user!.id;
-      const match = await matchService.editMatch(req.params.id, creatorId, req.body);
+      const match = await matchService.editMatch(req.params.id as string, creatorId, req.body);
       res.json(match);
     } catch (error) {
       next(error);
@@ -215,7 +215,7 @@ export class MatchController {
   async updateMatchStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const creatorId = req.user!.id;
-      const match = await matchService.updateMatchStatus(req.params.id, creatorId, req.body.status);
+      const match = await matchService.updateMatchStatus(req.params.id as string, creatorId, req.body.status);
 
       try {
         const io = getIO();
@@ -231,7 +231,7 @@ export class MatchController {
   async broadcastMessage(req: Request, res: Response, next: NextFunction) {
     try {
       const creatorId = req.user!.id;
-      const result = await matchService.broadcastMessage(req.params.id, creatorId, req.body.content);
+      const result = await matchService.broadcastMessage(req.params.id as string, creatorId, req.body.message);
       res.json(result);
     } catch (error) {
       next(error);
@@ -242,7 +242,7 @@ export class MatchController {
     try {
       const userId = req.user!.id;
       const { rating, comment } = req.body;
-      const review = await matchService.addReview(req.params.id, userId, rating, comment);
+      const review = await matchService.addReview(req.params.id as string, userId, rating, comment);
       res.status(201).json(review);
     } catch (error) {
       next(error);

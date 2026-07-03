@@ -126,6 +126,19 @@ export const initializeSocket = (server: Server) => {
         socket.leave(`match:${data.matchId}`);
       }
     });
+    
+    // Community Rooms
+    socket.on('join_community', (data: { communityId: string }) => {
+      if (data.communityId) {
+        socket.join(`community:${data.communityId}`);
+      }
+    });
+
+    socket.on('leave_community', (data: { communityId: string }) => {
+      if (data.communityId) {
+        socket.leave(`community:${data.communityId}`);
+      }
+    });
 
     socket.on('disconnect', () => {
       // Cleanup if needed

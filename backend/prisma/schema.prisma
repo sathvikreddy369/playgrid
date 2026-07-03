@@ -42,7 +42,7 @@ enum CommunityStatus {
   REJECTED
 }
 
-enum GroundStatus {
+enum VenueStatus {
   PENDING
   VERIFIED
   REJECTED
@@ -64,7 +64,7 @@ enum ReportType {
   POST
   USER
   COMMUNITY
-  GROUND
+  VENUE
   MESSAGE
 }
 
@@ -110,7 +110,7 @@ enum ActivityType {
   COMMUNITY_JOINED
   POST_CREATED
   COMMENT_ADDED
-  GROUND_REVIEWED
+  VENUE_REVIEWED
   FRIEND_ADDED
   BADGE_EARNED
 }
@@ -119,6 +119,34 @@ enum ConnectionStatus {
   PENDING
   ACCEPTED
   BLOCKED
+}
+
+enum CommunityRole {
+  OWNER
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+enum CommunityPrivacy {
+  PUBLIC
+  PRIVATE
+}
+
+enum CommunityMemberStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  BANNED
+}
+
+enum MatchType {
+  COMPETITIVE
+  CASUAL
+  MEETUP
+  PRACTICE
+  TOURNAMENT
+  TRAINING
 }
 
 // -----------------------------------------------------------------------------
@@ -148,7 +176,7 @@ model User {
   communitiesOwned     Community[]       @relation("CommunityOwner")
   communityMemberships CommunityMember[]
 
-  groundsOwned Ground[] @relation("GroundOwner")
+  venuesOwned Venue[] @relation("VenueOwner")
 
   tournamentsOrganized Tournament[]            @relation("TournamentOrganizer")
   tournamentEntries    TournamentParticipant[]
@@ -167,7 +195,7 @@ model User {
   postLikes     PostLike[]
   replyLikes    ReplyLike[]
   savedPosts    SavedPost[]
-  groundReviews GroundReview[]
+  venueReviews  VenueReview[]
   reviewsWritten UserReview[] @relation("Reviewer")
   reviewsReceived UserReview[] @relation("ReviewedUser")
   matchReviews   MatchReview[]
@@ -198,29 +226,40 @@ model Profile {
 }
 
 model Community {
-  id          String          @id @default(uuid())
-  name        String
-  description String
-  location    String?
-  status      CommunityStatus @default(PENDING)
-  ownerId     String
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id             String           @id @default(uuid())
+  name           String
+  description    String
+  rules          String[]
+  coverImage     String?
+  avatarUrl      String?
+  sports         String[]
+  tags           String[]
+  location       String?
+  primaryVenueId String?
+  privacy        CommunityPrivacy @default(PUBLIC)
+  status         CommunityStatus  @default(PENDING)
+  ownerId        String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
-  owner   User              @relation("CommunityOwner", fields: [ownerId], references: [id])
-  members CommunityMember[]
-  posts   Post[]
-  matches Match[]
+  owner        User              @relation("CommunityOwner", fields: [ownerId], references: [id])
+  primaryVenue Venue?            @relation("CommunityPrimaryVenue", fields: [primaryVenueId], references: [id], onDelete: SetNull)
+  members      CommunityMember[]
+  posts        Post[]
+  matches      Match[]
 
   @@index([status])
   @@index([ownerId])
+  @@index([primaryVenueId])
 }
 
 model CommunityMember {
-  id          String   @id @default(uuid())
+  id          String                @id @default(uuid())
   userId      String
   communityId String
-  joinedAt    DateTime @default(now())
+  role        CommunityRole         @default(MEMBER)
+  status      CommunityMemberStatus @default(APPROVED)
+  joinedAt    DateTime              @default(now())
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
@@ -228,7 +267,7 @@ model CommunityMember {
   @@unique([userId, communityId])
 }
 
-model Ground {
+model Venue {
   id                String       @id @default(uuid())
   name              String
   location          String
@@ -242,15 +281,21 @@ model Ground {
   amenities         String[]
   sports            String[]
   photos            String[]
+  description       String?      @db.Text
+  operatingHours    Json?
+  contactEmail      String?
   contactPhone      String?
-  status            GroundStatus @default(PENDING)
+  website           String?
+  status            VenueStatus @default(PENDING)
   ownerId           String
   aiSummary         String?      @db.Text
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
-  owner   User           @relation("GroundOwner", fields: [ownerId], references: [id])
-  reviews GroundReview[]
+  owner   User           @relation("VenueOwner", fields: [ownerId], references: [id])
+  reviews VenueReview[]
+  matches Match[]
+  primaryForCommunities Community[] @relation("CommunityPrimaryVenue")
 
   @@index([status])
   @@index([latitude, longitude]) // Spatial queries approximation
@@ -267,14 +312,17 @@ model Match {
   maxPlayers    Int
   costPerPerson Float?
   skillLevel    MatchSkillLevel @default(ALL)
+  matchType     MatchType       @default(CASUAL)
   status        MatchStatus     @default(OPEN)
   creatorId     String
   communityId   String?
+  venueId       String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
   creator   User           @relation("MatchCreator", fields: [creatorId], references: [id])
   community Community?     @relation(fields: [communityId], references: [id], onDelete: SetNull)
+  venue     Venue?         @relation(fields: [venueId], references: [id], onDelete: SetNull)
   players   MatchPlayer[]
   comments  MatchComment[]
   reviews   MatchReview[]
@@ -284,6 +332,7 @@ model Match {
   @@index([status, date])
   @@index([latitude, longitude])
   @@index([creatorId])
+  @@index([venueId])
 }
 
 model MatchComment {
@@ -503,18 +552,18 @@ model SavedPost {
   @@unique([userId, postId])
 }
 
-model GroundReview {
+model VenueReview {
   id        String   @id @default(uuid())
-  groundId  String
+  venueId   String
   userId    String
   rating    Int // 1 to 5
   comment   String?
   createdAt DateTime @default(now())
 
-  ground Ground @relation(fields: [groundId], references: [id], onDelete: Cascade)
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([groundId, userId]) // one review per user per ground
+  @@unique([venueId, userId]) // one review per user per venue
 }
 
 model Activity {

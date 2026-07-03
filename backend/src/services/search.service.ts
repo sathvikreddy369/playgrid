@@ -52,9 +52,9 @@ export class SearchService {
       });
     }
 
-    // 3. Grounds
-    if (type === 'ALL' || type === 'GROUNDS') {
-      results.grounds = await prisma.ground.findMany({
+    // 3. Venues
+    if (type === 'ALL' || type === 'VENUES') {
+      results.venues = await prisma.venue.findMany({
         where: {
           OR: [
             { name: { contains: query, mode: 'insensitive' } },
@@ -80,10 +80,10 @@ export class SearchService {
     return results;
   }
 
-  async nearbySearch(lat: number, lng: number, radiusKm: number, type: 'MATCHES' | 'GROUNDS' = 'MATCHES') {
+  async nearbySearch(lat: number, lng: number, radiusKm: number, type: 'MATCHES' | 'VENUES' = 'MATCHES') {
     // Use a CTE (Common Table Expression) to calculate distance once and filter with WHERE
-    if (type === 'GROUNDS') {
-      const grounds = await prisma.$queryRaw`
+    if (type === 'VENUES') {
+      const venues = await prisma.$queryRaw`
         WITH ground_distances AS (
           SELECT id, name, location, latitude, longitude,
             (6371 * acos(
@@ -92,7 +92,7 @@ export class SearchService {
                 + sin(radians(${lat})) * sin(radians(latitude))
               ))
             )) AS distance
-          FROM "Ground"
+          FROM "Venue"
           WHERE status = 'VERIFIED' AND latitude IS NOT NULL AND longitude IS NOT NULL
         )
         SELECT * FROM ground_distances
@@ -101,14 +101,14 @@ export class SearchService {
         LIMIT 20;
       `;
 
-      const groundIds = (grounds as any[]).map(g => g.id);
+      const groundIds = (venues as any[]).map(g => g.id);
       if (groundIds.length === 0) return [];
 
-      const fullGrounds = await prisma.ground.findMany({ where: { id: { in: groundIds } } });
+      const fullGrounds = await prisma.venue.findMany({ where: { id: { in: groundIds } } });
       
       // Merge distance
       return fullGrounds.map(g => {
-        const raw = (grounds as any[]).find(r => r.id === g.id);
+        const raw = (venues as any[]).find(r => r.id === g.id);
         return { ...g, distance: raw?.distance };
       }).sort((a, b) => (a.distance || 0) - (b.distance || 0));
     }
@@ -159,7 +159,7 @@ export class SearchService {
 
     const prompt = `You are an AI assistant for a sports matchmaking platform called Playgrid.
 Parse the following user search query and return ONLY a strict JSON object with these optional keys (no markdown wrapping):
-- "type": ONE OF ["MATCHES", "GROUNDS", "COMMUNITIES", "USERS", "ALL"]
+- "type": ONE OF ["MATCHES", "VENUES", "COMMUNITIES", "USERS", "ALL"]
 - "sport": string (if a specific sport is mentioned)
 - "maxCost": number (if a price or "free" is mentioned; "free" = 0)
 - "dateKeyword": string (e.g. "today", "tomorrow", "weekend")

@@ -24,7 +24,7 @@ export const CreatePostForm = () => {
       case 'EQUIPMENT': return 'Buying, selling, or discussing gear?';
       case 'TRAINING': return 'Share training tips or ask for advice...';
       case 'TOURNAMENT_ANNOUNCEMENT': return 'Announce your upcoming tournament...';
-      case 'GROUND_PROMOTION': return 'Promote your venue or ground...';
+      case 'GROUND_PROMOTION': return 'Promote your venue or venue...';
       default: return "What's happening in your sports world?";
     }
   };
@@ -187,7 +187,7 @@ export const CreatePostForm = () => {
               <option value="EQUIPMENT">Equipment</option>
               <option value="TRAINING">Training</option>
               <option value="TOURNAMENT_ANNOUNCEMENT">Tournament Announcement</option>
-              <option value="GROUND_PROMOTION">Ground Promotion</option>
+              <option value="GROUND_PROMOTION">Venue Promotion</option>
             </select>
             <button type="button" aria-label="Attach sports images" className="p-1.5 text-muted hover:text-foreground rounded-full transition-colors cursor-pointer">
               <ImageIcon className="w-4 h-4" />

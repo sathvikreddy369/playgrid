@@ -6,9 +6,9 @@ export class AdminService {
     const totalUsers = await prisma.user.count();
     const totalMatches = await prisma.match.count();
     const totalCommunities = await prisma.community.count();
-    const totalGrounds = await prisma.ground.count();
+    const totalGrounds = await prisma.venue.count();
     const activeMatches = await prisma.match.count({ where: { status: 'OPEN' } });
-    const pendingGrounds = await prisma.ground.count({ where: { status: 'PENDING' } });
+    const pendingGrounds = await prisma.venue.count({ where: { status: 'PENDING' } });
     const pendingCommunities = await prisma.community.count({ where: { status: 'PENDING' } });
     
     return {
@@ -29,7 +29,7 @@ export class AdminService {
       orderBy: { createdAt: 'asc' }
     });
     
-    const pendingGrounds = await prisma.ground.findMany({
+    const pendingGrounds = await prisma.venue.findMany({
       where: { status: 'PENDING' },
       include: { owner: { select: { name: true, email: true } } },
       orderBy: { createdAt: 'asc' }

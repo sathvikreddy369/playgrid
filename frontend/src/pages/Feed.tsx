@@ -72,7 +72,7 @@ export const Feed = () => {
      <option value="LOOKING_FOR_PLAYERS">Looking for Players</option>
      <option value="LOOKING_FOR_TEAM">Looking for Team</option>
      <option value="TOURNAMENT_ANNOUNCEMENT">Tournament Announcement</option>
-     <option value="GROUND_PROMOTION">Ground Promotion</option>
+     <option value="GROUND_PROMOTION">Venue Promotion</option>
      <option value="QUESTION">Question</option>
      <option value="EQUIPMENT">Equipment</option>
      <option value="TRAINING">Training</option>

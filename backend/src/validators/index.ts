@@ -51,6 +51,8 @@ export const createMatchSchema = z.object({
   costPerPerson: z.union([z.number().min(0), z.string().regex(/^\d+\.?\d*$/), z.null()]).optional(),
   skillLevel: z.enum(['ALL', 'BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'PRO']).optional(),
   communityId: z.string().uuid().optional().nullable(),
+  venueId: z.string().uuid().optional().nullable(),
+  matchType: z.enum(['COMPETITIVE', 'CASUAL', 'MEETUP', 'PRACTICE', 'TOURNAMENT', 'TRAINING']).optional(),
 }).strict();
 
 export const matchCommentSchema = z.object({
@@ -66,14 +68,21 @@ export const createCommunitySchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().min(1).max(2000),
   location: z.string().max(200).optional(),
+  rules: z.array(z.string()).max(10).optional(),
+  coverImage: z.string().url().optional().nullable(),
+  avatarUrl: z.string().url().optional().nullable(),
+  sports: z.array(z.string().max(50)).max(20).optional(),
+  tags: z.array(z.string().max(50)).max(10).optional(),
+  primaryVenueId: z.string().uuid().optional().nullable(),
+  privacy: z.enum(['PUBLIC', 'PRIVATE']).optional(),
 }).strict();
 
 export const verifyCommunitySchema = z.object({
   status: z.enum(['VERIFIED', 'REJECTED']),
 }).strict();
 
-// ─── Grounds ──────────────────────────────────────────────────────────
-export const createGroundSchema = z.object({
+// ─── Venues ──────────────────────────────────────────────────────────
+export const createVenueSchema = z.object({
   name: z.string().min(1).max(200),
   location: z.string().min(1).max(300),
   latitude: z.number().min(-90).max(90).optional(),
@@ -83,9 +92,13 @@ export const createGroundSchema = z.object({
   sports: z.array(z.string().max(50)).max(20).optional(),
   photos: z.array(z.string().url()).max(20).optional(),
   contactPhone: z.string().max(20).optional(),
+  contactEmail: z.string().email().optional(),
+  website: z.string().url().optional(),
+  description: z.string().max(2000).optional(),
+  operatingHours: z.record(z.string(), z.string()).optional(),
 }).strict();
 
-export const updateGroundSchema = z.object({
+export const updateVenueSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   location: z.string().min(1).max(300).optional(),
   latitude: z.number().min(-90).max(90).optional().nullable(),
@@ -95,20 +108,24 @@ export const updateGroundSchema = z.object({
   sports: z.array(z.string().max(50)).max(20).optional(),
   photos: z.array(z.string().url()).max(20).optional(),
   contactPhone: z.string().max(20).optional().nullable(),
+  contactEmail: z.string().email().optional().nullable(),
+  website: z.string().url().optional().nullable(),
+  description: z.string().max(2000).optional().nullable(),
+  operatingHours: z.record(z.string(), z.string()).optional().nullable(),
 }).strict();
 
-export const groundReviewSchema = z.object({
+export const reviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
   comment: z.string().max(1000).optional(),
 }).strict();
 
-export const verifyGroundSchema = z.object({
+export const verifyVenueSchema = z.object({
   status: z.enum(['VERIFIED', 'REJECTED']),
 }).strict();
 
 // ─── Reports ──────────────────────────────────────────────────────────
 export const createReportSchema = z.object({
-  targetType: z.enum(['POST', 'USER', 'COMMUNITY', 'GROUND', 'MESSAGE']),
+  targetType: z.enum(['POST', 'USER', 'COMMUNITY', 'VENUE', 'MESSAGE']),
   targetId: z.string().uuid(),
   reason: z.string().min(1).max(1000),
 }).strict();

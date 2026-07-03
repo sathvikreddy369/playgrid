@@ -134,12 +134,12 @@ export const Search = () => {
  </div>
  )}
 
- {searchResults.grounds?.length > 0 && (
+ {searchResults.venues?.length > 0 && (
  <div>
  <h3 className="font-bold text-xl mb-4 flex items-center gap-2"><MapPin className="w-5 h-5 text-green-500"/> Venues</h3>
  <motion.div initial="hidden" animate="visible" variants={staggerVariants} className="grid grid-cols-1 md:grid-cols-2 gap-4">
- {searchResults.grounds.map((g: any) => (
- <MotionLink variants={itemVariants} to={`/grounds/${g.id}`} key={g.id} className="bg-white border rounded-xl p-4 hover:border-green-500">
+ {searchResults.venues.map((g: any) => (
+ <MotionLink variants={itemVariants} to={`/venues/${g.id}`} key={g.id} className="bg-white border rounded-xl p-4 hover:border-green-500">
  <h4 className="font-bold">{g.name}</h4>
  <p className="text-sm text-gray-500">{g.location}</p>
  </MotionLink>
@@ -247,7 +247,7 @@ export const Search = () => {
  <h3 className="font-bold text-lg mb-4">Filter By</h3>
  
  <div className="space-y-2">
- {['ALL', 'MATCHES', 'GROUNDS', 'COMMUNITIES', 'USERS'].map(t => (
+ {['ALL', 'MATCHES', 'VENUES', 'COMMUNITIES', 'USERS'].map(t => (
  <label key={t} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
  <input
  type="radio"

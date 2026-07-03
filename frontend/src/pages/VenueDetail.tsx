@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useGroundDetail, useAddGroundReview } from '../hooks/useGrounds';
+import { useVenueDetail, useAddVenueReview } from '../hooks/useVenues';
 import { useAuth } from '../providers/AuthProvider';
-import { ArrowLeft, MapPin, Phone, IndianRupee, Star, CheckCircle2, CheckCircle, Image as ImageIcon, Navigation } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Mail, Globe, IndianRupee, Star, CheckCircle2, CheckCircle, Image as ImageIcon, Navigation, Info } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '../components/Skeleton';
 import { UserLink } from '../components/ui/UserLink';
 
-export const GroundDetail = () => {
+export const VenueDetail = () => {
  const { id } = useParams();
  const navigate = useNavigate();
  const { user } = useAuth();
- const { data: ground, isLoading } = useGroundDetail(id!);
- const addReview = useAddGroundReview();
+ const { data: venue, isLoading } = useVenueDetail(id!);
+ const addReview = useAddVenueReview();
 
  const [rating, setRating] = useState(5);
  const [comment, setComment] = useState('');
@@ -30,16 +30,16 @@ export const GroundDetail = () => {
  </div>
  </div>
  );
- if (!ground) return <div className="text-center py-20 font-bold text-muted text-sm">Venue not found</div>;
+ if (!venue) return <div className="text-center py-20 font-bold text-muted text-sm">Venue not found</div>;
 
  const handleReviewSubmit = (e: React.FormEvent) => {
  e.preventDefault();
- addReview.mutate({ id: ground.id, rating, comment }, {
+ addReview.mutate({ id: venue.id, rating, comment }, {
  onSuccess: () => setComment('')
  });
  };
 
- const hasReviewed = ground.reviews?.some((r: any) => r.userId === user?.id);
+ const hasReviewed = venue.reviews?.some((r: any) => r.userId === user?.id);
 
  const getSportBadgeClass = (sport: string) => {
  const s = sport.toLowerCase();
@@ -54,13 +54,13 @@ export const GroundDetail = () => {
 
  return (
  <div className="max-w-6xl mx-auto py-10 px-4">
- <button onClick={() => navigate('/grounds')} className="flex items-center gap-2 text-muted hover:text-foreground mb-8 font-semibold text-sm transition-colors cursor-pointer">
+ <button onClick={() => navigate('/venues')} className="flex items-center gap-2 text-muted hover:text-foreground mb-8 font-semibold text-sm transition-colors cursor-pointer">
  <ArrowLeft className="w-4 h-4" /> Back to Venues
  </button>
 
- {ground.status === 'PENDING' && (
+ {venue.status === 'PENDING' && (
  <div className="bg-yellow-50 text-yellow-800 border border-yellow-200 p-4 rounded-xl mb-8 font-bold flex items-center gap-3 text-xs">
- This ground is pending admin verification and is not publicly visible yet.
+ This venue is pending admin verification and is not publicly visible yet.
  </div>
  )}
 
@@ -69,12 +69,12 @@ export const GroundDetail = () => {
  <div className="lg:col-span-2 space-y-8">
  {/* Gallery */}
  <div className="bg-surface border border-border rounded-2xl overflow-hidden aspect-video relative shadow-sm group">
- {ground.photos?.length > 0 ? (
+ {venue.photos?.length > 0 ? (
  <>
- <img src={ground.photos[activeImage]} alt={ground.name} className="w-full h-full object-cover transition-transform duration-75 group-hover:scale-105" />
+ <img src={venue.photos[activeImage]} alt={venue.name} className="w-full h-full object-cover transition-transform duration-75 group-hover:scale-105" />
  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
- {ground.photos.map((_: any, i: number) => (
+ {venue.photos.map((_: any, i: number) => (
  <button key={i} onClick={() => setActiveImage(i)} aria-label={`View photo ${i + 1}`} className={`w-2.5 h-2.5 rounded-full transition-all ${i === activeImage ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/80'}`} />
  ))}
  </div>
@@ -91,20 +91,20 @@ export const GroundDetail = () => {
  <div className="flex items-start justify-between">
  <div>
  <h1 className="text-2xl md:text-3xl font-black text-foreground flex items-center gap-3 leading-tight">
- {ground.name}
- {ground.status === 'VERIFIED' && <CheckCircle className="w-6 h-6 text-emerald-500 shrink-0" />}
+ {venue.name}
+ {venue.status === 'VERIFIED' && <CheckCircle className="w-6 h-6 text-emerald-500 shrink-0" />}
  </h1>
  <div className="flex items-center gap-2 mt-3 text-muted font-bold text-sm">
  <MapPin className="w-4 h-4 shrink-0" /> 
  <span>
-   {ground.formattedAddress || ground.location}
-   {ground.city && `, ${ground.city}`}
+   {venue.formattedAddress || venue.location}
+   {venue.city && `, ${venue.city}`}
  </span>
  </div>
 
- {(ground.googleMapsUrl || (ground.latitude && ground.longitude)) && (
+ {(venue.googleMapsUrl || (venue.latitude && venue.longitude)) && (
    <a 
-     href={ground.googleMapsUrl || `https://www.google.com/maps/dir/?api=1&destination=${ground.latitude},${ground.longitude}`} 
+     href={venue.googleMapsUrl || `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`} 
      target="_blank" 
      rel="noreferrer"
      className="inline-flex items-center gap-2 mt-4 text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors border border-indigo-100"
@@ -117,24 +117,33 @@ export const GroundDetail = () => {
  <div className="text-right shrink-0 bg-surface border border-border px-4 py-2 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
  <div className="flex items-center justify-end gap-1.5 text-amber-500 mb-1">
  <Star className="w-5 h-5 fill-current" />
- <span className="text-2xl font-black text-foreground">{ground.avgRating > 0 ? ground.avgRating : 'New'}</span>
+ <span className="text-2xl font-black text-foreground">{venue.avgRating > 0 ? venue.avgRating : 'New'}</span>
  </div>
- <span className="text-muted text-[10px] font-bold uppercase tracking-wider">{ground._count.reviews} reviews</span>
+ <span className="text-muted text-[10px] font-bold uppercase tracking-wider">{venue._count.reviews} reviews</span>
  </div>
  </div>
 
  <div className="flex flex-wrap gap-2 mt-6">
- {ground.sports?.map((s: string) => (
+ {venue.sports?.map((s: string) => (
  <span key={s} className={`badge-premium ${getSportBadgeClass(s)}`}>{s}</span>
  ))}
  </div>
+
+ {venue.description && (
+    <div className="mt-8">
+      <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-foreground"><Info className="w-4 h-4 text-indigo-500" /> About this Venue</h3>
+      <p className="text-muted text-sm leading-relaxed whitespace-pre-wrap bg-surface p-5 rounded-2xl border border-border">
+        {venue.description}
+      </p>
+    </div>
+ )}
  </div>
 
  <div className="grid sm:grid-cols-2 gap-6">
  <div className="card-premium p-6 bg-surface">
  <h3 className="font-bold text-sm mb-4 flex items-center gap-2 text-foreground"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Amenities</h3>
  <ul className="space-y-3 text-muted text-xs font-semibold">
- {ground.amenities?.length > 0 ? ground.amenities.map((a: string) => (
+ {venue.amenities?.length > 0 ? venue.amenities.map((a: string) => (
  <li key={a} className="flex items-center gap-2">
  <div className="w-1.5 h-1.5 rounded-full bg-zinc-400" /> {a}
  </li>
@@ -147,15 +156,53 @@ export const GroundDetail = () => {
  <div className="space-y-4">
  <div className="flex items-center gap-4 text-foreground font-semibold">
  <div className="p-2.5 bg-zinc-50 border border-border rounded-xl"><IndianRupee className="w-4 h-4 text-muted" /></div>
- <span className="text-base font-bold">{ground.pricing || 'Contact for pricing'}</span>
+ <span className="text-base font-bold">{venue.pricing || 'Contact for pricing'}</span>
  </div>
- <div className="flex items-center gap-4 text-foreground font-semibold">
- <div className="p-2.5 bg-zinc-50 border border-border rounded-xl"><Phone className="w-4 h-4 text-muted" /></div>
- <span className="text-base">{ground.contactPhone || 'No contact provided'}</span>
+ <div className="flex items-center gap-4 text-muted font-medium text-sm">
+ <div className="p-2.5 bg-zinc-50 border border-border rounded-xl"><Phone className="w-4 h-4" /></div>
+ <span>{venue.contactPhone || 'N/A'}</span>
+ </div>
+ {venue.contactEmail && (
+ <div className="flex items-center gap-4 text-muted font-medium text-sm hover:text-indigo-600 transition-colors">
+ <div className="p-2.5 bg-zinc-50 border border-border rounded-xl"><Mail className="w-4 h-4" /></div>
+ <a href={`mailto:${venue.contactEmail}`}>{venue.contactEmail}</a>
+ </div>
+ )}
+ {venue.website && (
+ <div className="flex items-center gap-4 text-muted font-medium text-sm hover:text-indigo-600 transition-colors">
+ <div className="p-2.5 bg-zinc-50 border border-border rounded-xl"><Globe className="w-4 h-4" /></div>
+ <a href={venue.website} target="_blank" rel="noreferrer">{new URL(venue.website).hostname.replace('www.', '')}</a>
+ </div>
+ )}
  </div>
  </div>
  </div>
  </div>
+ 
+ {/* Upcoming Matches */}
+ {venue.matches && venue.matches.length > 0 && (
+ <div className="mt-8 pt-8 border-t border-border">
+ <h3 className="font-bold text-sm mb-4 text-foreground">Upcoming Matches</h3>
+ <div className="grid sm:grid-cols-2 gap-4">
+ {venue.matches.map((m: any) => (
+ <div key={m.id} className="bg-surface border border-border p-4 rounded-xl flex items-center justify-between group hover:border-indigo-200 transition-colors cursor-pointer" onClick={() => navigate(`/matches/${m.id}`)}>
+ <div>
+ <div className="flex items-center gap-2 mb-1">
+ <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${getSportBadgeClass(m.sport)}`}>{m.sport}</span>
+ <span className="text-xs font-semibold text-muted">{new Date(m.date).toLocaleDateString()}</span>
+ </div>
+ <h4 className="font-bold text-foreground text-sm group-hover:text-indigo-600 transition-colors truncate max-w-[150px]">{m.title}</h4>
+ </div>
+ <div className="text-right shrink-0">
+ <p className="text-xs font-bold text-muted mb-1">{m._count?.players || 0} / {m.maxPlayers || 0} Players</p>
+ <span className="text-indigo-600 font-bold text-xs group-hover:underline">View</span>
+ </div>
+ </div>
+ ))}
+ </div>
+ </div>
+ )}
+ 
  </div>
 
  {/* Right Col: Reviews */}
@@ -163,14 +210,14 @@ export const GroundDetail = () => {
  <div className="card-premium p-6 md:p-8 bg-surface">
  <h3 className="font-bold text-base mb-6 text-foreground">Reviews</h3>
  
- {ground.aiSummary && (
+ {venue.aiSummary && (
  <div className="bg-zinc-50 border border-border p-5 rounded-2xl mb-8 relative overflow-hidden">
  <div className="flex items-center gap-2 text-zinc-950 font-extrabold tracking-wider uppercase text-[10px] mb-3">
  <Star className="w-3.5 h-3.5 fill-current text-amber-500" />
  AI Summary
  </div>
  <p className="text-xs text-muted leading-relaxed font-semibold">
- {ground.aiSummary}
+ {venue.aiSummary}
  </p>
  </div>
  )}
@@ -199,8 +246,8 @@ export const GroundDetail = () => {
  )}
 
  <div className="space-y-6">
- {ground.reviews?.length > 0 ? (
- ground.reviews.map((r: any) => (
+ {venue.reviews?.length > 0 ? (
+ venue.reviews.map((r: any) => (
  <div key={r.id} className="group">
  <div className="flex justify-between items-start mb-3">
  <div className="flex items-center gap-3">
@@ -226,7 +273,6 @@ export const GroundDetail = () => {
  <p className="text-muted text-xs font-semibold">No reviews yet.</p>
  </div>
  )}
- </div>
  </div>
  </div>
  </div>

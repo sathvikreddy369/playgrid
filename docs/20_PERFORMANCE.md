@@ -8,7 +8,7 @@
 - **Prisma Schema Indexes**: Schema models are indexed on frequently queried columns:
   - `User`: `firebaseUid`, `email`
   - `Match`: `date`, `sport`, `status`, `latitude`, `longitude`
-  - `Ground`: `status`, `latitude`, `longitude`
+  - `Venue`: `status`, `latitude`, `longitude`
   - `Post`: `createdAt`, `type`
   - `Message`: `senderId`, `receiverId`, `isRead`
 - **Paginated Queries**: Implements cursor-based pagination for social feeds and matches lists.

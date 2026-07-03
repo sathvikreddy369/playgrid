@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
-import { useCreateGround } from '../hooks/useGrounds';
+import { useCreateVenue } from '../hooks/useVenues';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../providers/AuthProvider';
 
-export const CreateGround = () => {
+export const CreateVenue = () => {
  const { user } = useAuth();
  const navigate = useNavigate();
- const createGround = useCreateGround();
+ const createGround = useCreateVenue();
 
  const [formData, setFormData] = useState({
  name: '',
  location: '',
  pricing: '',
  contactPhone: '',
+ contactEmail: '',
+ website: '',
+ description: '',
  });
 
  const [photoUrl, setPhotoUrl] = useState('');
@@ -30,13 +33,13 @@ export const CreateGround = () => {
  return (
  <div className="text-center py-20">
  <h2 className="text-xl font-bold">Access Denied</h2>
- <p className="text-gray-500">Only Organizers can list grounds.</p>
+ <p className="text-gray-500">Only Organizers can list venues.</p>
  <button onClick={() => navigate('/profile')} className="text-blue-600 mt-4">Upgrade to Organizer in Profile</button>
  </div>
  );
  }
 
- const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
  setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
  };
 
@@ -58,8 +61,8 @@ export const CreateGround = () => {
  { ...formData, photos, sports, amenities },
  {
  onSuccess: () => {
- toast.success('Ground listing submitted for verification.');
- navigate('/grounds');
+ toast.success('Venue listing submitted for verification.');
+ navigate('/venues');
  },
  onError: (err: any) => toast.error(err.response?.data?.error || 'Failed to submit')
  }
@@ -73,7 +76,7 @@ export const CreateGround = () => {
  </button>
 
  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
- <h1 className="text-3xl font-bold text-gray-900 mb-2">List Your Ground</h1>
+ <h1 className="text-3xl font-bold text-gray-900 mb-2">List Your Venue</h1>
  <p className="text-gray-500 mb-8">Add your sports venue to Playgrid. Listings require admin approval.</p>
 
  <form onSubmit={handleSubmit} className="space-y-6">
@@ -94,6 +97,19 @@ export const CreateGround = () => {
  <label htmlFor="contactPhone" className="block text-sm font-medium text-gray-700 mb-1">Contact Phone</label>
  <input id="contactPhone" name="contactPhone" value={formData.contactPhone} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="+91..." />
  </div>
+ <div>
+ <label htmlFor="contactEmail" className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
+ <input type="email" id="contactEmail" name="contactEmail" value={formData.contactEmail} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="hello@playarena.com" />
+ </div>
+ <div>
+ <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
+ <input type="url" id="website" name="website" value={formData.website} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="https://playarena.com" />
+ </div>
+ </div>
+
+ <div>
+ <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+ <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={4} className="w-full border rounded-lg px-4 py-2" placeholder="Tell players about the venue..." />
  </div>
 
  <hr className="my-6" />
@@ -108,7 +124,7 @@ export const CreateGround = () => {
  <div className="flex flex-wrap gap-2 mt-3">
  {photos.map((p, i) => (
  <div key={i} className="relative w-24 h-24 rounded overflow-hidden group">
- <img src={p} alt="Ground photo" className="w-full h-full object-cover" />
+ <img src={p} alt="Venue photo" className="w-full h-full object-cover" />
  <button type="button" aria-label="Remove photo" onClick={() => handleRemoveItem(setPhotos, i)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"><X className="w-3 h-3" /></button>
  </div>
  ))}

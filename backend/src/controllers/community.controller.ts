@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { communityService } from '../services/community.service';
-import { CommunityStatus } from '@prisma/client';
+import { CommunityStatus, CommunityRole } from '@prisma/client';
 import { AppError } from '../utils/AppError';
 import { StructuredLogger } from '../utils/logger';
 
@@ -20,8 +20,14 @@ export class CommunityController {
 
   async getCommunities(req: Request, res: Response, next: NextFunction) {
     try {
-      const status = req.query.status as CommunityStatus;
-      const communities = await communityService.getCommunities(status);
+      const filters = {
+        lat: req.query.lat ? parseFloat(req.query.lat as string) : undefined,
+        lng: req.query.lng ? parseFloat(req.query.lng as string) : undefined,
+        radius: req.query.radius ? parseFloat(req.query.radius as string) : undefined,
+        sport: req.query.sport as string,
+        search: req.query.search as string
+      };
+      const communities = await communityService.getCommunities(filters);
       res.json(communities);
     } catch (error) {
       next(error);
@@ -60,14 +66,51 @@ export class CommunityController {
     }
   }
 
+  async approveMember(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requesterId = req.user!.id;
+      const communityId = req.params.id as string;
+      const userId = req.params.userId as string;
+      const updated = await communityService.approveMember(communityId, userId, requesterId);
+      res.json(updated);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async rejectMember(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requesterId = req.user!.id;
+      const communityId = req.params.id as string;
+      const userId = req.params.userId as string;
+      const updated = await communityService.rejectMember(communityId, userId, requesterId);
+      res.json(updated);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateMemberRole(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requesterId = req.user!.id;
+      const communityId = req.params.id as string;
+      const userId = req.params.userId as string;
+      const newRole = req.body.role as CommunityRole;
+      const updated = await communityService.updateMemberRole(communityId, userId, newRole, requesterId);
+      res.json(updated);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async kickMember(req: Request, res: Response, next: NextFunction) {
     try {
       const requesterId = req.user!.id;
-      const requesterRole = req.user!.role;
+      const requesterSystemRole = req.user!.role;
       const id = (req.params.id as string);
       const userId = (req.params.userId as string);
       
-      await communityService.kickMember(id, userId, requesterId, requesterRole);
+      await communityService.kickMember(id, userId, requesterId, requesterSystemRole);
       res.json({ message: 'Member removed' });
     } catch (error) {
       next(error);

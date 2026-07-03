@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useAdminStats, useAdminQueue, useAdminUsers, useAdminMatches, useAdminVerifyCommunity, useAdminVerifyGround, useAdminReports, useResolveReport, useBlockUser, useDeletePost } from '../hooks/useAdmin';
+import { useAdminStats, useAdminQueue, useAdminUsers, useAdminMatches, useAdminVerifyCommunity, useAdminVerifyVenue, useAdminReports, useResolveReport, useBlockUser, useDeletePost } from '../hooks/useAdmin';
 import { useAuth } from '../providers/AuthProvider';
 import { Navigate, Link } from 'react-router-dom';
 import { Loader2, Users, MapPin, Activity, Check, X, Shield, BarChart3, Clock, AlertTriangle, Trash2, Ban } from 'lucide-react';
 import { motion } from 'framer-motion';
-import type { Community, Ground, User, Match, Report } from "../types";
+import type { Community, Venue, User, Match, Report } from "../types";
 
 export const AdminDashboard = () => {
  const { user } = useAuth();
@@ -17,7 +17,7 @@ export const AdminDashboard = () => {
  const { data: reportsData, isLoading: reportsLoading } = useAdminReports();
 
  const verifyComm = useAdminVerifyCommunity();
- const verifyGround = useAdminVerifyGround();
+ const verifyGround = useAdminVerifyVenue();
  const resolveReport = useResolveReport();
  const blockUser = useBlockUser();
  const deletePost = useDeletePost();
@@ -67,7 +67,7 @@ export const AdminDashboard = () => {
  <StatCard title="Total Users" value={stats.totalUsers} icon={<Users className="text-foreground" />} />
  <StatCard title="Active Matches" value={stats.activeMatches} subtext={`${stats.totalMatches} total matches`} icon={<Activity className="text-foreground" />} />
  <StatCard title="Total Communities" value={stats.totalCommunities} icon={<Users className="text-foreground" />} />
- <StatCard title="Total Grounds" value={stats.totalGrounds} icon={<MapPin className="text-foreground" />} />
+ <StatCard title="Total Venues" value={stats.totalGrounds} icon={<MapPin className="text-foreground" />} />
  </div>
  )}
  </motion.div>
@@ -100,21 +100,21 @@ export const AdminDashboard = () => {
  </ul>
  </div>
 
- {/* Grounds */}
+ {/* Venues */}
  <div className="bg-surface rounded-2xl border border-border overflow-hidden">
  <div className="px-6 py-4 border-b border-border bg-zinc-50 ">
- <h2 className="font-bold text-sm tracking-tight text-foreground">Pending Grounds ({queue.pendingGrounds?.length || 0})</h2>
+ <h2 className="font-bold text-sm tracking-tight text-foreground">Pending Venues ({queue.pendingGrounds?.length || 0})</h2>
  </div>
  <ul className="divide-y divide-border">
- {queue.pendingGrounds?.map((ground: Ground) => (
- <li key={ground.id} className="p-4 flex justify-between items-center text-sm font-semibold">
+ {queue.pendingGrounds?.map((venue: Venue) => (
+ <li key={venue.id} className="p-4 flex justify-between items-center text-sm font-semibold">
  <div>
- <p className="font-bold text-foreground">{ground.name}</p>
- <p className="text-xs text-muted font-semibold">{ground.location}</p>
+ <p className="font-bold text-foreground">{venue.name}</p>
+ <p className="text-xs text-muted font-semibold">{venue.location}</p>
  </div>
  <div className="flex gap-2">
- <button onClick={() => handleVerifyGround(ground.id, 'REJECTED')} aria-label="Reject ground" className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"><X className="w-4 h-4" /></button>
- <button onClick={() => handleVerifyGround(ground.id, 'VERIFIED')} aria-label="Verify ground" className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all cursor-pointer"><Check className="w-4 h-4" /></button>
+ <button onClick={() => handleVerifyGround(venue.id, 'REJECTED')} aria-label="Reject venue" className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"><X className="w-4 h-4" /></button>
+ <button onClick={() => handleVerifyGround(venue.id, 'VERIFIED')} aria-label="Verify venue" className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all cursor-pointer"><Check className="w-4 h-4" /></button>
  </div>
  </li>
  ))}

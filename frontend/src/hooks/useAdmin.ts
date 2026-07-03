@@ -41,11 +41,11 @@ export const useAdminMatches = () => {
   });
 };
 
-export const useAdminVerifyGround = () => {
+export const useAdminVerifyVenue = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { data } = await api.put(`/admin/grounds/${id}/verify`, { status });
+      const { data } = await api.put(`/admin/venues/${id}/verify`, { status });
       return data;
     },
     onSuccess: () => {

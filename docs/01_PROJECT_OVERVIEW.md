@@ -14,7 +14,7 @@ PlayGrid is a community-driven sports matchmaking, venue discovery, and social e
 1. **Authentication**: Firebase Authentication integrated with a secure custom database sync layer.
 2. **Social Feed**: Creating posts, replies, nesting, and liking contents with spam protection.
 3. **Matches**: Scheduling, joining, and organizer roster moderation.
-4. **Venues (Grounds)**: Promoting venues, compiling ratings, and rendering review summaries with AI.
+4. **Venues (Venues)**: Promoting venues, compiling ratings, and rendering review summaries with AI.
 5. **Communities**: Joining and creating private/public groups.
 6. **Chat (Socket.IO)**: Persistent personal rooms and real-time messaging indicators.
 7. **Search (AI & Spatial)**: Natural language queries mapped to SQL filters, and spatial geo-distance search.

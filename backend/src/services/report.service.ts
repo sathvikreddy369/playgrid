@@ -15,8 +15,8 @@ export class ReportService {
       case 'COMMUNITY':
         targetExists = (await prisma.community.count({ where: { id: data.targetId } })) > 0;
         break;
-      case 'GROUND':
-        targetExists = (await prisma.ground.count({ where: { id: data.targetId } })) > 0;
+      case 'VENUE':
+        targetExists = (await prisma.venue.count({ where: { id: data.targetId } })) > 0;
         break;
       case 'MESSAGE':
         targetExists = (await prisma.message.count({ where: { id: data.targetId } })) > 0;

@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMatchDetail, useJoinMatch, useMatchAction, useAddMatchComment, useUpdateMatchStatus, useBroadcastMessage, useAddMatchReview, useDeleteMatchComment } from '../hooks/useMatches';
 import { useAuth } from '../providers/AuthProvider';
-import { ArrowLeft, Calendar, MapPin, Users, IndianRupee, ShieldAlert, Check, Star, MessageSquare, Trash2, Edit3, Send, Clock } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, IndianRupee, ShieldAlert, Check, Star, MessageSquare, Trash2, Edit3, Send, Clock, ImageIcon, Navigation } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { Skeleton } from '../components/Skeleton';
 import { UserLink } from '../components/ui/UserLink';
-import { useSocket } from '../providers/SocketProvider';
+import { useSocket } from '../hooks/useSocket';
 import { useQueryClient } from '@tanstack/react-query';
 import type { MatchPlayer, MatchComment, MatchReview } from '../types';
 
@@ -24,7 +24,7 @@ export const MatchDetail = () => {
  const updateStatus = useUpdateMatchStatus();
  const broadcastMessage = useBroadcastMessage();
  const addReview = useAddMatchReview();
- const { socket } = useSocket();
+ const socket = useSocket();
  const queryClient = useQueryClient();
 
  React.useEffect(() => {
@@ -161,10 +161,40 @@ export const MatchDetail = () => {
 
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm font-semibold text-muted bg-zinc-50 p-5 rounded-2xl border border-border">
  <div className="flex items-center gap-3"><Calendar className="w-4 h-4 text-zinc-450" /> <span>{match.date ? (isNaN(new Date(match.date).getTime()) ? 'Invalid Date' : format(new Date(match.date), 'PPp')) : 'No Date'}</span></div>
- <div className="flex items-center gap-3"><MapPin className="w-4 h-4 text-zinc-450" /> <span className="truncate">{match.location || 'No Location'}</span></div>
+ <div className="flex items-center gap-3"><MapPin className="w-4 h-4 text-zinc-450" /> <span className="truncate">{match.venue?.name || match.location || 'No Location'}</span></div>
  <div className="flex items-center gap-3"><Users className="w-4 h-4 text-zinc-450" /> <span>{approvedPlayers.length} / {match.maxPlayers || 0} Players</span></div>
  <div className="flex items-center gap-3"><IndianRupee className="w-4 h-4 text-zinc-450" /> <span>{match.costPerPerson ? `₹${match.costPerPerson} / Person` : 'Free Entry'}</span></div>
  </div>
+
+  {match.venue && (
+  <div className="mt-8 border border-border rounded-2xl overflow-hidden bg-white shadow-sm">
+    <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center gap-4">
+        {match.venue.photos?.[0] ? (
+          <img src={match.venue.photos[0]} alt={match.venue.name} className="w-16 h-16 rounded-xl object-cover" />
+        ) : (
+          <div className="w-16 h-16 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-400">
+            <ImageIcon className="w-6 h-6" />
+          </div>
+        )}
+        <div>
+          <h3 className="font-bold text-foreground text-lg leading-tight">{match.venue.name}</h3>
+          <p className="text-muted text-sm flex items-center gap-1 mt-1"><MapPin className="w-3.5 h-3.5" /> {match.venue.location}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        {(match.venue.latitude && match.venue.longitude) && (
+          <a href={`https://www.google.com/maps/dir/?api=1&destination=${match.venue.latitude},${match.venue.longitude}`} target="_blank" rel="noreferrer" className="btn-secondary text-xs py-2 px-4 whitespace-nowrap bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100 flex items-center gap-2">
+            <Navigation className="w-3.5 h-3.5" /> Directions
+          </a>
+        )}
+        <button onClick={() => navigate(`/venues/${match.venue.id}`)} className="btn-secondary text-xs py-2 px-4 whitespace-nowrap">
+          View Venue
+        </button>
+      </div>
+    </div>
+  </div>
+  )}
 
  <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
  <UserLink userId={match.creatorId} className="flex items-center gap-3 hover:opacity-100">

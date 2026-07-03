@@ -8,12 +8,12 @@ export class SearchController {
       const { q = '', type = 'ALL', lat, lng, radius = '10' } = req.query;
 
       // Nearby Search (Requires lat and lng)
-      if (lat && lng && (type === 'MATCHES' || type === 'GROUNDS')) {
+      if (lat && lng && (type === 'MATCHES' || type === 'VENUES')) {
         const results = await searchService.nearbySearch(
           parseFloat(lat as string), 
           parseFloat(lng as string), 
           parseFloat(radius as string),
-          type as 'MATCHES' | 'GROUNDS'
+          type as 'MATCHES' | 'VENUES'
         );
         return res.json({ nearby: true, results });
       }
