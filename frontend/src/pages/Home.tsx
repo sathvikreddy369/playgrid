@@ -7,7 +7,7 @@ import { useMatches } from '../hooks/useMatches';
 import { useCommunities } from '../hooks/useCommunities';
 import { PostCard } from '../components/PostCard';
 import { PostSkeleton } from '../components/Skeleton';
-import { ArrowRight, Search, Users, Calendar, MapPin, Plus, Flame, Clock } from 'lucide-react';
+import { ArrowRight, Search, Users, Calendar, MapPin, Plus, Flame, Clock, MessageSquare } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -119,7 +119,14 @@ export const Home = () => {
                 {isLoadingMatches ? (
                   <div className="flex gap-4 overflow-hidden">
                     {[1, 2, 3].map(i => (
-                      <Card key={i} className="min-w-[280px] h-[160px] p-4 bg-zinc-50 animate-pulse border-transparent" />
+                      <Card key={i} className="min-w-[280px] w-[280px] md:w-[320px] h-[160px] p-5 bg-surface animate-pulse flex flex-col justify-between">
+                        <div className="flex justify-between">
+                          <div className="w-16 h-5 bg-zinc-200 rounded-full" />
+                          <div className="w-10 h-4 bg-zinc-100 rounded" />
+                        </div>
+                        <div className="w-3/4 h-5 bg-zinc-200 rounded mt-2" />
+                        <div className="w-1/2 h-4 bg-zinc-100 rounded mt-auto" />
+                      </Card>
                     ))}
                   </div>
                 ) : matches.length > 0 ? (
@@ -145,10 +152,16 @@ export const Home = () => {
                     ))}
                   </div>
                 ) : (
-                  <Card className="p-8 text-center bg-zinc-50 border-dashed">
-                    <p className="text-foreground text-sm font-medium">No open matches found nearby.</p>
-                    <Link to="/matches/create" className="text-primary-600 text-sm font-bold mt-2 inline-block hover:underline">Host one</Link>
-                  </Card>
+                  <div className="text-center py-12 bg-surface border border-border border-dashed rounded-2xl p-6">
+                    <Calendar className="w-10 h-10 text-muted/60 mx-auto mb-3" />
+                    <h3 className="font-bold text-foreground text-sm">No matches active</h3>
+                    <p className="text-xs text-muted mt-1 mb-4">Be the first to list a match in your neighborhood!</p>
+                    <Link to="/matches/create">
+                      <Button variant="outline" size="sm" className="rounded-full">
+                        <Plus className="w-4 h-4 mr-1.5" /> Host a Match
+                      </Button>
+                    </Link>
+                  </div>
                 )}
               </section>
 
@@ -167,9 +180,16 @@ export const Home = () => {
                       <PostCard key={post.id} post={post} />
                     ))
                   ) : (
-                    <Card className="p-8 text-center border-dashed">
-                      <p className="text-foreground text-sm font-medium">It's quiet here. Post something!</p>
-                    </Card>
+                    <div className="text-center py-12 bg-surface border border-border border-dashed rounded-2xl p-6">
+                      <MessageSquare className="w-10 h-10 text-muted/60 mx-auto mb-3" />
+                      <h3 className="font-bold text-foreground text-sm">No community posts yet</h3>
+                      <p className="text-xs text-muted mt-1 mb-4">Start a conversation by posting updates, questions, or memes!</p>
+                      <Link to="/feed">
+                        <Button variant="outline" size="sm" className="rounded-full">
+                          Go to Feed
+                        </Button>
+                      </Link>
+                    </div>
                   )}
                   {posts.length > 0 && (
                     <Link to="/feed">
@@ -211,6 +231,12 @@ export const Home = () => {
                     <Button variant="ghost" className="w-full text-sm mt-1">Explore all clubs</Button>
                   </Link>
                 </div>
+              </section>
+
+              {/* Friend Activity Feed */}
+              <section>
+                <h2 className="text-lg font-bold mb-4">Friend Activity</h2>
+                <ActivityFeed userId={user.id} />
               </section>
 
             </div>

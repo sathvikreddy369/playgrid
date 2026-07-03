@@ -44,7 +44,7 @@ export const useSocket = () => {
         socket.current.disconnect();
       }
     };
-  }, [user, firebaseUser]);
+  }, [user, firebaseUser, queryClient]);
 
   return socket.current;
 };

@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../providers/AuthProvider';
+import { Input } from '../components/ui/Input';
+import { Textarea } from '../components/ui/Textarea';
+import { Button } from '../components/ui/Button';
 
 export const CreateVenue = () => {
  const { user } = useAuth();
@@ -29,15 +32,17 @@ export const CreateVenue = () => {
  const [amenityInput, setAmenityInput] = useState('');
  const [amenities, setAmenities] = useState<string[]>([]);
 
- if (!user || (user.role !== 'ORGANIZER' && user.role !== 'ADMIN')) {
- return (
- <div className="text-center py-20">
- <h2 className="text-xl font-bold">Access Denied</h2>
- <p className="text-gray-500">Only Organizers can list venues.</p>
- <button onClick={() => navigate('/profile')} className="text-blue-600 mt-4">Upgrade to Organizer in Profile</button>
- </div>
- );
- }
+  if (!user || (user.role !== 'ORGANIZER' && user.role !== 'ADMIN')) {
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-xl font-bold">Access Denied</h2>
+        <p className="text-muted">Only Organizers can list venues.</p>
+        <Button onClick={() => navigate('/profile')} variant="ghost" className="mt-4 text-primary-600 hover:text-primary-700">
+          Upgrade to Organizer in Profile
+        </Button>
+      </div>
+    );
+  }
 
  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
  setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -69,58 +74,52 @@ export const CreateVenue = () => {
  );
  };
 
- return (
- <div className="max-w-3xl mx-auto py-8 px-4">
- <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-6">
- <ArrowLeft className="w-5 h-5" /> Back
- </button>
+  return (
+  <div className="max-w-3xl mx-auto py-8 px-4">
+  <Button variant="ghost" onClick={() => navigate(-1)} className="flex items-center gap-2 text-muted hover:text-foreground mb-6">
+  <ArrowLeft className="w-5 h-5" /> Back
+  </Button>
 
- <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
- <h1 className="text-3xl font-bold text-gray-900 mb-2">List Your Venue</h1>
- <p className="text-gray-500 mb-8">Add your sports venue to Playgrid. Listings require admin approval.</p>
+  <div className="bg-surface rounded-2xl shadow-soft border border-border p-8">
+  <h1 className="text-3xl font-black text-foreground mb-2">List Your Venue</h1>
+  <p className="text-muted text-sm mb-8">Add your sports venue to Playgrid. Listings require admin approval.</p>
 
- <form onSubmit={handleSubmit} className="space-y-6">
- <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
- <div>
- <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Venue Name *</label>
- <input required id="name" name="name" value={formData.name} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. Play Arena" />
- </div>
- <div>
- <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
- <input required id="location" name="location" value={formData.location} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. HSR Layout, Bangalore" />
- </div>
- <div>
- <label htmlFor="pricing" className="block text-sm font-medium text-gray-700 mb-1">Pricing Guide</label>
- <input id="pricing" name="pricing" value={formData.pricing} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="e.g. ₹1500 / hr" />
- </div>
- <div>
- <label htmlFor="contactPhone" className="block text-sm font-medium text-gray-700 mb-1">Contact Phone</label>
- <input id="contactPhone" name="contactPhone" value={formData.contactPhone} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="+91..." />
- </div>
- <div>
- <label htmlFor="contactEmail" className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
- <input type="email" id="contactEmail" name="contactEmail" value={formData.contactEmail} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="hello@playarena.com" />
- </div>
- <div>
- <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
- <input type="url" id="website" name="website" value={formData.website} onChange={handleChange} className="w-full border rounded-lg px-4 py-2" placeholder="https://playarena.com" />
- </div>
- </div>
+  <form onSubmit={handleSubmit} className="space-y-6">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div>
+  <Input required id="name" name="name" label="Venue Name *" value={formData.name} onChange={handleChange} placeholder="e.g. Play Arena" />
+  </div>
+  <div>
+  <Input required id="location" name="location" label="Location *" value={formData.location} onChange={handleChange} placeholder="e.g. HSR Layout, Bangalore" />
+  </div>
+  <div>
+  <Input id="pricing" name="pricing" label="Pricing Guide" value={formData.pricing} onChange={handleChange} placeholder="e.g. ₹1500 / hr" />
+  </div>
+  <div>
+  <Input id="contactPhone" name="contactPhone" label="Contact Phone" value={formData.contactPhone} onChange={handleChange} placeholder="+91..." />
+  </div>
+  <div>
+  <Input type="email" id="contactEmail" name="contactEmail" label="Contact Email" value={formData.contactEmail} onChange={handleChange} placeholder="hello@playarena.com" />
+  </div>
+  <div>
+  <Input type="url" id="website" name="website" label="Website URL" value={formData.website} onChange={handleChange} placeholder="https://playarena.com" />
+  </div>
+  </div>
 
- <div>
- <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
- <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows={4} className="w-full border rounded-lg px-4 py-2" placeholder="Tell players about the venue..." />
- </div>
+  <div>
+  <Textarea id="description" name="description" label="Description" value={formData.description} onChange={handleChange} rows={4} placeholder="Tell players about the venue..." />
+  </div>
 
  <hr className="my-6" />
 
  {/* Photos */}
- <div>
- <label htmlFor="photoUrl" className="block text-sm font-medium text-gray-700 mb-1">Photo URLs (Gallery)</label>
- <div className="flex gap-2">
- <input id="photoUrl" value={photoUrl} onChange={e => setPhotoUrl(e.target.value)} className="flex-1 border rounded-lg px-4 py-2" placeholder="https://image-url.jpg" />
- <button type="button" aria-label="Add photo URL" onClick={() => handleAddItem(setPhotos, photoUrl, setPhotoUrl)} className="bg-gray-100 px-4 rounded-lg"><Plus className="w-5 h-5" /></button>
- </div>
+  <div>
+  <div className="flex gap-2 items-end">
+  <div className="flex-1">
+  <Input id="photoUrl" label="Photo URLs (Gallery)" value={photoUrl} onChange={e => setPhotoUrl(e.target.value)} placeholder="https://image-url.jpg" />
+  </div>
+  <Button type="button" aria-label="Add photo URL" onClick={() => handleAddItem(setPhotos, photoUrl, setPhotoUrl)} className="h-10 px-4 rounded-xl"><Plus className="w-5 h-5" /></Button>
+  </div>
  <div className="flex flex-wrap gap-2 mt-3">
  {photos.map((p, i) => (
  <div key={i} className="relative w-24 h-24 rounded overflow-hidden group">
@@ -132,12 +131,13 @@ export const CreateVenue = () => {
  </div>
 
  {/* Sports */}
- <div>
- <label htmlFor="sportInput" className="block text-sm font-medium text-gray-700 mb-1">Supported Sports</label>
- <div className="flex gap-2">
- <input id="sportInput" value={sportInput} onChange={e => setSportInput(e.target.value)} className="flex-1 border rounded-lg px-4 py-2" placeholder="e.g. Football, Cricket" />
- <button type="button" aria-label="Add sport" onClick={() => handleAddItem(setSports, sportInput, setSportInput)} className="bg-gray-100 px-4 rounded-lg"><Plus className="w-5 h-5" /></button>
- </div>
+  <div>
+  <div className="flex gap-2 items-end">
+  <div className="flex-1">
+  <Input id="sportInput" label="Supported Sports" value={sportInput} onChange={e => setSportInput(e.target.value)} placeholder="e.g. Football, Cricket" />
+  </div>
+  <Button type="button" aria-label="Add sport" onClick={() => handleAddItem(setSports, sportInput, setSportInput)} className="h-10 px-4 rounded-xl"><Plus className="w-5 h-5" /></Button>
+  </div>
  <div className="flex flex-wrap gap-2 mt-2">
  {sports.map((s, i) => (
  <span key={i} className="flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
@@ -148,12 +148,13 @@ export const CreateVenue = () => {
  </div>
 
  {/* Amenities */}
- <div>
- <label htmlFor="amenityInput" className="block text-sm font-medium text-gray-700 mb-1">Amenities</label>
- <div className="flex gap-2">
- <input id="amenityInput" value={amenityInput} onChange={e => setAmenityInput(e.target.value)} className="flex-1 border rounded-lg px-4 py-2" placeholder="e.g. Floodlights, Parking, Washrooms" />
- <button type="button" aria-label="Add amenity" onClick={() => handleAddItem(setAmenities, amenityInput, setAmenityInput)} className="bg-gray-100 px-4 rounded-lg"><Plus className="w-5 h-5" /></button>
- </div>
+  <div>
+  <div className="flex gap-2 items-end">
+  <div className="flex-1">
+  <Input id="amenityInput" label="Amenities" value={amenityInput} onChange={e => setAmenityInput(e.target.value)} placeholder="e.g. Floodlights, Parking, Washrooms" />
+  </div>
+  <Button type="button" aria-label="Add amenity" onClick={() => handleAddItem(setAmenities, amenityInput, setAmenityInput)} className="h-10 px-4 rounded-xl"><Plus className="w-5 h-5" /></Button>
+  </div>
  <div className="flex flex-wrap gap-2 mt-2">
  {amenities.map((a, i) => (
  <span key={i} className="flex items-center gap-1 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm">
@@ -163,11 +164,11 @@ export const CreateVenue = () => {
  </div>
  </div>
 
- <div className="pt-6 flex justify-end">
- <button type="submit" disabled={createGround.isPending} className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-medium">
- {createGround.isPending ? 'Submitting...' : 'Submit Listing'}
- </button>
- </div>
+  <div className="pt-6 flex justify-end">
+  <Button type="submit" isLoading={createGround.isPending} className="px-8 rounded-xl font-bold">
+  Submit Listing
+  </Button>
+  </div>
  </form>
  </div>
  </div>

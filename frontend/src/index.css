@@ -10,6 +10,14 @@
     --text-h: #111827; 
     --border: #E5E7EB; 
     --code-bg: #F3F4F6;
+
+    /* Sports Accent Colors */
+    --sport-cricket: #EA580C;
+    --sport-football: #059669;
+    --sport-basketball: #D97706;
+    --sport-badminton: #7C3AED;
+    --sport-tennis: #2563EB;
+    --sport-pickleball: #65A30D;
   }
 
   body {
@@ -34,3 +42,28 @@
     color: var(--text);
   }
 }
+
+@layer utilities {
+  /* Safe Area paddings */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* Hide scrollbar utility */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Custom animation utilities */
+  .transition-premium {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+

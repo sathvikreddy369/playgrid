@@ -23,7 +23,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ isOpen, onClose, title
   };
 
   const handleNativeShare = async () => {
-    if (navigator.share) {
+    if (typeof navigator.share !== 'undefined') {
       try {
         await navigator.share({
           title: title,
@@ -74,7 +74,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ isOpen, onClose, title
               </button>
             </div>
 
-            {navigator.share && (
+            {typeof navigator.share !== 'undefined' && (
               <button 
                 onClick={handleNativeShare}
                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 transition-colors text-white rounded-xl font-bold flex items-center justify-center gap-2"

@@ -1,8 +1,9 @@
 import React from 'react';
 import { useTournaments } from '../hooks/useTournaments';
 import { format } from 'date-fns';
-import { Trophy, Calendar, MapPin, Users } from 'lucide-react';
+import { Trophy, Calendar, MapPin, Users, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Button } from '../components/ui/Button';
 
 export const Tournaments = () => {
  const { data: tournaments, isLoading } = useTournaments();
@@ -81,10 +82,13 @@ export const Tournaments = () => {
  ))}
  </div>
  ) : (
- <div className="text-center py-20 bg-surface border border-border border-dashed rounded-2xl">
- <Trophy className="w-12 h-12 text-muted mx-auto mb-4" />
+ <div className="text-center py-16 bg-surface border border-border border-dashed rounded-2xl p-6">
+ <Trophy className="w-12 h-12 text-muted/60 mx-auto mb-4" />
  <h3 className="text-lg font-bold text-foreground">No tournaments active</h3>
- <p className="text-muted text-sm">Check back later or organize your own!</p>
+ <p className="text-muted text-xs mb-6">Check back later or host a custom match in the meantime!</p>
+ <Button variant="outline" className="rounded-full">
+   Explore Matches
+ </Button>
  </div>
  )}
  </div>

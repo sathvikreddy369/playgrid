@@ -3,6 +3,10 @@ import { useCreateCommunity } from '../hooks/useCommunities';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Input } from '../components/ui/Input';
+import { Select } from '../components/ui/Select';
+import { Textarea } from '../components/ui/Textarea';
+import { Button } from '../components/ui/Button';
 
 export const CreateCommunity = () => {
   const [name, setName] = useState('');
@@ -52,12 +56,13 @@ export const CreateCommunity = () => {
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-4">
-      <button 
+      <Button 
+        variant="ghost"
         onClick={() => navigate(-1)} 
         className="flex items-center gap-2 text-muted hover:text-foreground font-semibold text-sm mb-8 transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" /> Back
-      </button>
+      </Button>
 
       <div className="card-premium p-8 md:p-10 bg-surface">
         <h1 className="text-3xl font-black text-foreground mb-2">Create Community</h1>
@@ -71,25 +76,22 @@ export const CreateCommunity = () => {
           <div className="space-y-5">
             <h3 className="font-bold text-lg text-foreground border-b border-border pb-2">Basic Info</h3>
             <div>
-              <label className="block text-xs font-bold text-muted mb-2 uppercase tracking-wider">Community Name *</label>
-              <input
-                type="text"
+              <Input
+                label="Community Name *"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="input-primary w-full"
                 placeholder="e.g. Bangalore Weekend Footballers"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-muted mb-2 uppercase tracking-wider">Description *</label>
-              <textarea
+              <Textarea
+                label="Description *"
                 required
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="input-primary w-full resize-none"
                 placeholder="What is this community about?"
               />
             </div>
@@ -100,24 +102,22 @@ export const CreateCommunity = () => {
             <h3 className="font-bold text-lg text-foreground border-b border-border pb-2">Settings</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-xs font-bold text-muted mb-2 uppercase tracking-wider">Privacy *</label>
-                <select 
-                  className="input-primary w-full appearance-none"
+                <Select 
+                  label="Privacy *"
                   value={privacy}
                   onChange={(e) => setPrivacy(e.target.value as any)}
                 >
                   <option value="PUBLIC">Public (Anyone can join)</option>
                   <option value="PRIVATE">Private (Requires approval)</option>
-                </select>
+                </Select>
               </div>
               
               <div>
-                <label className="block text-xs font-bold text-muted mb-2 uppercase tracking-wider">Base Location</label>
-                <input
+                <Input
+                  label="Base Location"
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="input-primary w-full"
                   placeholder="e.g. Koramangala, Bangalore"
                 />
               </div>
@@ -125,22 +125,20 @@ export const CreateCommunity = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-xs font-bold text-muted mb-2 uppercase tracking-wider">Sports (Comma separated)</label>
-                <input
+                <Input
+                  label="Sports (Comma separated)"
                   type="text"
                   value={sportsInput}
                   onChange={(e) => setSportsInput(e.target.value)}
-                  className="input-primary w-full"
                   placeholder="e.g. Cricket, Football"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-muted mb-2 uppercase tracking-wider">Tags (Comma separated)</label>
-                <input
+                <Input
+                  label="Tags (Comma separated)"
                   type="text"
                   value={tagsInput}
                   onChange={(e) => setTagsInput(e.target.value)}
-                  className="input-primary w-full"
                   placeholder="e.g. beginners, weekend, casual"
                 />
               </div>
@@ -152,47 +150,45 @@ export const CreateCommunity = () => {
             <h3 className="font-bold text-lg text-foreground border-b border-border pb-2">Branding & Rules</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-xs font-bold text-muted mb-2 uppercase tracking-wider">Avatar URL</label>
-                <input
+                <Input
+                  label="Avatar URL"
                   type="url"
                   value={avatarUrl}
                   onChange={(e) => setAvatarUrl(e.target.value)}
-                  className="input-primary w-full"
                   placeholder="https://..."
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-muted mb-2 uppercase tracking-wider">Cover Image URL</label>
-                <input
+                <Input
+                  label="Cover Image URL"
                   type="url"
                   value={coverImage}
                   onChange={(e) => setCoverImage(e.target.value)}
-                  className="input-primary w-full"
                   placeholder="https://..."
                 />
               </div>
             </div>
             
             <div>
-              <label className="block text-xs font-bold text-muted mb-2 uppercase tracking-wider">Community Rules (One per line)</label>
-              <textarea
+              <Textarea
+                label="Community Rules (One per line)"
                 rows={4}
                 value={rulesInput}
                 onChange={(e) => setRulesInput(e.target.value)}
-                className="input-primary w-full resize-none"
                 placeholder="1. Be respectful to others&#10;2. No spamming"
               />
             </div>
           </div>
 
           <div className="pt-8 border-t border-border flex justify-end">
-            <button
+            <Button
               type="submit"
-              disabled={createCommunity.isPending || !name.trim() || !description.trim()}
-              className="btn-primary w-full md:w-auto"
+              isLoading={createCommunity.isPending}
+              disabled={!name.trim() || !description.trim()}
+              className="w-full md:w-auto px-8 rounded-xl font-bold"
             >
-              {createCommunity.isPending ? 'Submitting...' : 'Submit for Verification'}
-            </button>
+              Submit for Verification
+            </Button>
           </div>
         </form>
       </div>

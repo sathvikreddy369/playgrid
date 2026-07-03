@@ -5,6 +5,10 @@ import api from '../lib/api';
 import { Save, User, MapPin, Gamepad2, Activity, Clock, Shield, Upload, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { Input } from '../components/ui/Input';
+import { Select } from '../components/ui/Select';
+import { Textarea } from '../components/ui/Textarea';
+import { Button } from '../components/ui/Button';
 
 export const Settings = () => {
   const { user, profile } = useAuth();
@@ -114,70 +118,49 @@ export const Settings = () => {
           </div>
 
           <div className="space-y-4">
-            <div>
-              <label className="flex items-center gap-2 text-sm font-bold text-foreground mb-1.5">
-                <User className="w-4 h-4 text-primary-500" /> Bio
-              </label>
-              <textarea 
-                value={formData.bio}
-                onChange={e => setFormData({ ...formData, bio: e.target.value })}
-                className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-foreground focus:outline-none focus:border-primary-500 transition-colors"
-                rows={3}
-                placeholder="Tell others about yourself..."
-              />
-            </div>
+            <Textarea
+              label="Bio"
+              value={formData.bio}
+              onChange={e => setFormData({ ...formData, bio: e.target.value })}
+              placeholder="Tell others about yourself..."
+              rows={3}
+            />
 
-            <div>
-              <label className="flex items-center gap-2 text-sm font-bold text-foreground mb-1.5">
-                <MapPin className="w-4 h-4 text-green-500" /> Location
-              </label>
-              <input 
-                type="text"
-                value={formData.location}
-                onChange={e => setFormData({ ...formData, location: e.target.value })}
-                className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-foreground focus:outline-none focus:border-primary-500 transition-colors"
-                placeholder="City, Neighborhood"
-              />
-            </div>
+            <Input
+              label="Location"
+              startIcon={<MapPin className="w-4 h-4 text-green-500" />}
+              type="text"
+              value={formData.location}
+              onChange={e => setFormData({ ...formData, location: e.target.value })}
+              placeholder="City, Neighborhood"
+            />
 
-            <div>
-              <label className="flex items-center gap-2 text-sm font-bold text-foreground mb-1.5">
-                <Activity className="w-4 h-4 text-orange-500" /> Sports Interests (comma separated)
-              </label>
-              <input 
-                type="text"
-                value={formData.sports}
-                onChange={e => setFormData({ ...formData, sports: e.target.value })}
-                className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-foreground focus:outline-none focus:border-primary-500 transition-colors"
-                placeholder="Cricket, Football, Tennis"
-              />
-            </div>
+            <Input
+              label="Sports Interests (comma separated)"
+              startIcon={<Activity className="w-4 h-4 text-orange-500" />}
+              type="text"
+              value={formData.sports}
+              onChange={e => setFormData({ ...formData, sports: e.target.value })}
+              placeholder="Cricket, Football, Tennis"
+            />
 
-            <div>
-              <label className="flex items-center gap-2 text-sm font-bold text-foreground mb-1.5">
-                <Gamepad2 className="w-4 h-4 text-purple-500" /> Favorite Games (comma separated)
-              </label>
-              <input 
-                type="text"
-                value={formData.favoriteGames}
-                onChange={e => setFormData({ ...formData, favoriteGames: e.target.value })}
-                className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-foreground focus:outline-none focus:border-primary-500 transition-colors"
-                placeholder="FIFA, Call of Duty, etc."
-              />
-            </div>
+            <Input
+              label="Favorite Games (comma separated)"
+              startIcon={<Gamepad2 className="w-4 h-4 text-purple-500" />}
+              type="text"
+              value={formData.favoriteGames}
+              onChange={e => setFormData({ ...formData, favoriteGames: e.target.value })}
+              placeholder="FIFA, Call of Duty, etc."
+            />
 
-            <div>
-              <label className="flex items-center gap-2 text-sm font-bold text-foreground mb-1.5">
-                <Clock className="w-4 h-4 text-blue-500" /> Preferred Play Times (comma separated)
-              </label>
-              <input 
-                type="text"
-                value={formData.preferredPlayTimes}
-                onChange={e => setFormData({ ...formData, preferredPlayTimes: e.target.value })}
-                className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-foreground focus:outline-none focus:border-primary-500 transition-colors"
-                placeholder="Weekends, Evenings"
-              />
-            </div>
+            <Input
+              label="Preferred Play Times (comma separated)"
+              startIcon={<Clock className="w-4 h-4 text-blue-500" />}
+              type="text"
+              value={formData.preferredPlayTimes}
+              onChange={e => setFormData({ ...formData, preferredPlayTimes: e.target.value })}
+              placeholder="Weekends, Evenings"
+            />
           </div>
 
           <div className="pt-6 border-t border-border space-y-4">
@@ -190,15 +173,15 @@ export const Settings = () => {
                 <p className="font-bold text-sm text-foreground">Profile Visibility</p>
                 <p className="text-xs text-muted">Who can see your profile details.</p>
               </div>
-              <select 
+              <Select 
                 value={formData.privacySettings.profileVisibility}
                 onChange={e => setFormData(f => ({...f, privacySettings: {...f.privacySettings, profileVisibility: e.target.value}}))}
-                className="bg-surface border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary-500"
+                className="w-40"
               >
                 <option value="PUBLIC">Public</option>
                 <option value="FRIENDS">Friends Only</option>
                 <option value="PRIVATE">Private</option>
-              </select>
+              </Select>
             </div>
 
             <div className="flex items-center justify-between">
@@ -225,14 +208,14 @@ export const Settings = () => {
           </div>
 
           <div className="pt-4 border-t border-border flex justify-end">
-            <button 
+            <Button 
               type="submit" 
-              disabled={updateProfileMutation.isPending}
-              className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 px-6 rounded-full flex items-center gap-2 transition-all disabled:opacity-50"
+              isLoading={updateProfileMutation.isPending}
+              className="rounded-full px-6 flex items-center gap-2"
             >
               <Save className="w-4 h-4" /> 
-              {updateProfileMutation.isPending ? 'Saving...' : 'Save Settings'}
-            </button>
+              Save Settings
+            </Button>
           </div>
         </form>
       </motion.div>

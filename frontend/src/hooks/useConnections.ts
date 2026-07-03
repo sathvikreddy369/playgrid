@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import { UserConnection } from '../types';
+import type { UserConnection } from '../types';
 
 export const useConnections = (userId: string | undefined) => {
   return useQuery<UserConnection[]>({
