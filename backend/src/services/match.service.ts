@@ -4,6 +4,7 @@ import { notificationService } from './notification.service';
 import { FraudDetection } from '../utils/fraudDetection';
 import { activityService } from './activity.service';
 import { trustService } from './trust.service';
+import { AppError } from '../utils/AppError';
 
 export class MatchService {
   async createMatch(userId: string, data: any) {
@@ -12,7 +13,7 @@ export class MatchService {
     // Deterministic Fake Event Check
     const fraudCheck = FraudDetection.isFakeEvent(data.title, cost);
     if (fraudCheck.isFake) {
-      throw new Error(`Match creation blocked: ${fraudCheck.reason}`);
+      throw AppError.badRequest(`Match creation blocked: ${fraudCheck.reason}`);
     }
 
     const match = await prisma.match.create({
@@ -147,15 +148,15 @@ export class MatchService {
 
   async requestToJoin(matchId: string, userId: string) {
     const match = await prisma.match.findUnique({ where: { id: matchId } });
-    if (!match) throw new Error('Match not found');
+    if (!match) throw AppError.notFound('Match not found');
     if (['COMPLETED', 'ARCHIVED', 'CANCELLED', 'EXPIRED'].includes(match.status)) {
-      throw new Error('Match is closed and cannot be joined');
+      throw AppError.badRequest('Match is closed and cannot be joined');
     }
 
     const existing = await prisma.matchPlayer.findUnique({
       where: { matchId_userId: { matchId, userId } }
     });
-    if (existing && existing.status !== 'WITHDRAWN') throw new Error('Already requested to join');
+    if (existing && existing.status !== 'WITHDRAWN') throw AppError.badRequest('Already requested to join');
 
     const status = match.status === 'FULL' ? 'WAITLISTED' : 'PENDING';
 
@@ -181,7 +182,7 @@ export class MatchService {
       where: { id: matchId },
       include: { creator: { select: { name: true } } }
     });
-    if (!match) throw new Error('Match not found');
+    if (!match) throw AppError.notFound('Match not found');
 
     const inviter = await prisma.user.findUnique({ where: { id: inviterId } });
 
@@ -190,7 +191,7 @@ export class MatchService {
     });
     
     if (existing && existing.status !== 'WITHDRAWN') {
-      throw new Error(`User already has status: ${existing.status}`);
+      throw AppError.badRequest(`User already has status: ${existing.status}`);
     }
 
     const player = await prisma.matchPlayer.upsert({
@@ -211,7 +212,7 @@ export class MatchService {
 
   async handleJoinRequest(matchId: string, creatorId: string, targetUserId: string, action: 'APPROVED' | 'REJECTED') {
     const match = await prisma.match.findUnique({ where: { id: matchId } });
-    if (!match || match.creatorId !== creatorId) throw new Error('Unauthorized');
+    if (!match || match.creatorId !== creatorId) throw AppError.forbidden('Unauthorized');
 
     const updated = await prisma.matchPlayer.update({
       where: { matchId_userId: { matchId, userId: targetUserId } },
@@ -245,17 +246,17 @@ export class MatchService {
 
   async leaveMatch(matchId: string, userId: string) {
     const match = await prisma.match.findUnique({ where: { id: matchId } });
-    if (!match) throw new Error('Match not found');
+    if (!match) throw AppError.notFound('Match not found');
     if (['COMPLETED', 'ARCHIVED', 'CANCELLED', 'EXPIRED'].includes(match.status)) {
-      throw new Error('Match is closed and cannot be modified');
+      throw AppError.badRequest('Match is closed and cannot be modified');
     }
 
     const player = await prisma.matchPlayer.findUnique({
       where: { matchId_userId: { matchId, userId } }
     });
 
-    if (!player) throw new Error('Player not found in this match');
-    if (player.status === 'WITHDRAWN' || player.status === 'KICKED') throw new Error('Already left or removed from match');
+    if (!player) throw AppError.notFound('Player not found in this match');
+    if (player.status === 'WITHDRAWN' || player.status === 'KICKED') throw AppError.badRequest('Already left or removed from match');
 
     // If they were just pending or waitlisted, we can just delete the request (CANCEL_JOIN)
     if (player.status === 'PENDING' || player.status === 'WAITLISTED') {
@@ -297,13 +298,13 @@ export class MatchService {
 
   async kickPlayer(matchId: string, creatorId: string, targetUserId: string) {
     const match = await prisma.match.findUnique({ where: { id: matchId } });
-    if (!match || match.creatorId !== creatorId) throw new Error('Unauthorized');
+    if (!match || match.creatorId !== creatorId) throw AppError.forbidden('Unauthorized');
 
     const player = await prisma.matchPlayer.findUnique({
       where: { matchId_userId: { matchId, userId: targetUserId } }
     });
 
-    if (!player) throw new Error('Player not found in this match');
+    if (!player) throw AppError.notFound('Player not found in this match');
 
     const updated = await prisma.matchPlayer.update({
       where: { matchId_userId: { matchId, userId: targetUserId } },
@@ -331,9 +332,9 @@ export class MatchService {
 
   async markAttendance(matchId: string, creatorId: string, targetUserId: string, status: MatchPlayerStatus, performanceRating?: number) {
     const match = await prisma.match.findUnique({ where: { id: matchId } });
-    if (!match || match.creatorId !== creatorId) throw new Error('Unauthorized');
+    if (!match || match.creatorId !== creatorId) throw AppError.forbidden('Unauthorized');
 
-    if (performanceRating && (performanceRating < 1 || performanceRating > 5)) throw new Error('Rating must be 1-5');
+    if (performanceRating && (performanceRating < 1 || performanceRating > 5)) throw AppError.badRequest('Rating must be 1-5');
 
     const player = await prisma.matchPlayer.update({
       where: { matchId_userId: { matchId, userId: targetUserId } },
@@ -351,7 +352,7 @@ export class MatchService {
       include: { players: { where: { status: 'APPROVED' } } }
     });
 
-    if (!match || match.creatorId !== creatorId) throw new Error('Unauthorized');
+    if (!match || match.creatorId !== creatorId) throw AppError.forbidden('Unauthorized');
 
     const updated = await prisma.match.update({
       where: { id: matchId },
@@ -379,12 +380,12 @@ export class MatchService {
       include: { players: true }
     });
     
-    if (!match) throw new Error('Match not found');
+    if (!match) throw AppError.notFound('Match not found');
 
     const isParticipant = match.creatorId === userId || match.players.some(p => p.userId === userId && (p.status === 'APPROVED' || p.status === 'ATTENDED'));
     
     if (!isParticipant) {
-      throw new Error('Only participants can comment on a match');
+      throw AppError.forbidden('Only participants can comment on a match');
     }
 
     return prisma.matchComment.create({
@@ -401,7 +402,7 @@ export class MatchService {
 
   async editComment(commentId: string, userId: string, content: string) {
     const comment = await prisma.matchComment.findUnique({ where: { id: commentId } });
-    if (!comment || comment.userId !== userId) throw new Error('Unauthorized');
+    if (!comment || comment.userId !== userId) throw AppError.forbidden('Unauthorized');
 
     return prisma.matchComment.update({
       where: { id: commentId },
@@ -415,10 +416,10 @@ export class MatchService {
       where: { id: commentId },
       include: { match: { select: { creatorId: true } } }
     });
-    if (!comment) throw new Error('Comment not found');
+    if (!comment) throw AppError.notFound('Comment not found');
 
     if (comment.userId !== userId && comment.match.creatorId !== userId) {
-      throw new Error('Unauthorized');
+      throw AppError.forbidden('Unauthorized');
     }
 
     await prisma.matchComment.delete({ where: { id: commentId } });
@@ -427,8 +428,8 @@ export class MatchService {
 
   async editMatch(matchId: string, creatorId: string, data: any) {
     const match = await prisma.match.findUnique({ where: { id: matchId } });
-    if (!match || match.creatorId !== creatorId) throw new Error('Unauthorized');
-    if (['COMPLETED', 'ARCHIVED', 'CANCELLED'].includes(match.status)) throw new Error('Cannot edit a closed match');
+    if (!match || match.creatorId !== creatorId) throw AppError.forbidden('Unauthorized');
+    if (['COMPLETED', 'ARCHIVED', 'CANCELLED'].includes(match.status)) throw AppError.badRequest('Cannot edit a closed match');
 
     return prisma.match.update({
       where: { id: matchId },
@@ -450,7 +451,7 @@ export class MatchService {
 
   async updateMatchStatus(matchId: string, creatorId: string, status: MatchStatus) {
     const match = await prisma.match.findUnique({ where: { id: matchId } });
-    if (!match || match.creatorId !== creatorId) throw new Error('Unauthorized');
+    if (!match || match.creatorId !== creatorId) throw AppError.forbidden('Unauthorized');
     
     // Only allow manual transitions to ONGOING or COMPLETED if within time boundaries
     if (status === 'ONGOING' || status === 'COMPLETED') {
@@ -459,7 +460,7 @@ export class MatchService {
         data: { status }
       });
     }
-    throw new Error('Invalid manual status transition');
+    throw AppError.badRequest('Invalid manual status transition');
   }
 
   async broadcastMessage(matchId: string, creatorId: string, content: string) {
@@ -467,7 +468,7 @@ export class MatchService {
       where: { id: matchId },
       include: { players: { where: { status: 'APPROVED' } } }
     });
-    if (!match || match.creatorId !== creatorId) throw new Error('Unauthorized');
+    if (!match || match.creatorId !== creatorId) throw AppError.forbidden('Unauthorized');
 
     for (const player of match.players) {
       if (player.userId !== creatorId) {
@@ -488,10 +489,10 @@ export class MatchService {
     });
 
     if (!player || player.status !== 'ATTENDED') {
-      throw new Error('Only participants who attended can review the match');
+      throw AppError.forbidden('Only participants who attended can review the match');
     }
 
-    if (rating < 1 || rating > 5) throw new Error('Rating must be 1-5');
+    if (rating < 1 || rating > 5) throw AppError.badRequest('Rating must be 1-5');
 
     return prisma.matchReview.create({
       data: { matchId, userId, rating, comment }

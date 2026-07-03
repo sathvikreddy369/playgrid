@@ -1,6 +1,7 @@
 import prisma from '../utils/db';
 import { GoogleGenAI } from '@google/genai';
 import { AppError } from '../utils/AppError';
+import { StructuredLogger } from '../utils/logger';
 
 // Initialize Gemini if key exists
 const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
@@ -193,7 +194,7 @@ User query: "${sanitizedQuery}"`;
 
       return filtered;
     } catch (error) {
-      console.error('AI Parsing Error:', error);
+      StructuredLogger.error('AI Parsing Error', undefined, error);
       throw new AppError('Failed to parse query with AI.', 500);
     }
   }

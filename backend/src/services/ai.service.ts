@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { StructuredLogger } from '../utils/logger';
 
 const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
 
@@ -17,7 +18,7 @@ export class AIService {
       const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
       return response.text || '';
     } catch (e) {
-      console.error('AI Review Summarization failed', e);
+      StructuredLogger.error('AI Review Summarization failed', undefined, e);
       return '';
     }
   }
@@ -43,7 +44,7 @@ export class AIService {
         reason: parsed.reason,
       };
     } catch (e) {
-      console.error('AI Moderation failed', e);
+      StructuredLogger.error('AI Moderation failed', undefined, e);
       return { isSafe: true }; // Fail open
     }
   }

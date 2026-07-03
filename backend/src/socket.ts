@@ -2,6 +2,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import { Server } from 'http';
 import { auth } from './utils/firebase';
 import prisma from './utils/db';
+import { StructuredLogger } from './utils/logger';
 
 let io: SocketIOServer;
 
@@ -65,7 +66,7 @@ export const initializeSocket = (server: Server) => {
       // Broadcast to all (or just friends, but for simplicity broadcast globally)
       io.emit('presence_update', { userId, isOnline: true, lastActive: new Date() });
     } catch (e) {
-      console.error('Failed to update presence on connect', e);
+      StructuredLogger.error('Failed to update presence on connect', undefined, e);
     }
 
     // Handle sending messages
@@ -94,7 +95,7 @@ export const initializeSocket = (server: Server) => {
         // Confirm to sender
         socket.emit('message_sent', message);
       } catch (error) {
-        console.error('Error sending message:', error);
+        StructuredLogger.error('Error sending message', undefined, error);
         socket.emit('error', { message: 'Failed to send message' });
       }
     });
@@ -122,7 +123,7 @@ export const initializeSocket = (server: Server) => {
 
         io.to(`user:${data.from}`).emit('messages_read', { by: userId });
       } catch (error) {
-        console.error('Error marking messages as read:', error);
+        StructuredLogger.error('Error marking messages as read', undefined, error);
       }
     });
 
@@ -140,9 +141,32 @@ export const initializeSocket = (server: Server) => {
     });
     
     // Community Rooms
-    socket.on('join_community', (data: { communityId: string }) => {
-      if (data.communityId) {
+    socket.on('join_community', async (data: { communityId: string }) => {
+      if (!data.communityId) return;
+      try {
+        const community = await prisma.community.findUnique({
+          where: { id: data.communityId },
+          select: { privacy: true }
+        });
+        if (!community) return;
+
+        if (community.privacy === 'PRIVATE') {
+          const member = await prisma.communityMember.findUnique({
+            where: {
+              userId_communityId: {
+                userId,
+                communityId: data.communityId
+              }
+            }
+          });
+          if (!member || member.status !== 'APPROVED') {
+            socket.emit('error', { message: 'Unauthorized to join private community channel' });
+            return;
+          }
+        }
         socket.join(`community:${data.communityId}`);
+      } catch (err) {
+        console.error('Failed to join community socket room:', err);
       }
     });
 
@@ -156,13 +180,17 @@ export const initializeSocket = (server: Server) => {
       // Handle disconnected user
       try {
         const lastActive = new Date();
-        await prisma.user.update({
-          where: { id: userId },
-          data: { isOnline: false, lastActive }
-        });
-        io.emit('presence_update', { userId, isOnline: false, lastActive });
+        // Check if there are other active sockets for this user in their personal room
+        const activeSockets = await io.in(`user:${userId}`).fetchSockets();
+        if (activeSockets.length === 0) {
+          await prisma.user.update({
+            where: { id: userId },
+            data: { isOnline: false, lastActive }
+          });
+          io.emit('presence_update', { userId, isOnline: false, lastActive });
+        }
       } catch (e) {
-        console.error('Failed to update presence on disconnect', e);
+        StructuredLogger.error('Failed to update presence on disconnect', undefined, e);
       }
     });
   });

@@ -4,6 +4,8 @@ import { FraudDetection } from '../utils/fraudDetection';
 import { aiService } from './ai.service';
 import { activityService } from './activity.service';
 import { getIO } from '../socket';
+import { AppError } from '../utils/AppError';
+import { StructuredLogger } from '../utils/logger';
 
 export class PostService {
   async getPosts(filters: { type?: string; location?: string; communityId?: string; authorId?: string }, cursor?: string, limit: number = 10) {
@@ -96,7 +98,7 @@ export class PostService {
         io.to(`community:${data.communityId}`).emit('new_community_post', post);
       } catch (err) {
         // socket might not be initialized in some test envs
-        console.error('Failed to emit socket event', err);
+        StructuredLogger.error('Failed to emit socket event', undefined, err);
       }
     }
 
@@ -105,11 +107,11 @@ export class PostService {
 
   async updatePost(postId: string, userId: string, content: string) {
     const post = await prisma.post.findUnique({ where: { id: postId } });
-    if (!post) throw new Error('Post not found');
-    if (post.authorId !== userId) throw new Error('Unauthorized');
+    if (!post) throw AppError.notFound('Post not found');
+    if (post.authorId !== userId) throw AppError.forbidden('Unauthorized to update this post');
 
     if (FraudDetection.containsProfanityOrSpam(content)) {
-      throw new Error('Content flagged as spam or contains profanity.');
+      throw AppError.badRequest('Content flagged as spam or contains profanity.');
     }
 
     return prisma.post.update({
@@ -123,14 +125,14 @@ export class PostService {
       where: { id: postId },
       include: { community: true }
     });
-    if (!post) throw new Error('Post not found');
+    if (!post) throw AppError.notFound('Post not found');
 
     const isAuthor = post.authorId === userId;
     const isAdmin = userRole === 'ADMIN';
     const isCommunityOwner = post.community?.ownerId === userId;
 
     if (!isAuthor && !isAdmin && !isCommunityOwner) {
-      throw new Error('Unauthorized to delete this post');
+      throw AppError.forbidden('Unauthorized to delete this post');
     }
 
     return prisma.post.delete({ where: { id: postId } });

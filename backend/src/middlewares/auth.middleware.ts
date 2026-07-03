@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { auth } from '../utils/firebase';
 import prisma from '../utils/db';
 import { Role } from '@prisma/client';
+import { StructuredLogger } from '../utils/logger';
 
 export const requireFirebaseUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -28,7 +29,7 @@ export const requireFirebaseUser = async (req: Request, res: Response, next: Nex
     req.firebaseUid = decodedToken.uid;
     next();
   } catch (error) {
-    console.error('Firebase Auth Error:', error);
+    StructuredLogger.error('Firebase Auth Error', undefined, error);
     res.status(401).json({ error: 'Unauthorized: Invalid or expired token' });
     return;
   }
@@ -74,7 +75,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
       return;
     }
   } catch (error) {
-    console.error('Authentication Error:', error);
+    StructuredLogger.error('Authentication Error', undefined, error);
     res.status(401).json({ error: 'Unauthorized: Invalid or expired token' });
     return;
   }

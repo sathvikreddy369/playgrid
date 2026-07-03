@@ -2,6 +2,7 @@ import prisma from '../utils/db';
 import { VenueStatus } from '@prisma/client';
 import { aiService } from './ai.service';
 import { activityService } from './activity.service';
+import { StructuredLogger } from '../utils/logger';
 
 export class VenueService {
   async createVenue(userId: string, data: any) {
@@ -157,7 +158,7 @@ export class VenueService {
     });
 
     // Fire and forget AI summary generation
-    this.generateAiSummary(venueId).catch(err => console.error('Failed to generate AI summary:', err));
+    this.generateAiSummary(venueId).catch(err => StructuredLogger.error('Failed to generate AI summary', undefined, err));
 
     await activityService.logActivity(userId, 'VENUE_REVIEWED', venueId, 'Venue', { rating });
 

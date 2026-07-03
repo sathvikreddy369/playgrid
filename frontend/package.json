@@ -18,7 +18,6 @@
     "date-fns": "^4.4.0",
     "firebase": "^12.15.0",
     "framer-motion": "^12.42.0",
-    "glob": "^13.0.6",
     "lucide-react": "^1.22.0",
     "mapbox-gl": "^3.25.0",
     "react": "^19.2.7",

@@ -17,3 +17,13 @@ export const postLimiter = rateLimit({
   legacyHeaders: false,
   message: 'You are posting too frequently. Please slow down to prevent spam.',
 });
+
+// Stricter limit for authentication sync/signup endpoints
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Limit each IP to 20 auth attempts per 15 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many authentication attempts. Please try again after 15 minutes.',
+});
+

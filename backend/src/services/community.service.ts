@@ -3,6 +3,8 @@ import { CommunityStatus, CommunityPrivacy, CommunityRole, CommunityMemberStatus
 import { activityService } from './activity.service';
 import { notificationService } from './notification.service';
 import { getIO } from '../socket';
+import { AppError } from '../utils/AppError';
+import { StructuredLogger } from '../utils/logger';
 
 interface CreateCommunityData {
   name: string;
@@ -111,15 +113,15 @@ export class CommunityService {
 
   async joinCommunity(communityId: string, userId: string) {
     const community = await prisma.community.findUnique({ where: { id: communityId } });
-    if (!community) throw new Error('Community not found');
+    if (!community) throw AppError.notFound('Community not found');
 
     const existing = await prisma.communityMember.findUnique({
       where: { userId_communityId: { userId, communityId } }
     });
 
     if (existing) {
-      if (existing.status === CommunityMemberStatus.BANNED) throw new Error('You are banned from this community');
-      throw new Error('Already a member or request pending');
+      if (existing.status === CommunityMemberStatus.BANNED) throw AppError.forbidden('You are banned from this community');
+      throw AppError.badRequest('Already a member or request pending');
     }
 
     const status = community.privacy === CommunityPrivacy.PRIVATE 
@@ -140,7 +142,7 @@ export class CommunityService {
       try {
         getIO().to(`community:${communityId}`).emit('community_member_joined', { userId, communityId });
       } catch (err) {
-        console.error('Socket emit error', err);
+        StructuredLogger.error('Socket emit error (member joined)', undefined, err);
       }
     }
 
@@ -149,7 +151,7 @@ export class CommunityService {
 
   async inviteUser(communityId: string, inviterId: string, targetUserId: string) {
     const community = await prisma.community.findUnique({ where: { id: communityId } });
-    if (!community) throw new Error('Community not found');
+    if (!community) throw AppError.notFound('Community not found');
 
     const inviter = await prisma.user.findUnique({ where: { id: inviterId } });
 
@@ -158,8 +160,8 @@ export class CommunityService {
     });
 
     if (existing) {
-      if (existing.status === CommunityMemberStatus.BANNED) throw new Error('User is banned');
-      throw new Error(`User already has status: ${existing.status}`);
+      if (existing.status === CommunityMemberStatus.BANNED) throw AppError.forbidden('User is banned');
+      throw AppError.badRequest(`User already has status: ${existing.status}`);
     }
 
     const member = await prisma.communityMember.upsert({
@@ -183,8 +185,8 @@ export class CommunityService {
       where: { userId_communityId: { userId, communityId } }
     });
 
-    if (!existing) throw new Error('Not a member');
-    if (existing.role === CommunityRole.OWNER) throw new Error('Owner cannot leave the community. Transfer ownership first.');
+    if (!existing) throw AppError.notFound('Not a member');
+    if (existing.role === CommunityRole.OWNER) throw AppError.badRequest('Owner cannot leave the community. Transfer ownership first.');
 
     return prisma.communityMember.delete({
       where: { id: existing.id }
@@ -198,7 +200,7 @@ export class CommunityService {
       where: { userId_communityId: { userId: memberUserId, communityId } }
     });
 
-    if (!member || member.status !== CommunityMemberStatus.PENDING) throw new Error('Pending request not found');
+    if (!member || member.status !== CommunityMemberStatus.PENDING) throw AppError.notFound('Pending request not found');
 
     const updated = await prisma.communityMember.update({
       where: { id: member.id },
@@ -211,7 +213,7 @@ export class CommunityService {
       try {
         getIO().to(`community:${communityId}`).emit('community_member_joined', { userId: memberUserId, communityId });
       } catch (err) {
-        console.error('Socket emit error', err);
+        StructuredLogger.error('Socket emit error (member approved)', undefined, err);
       }
     }
 
@@ -225,7 +227,7 @@ export class CommunityService {
       where: { userId_communityId: { userId: memberUserId, communityId } }
     });
 
-    if (!member || member.status !== CommunityMemberStatus.PENDING) throw new Error('Pending request not found');
+    if (!member || member.status !== CommunityMemberStatus.PENDING) throw AppError.notFound('Pending request not found');
 
     return prisma.communityMember.update({
       where: { id: member.id },
@@ -235,21 +237,21 @@ export class CommunityService {
 
   async updateMemberRole(communityId: string, memberUserId: string, newRole: CommunityRole, requesterId: string) {
     const community = await prisma.community.findUnique({ where: { id: communityId } });
-    if (!community) throw new Error('Community not found');
+    if (!community) throw AppError.notFound('Community not found');
 
     if (community.ownerId !== requesterId) {
-      throw new Error('Only the owner can update roles');
+      throw AppError.forbidden('Only the owner can update roles');
     }
 
     if (memberUserId === community.ownerId) {
-      throw new Error('Cannot change owner role this way');
+      throw AppError.badRequest('Cannot change owner role this way');
     }
 
     const member = await prisma.communityMember.findUnique({
       where: { userId_communityId: { userId: memberUserId, communityId } }
     });
 
-    if (!member || member.status !== CommunityMemberStatus.APPROVED) throw new Error('User is not an approved member');
+    if (!member || member.status !== CommunityMemberStatus.APPROVED) throw AppError.badRequest('User is not an approved member');
 
     return prisma.communityMember.update({
       where: { id: member.id },
@@ -259,10 +261,10 @@ export class CommunityService {
 
   async kickMember(communityId: string, memberUserId: string, requesterId: string, requesterSystemRole: string) {
     const community = await prisma.community.findUnique({ where: { id: communityId } });
-    if (!community) throw new Error('Community not found');
+    if (!community) throw AppError.notFound('Community not found');
 
     if (community.ownerId === memberUserId) {
-      throw new Error('Cannot kick the owner');
+      throw AppError.badRequest('Cannot kick the owner');
     }
 
     const requester = await prisma.communityMember.findUnique({
@@ -274,24 +276,24 @@ export class CommunityService {
     const isAdmin = requester?.role === CommunityRole.ADMIN;
 
     if (!isPlatformAdmin && !isOwner && !isAdmin) {
-      throw new Error('Unauthorized to kick members');
+      throw AppError.forbidden('Unauthorized to kick members');
     }
 
     const member = await prisma.communityMember.findUnique({
       where: { userId_communityId: { userId: memberUserId, communityId } }
     });
 
-    if (!member) throw new Error('User is not a member');
+    if (!member) throw AppError.notFound('User is not a member');
 
     if (isAdmin && !isOwner && member.role === CommunityRole.ADMIN) {
-      throw new Error('Admins cannot kick other admins');
+      throw AppError.forbidden('Admins cannot kick other admins');
     }
 
     return prisma.communityMember.delete({ where: { id: member.id } });
   }
 
   async verifyCommunity(communityId: string, status: CommunityStatus, adminId: string, adminRole: string) {
-    if (adminRole !== 'ADMIN') throw new Error('Unauthorized');
+    if (adminRole !== 'ADMIN') throw AppError.forbidden('Unauthorized');
 
     return prisma.community.update({
       where: { id: communityId },
@@ -301,7 +303,7 @@ export class CommunityService {
 
   private async ensureAdminOrOwner(communityId: string, userId: string) {
     const community = await prisma.community.findUnique({ where: { id: communityId } });
-    if (!community) throw new Error('Community not found');
+    if (!community) throw AppError.notFound('Community not found');
 
     if (community.ownerId === userId) return true;
 
@@ -310,7 +312,7 @@ export class CommunityService {
     });
 
     if (!member || (member.role !== CommunityRole.ADMIN && member.role !== CommunityRole.OWNER)) {
-      throw new Error('Unauthorized');
+      throw AppError.forbidden('Unauthorized');
     }
 
     return true;
