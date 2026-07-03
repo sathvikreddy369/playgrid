@@ -12,7 +12,8 @@ const MotionLink = motion.create(Link);
 
 export const Matches = () => {
  const [filter, setFilter] = useState('OPEN');
- const { data: matches, isLoading } = useMatches({ status: filter });
+ const [dateFilter, setDateFilter] = useState('');
+ const { data: matches, isLoading } = useMatches({ status: filter, date: dateFilter });
  const { data: recommendations } = useMatchRecommendations();
  const navigate = useNavigate();
  const { user } = useAuth();
@@ -74,22 +75,45 @@ export const Matches = () => {
  </div>
  )}
 
- {/* Filter Tabs */}
- <div className="flex gap-2 mb-8 overflow-x-auto no-scrollbar pb-2">
- {['OPEN', 'FULL', 'COMPLETED'].map(f => (
- <button
- key={f}
- onClick={() => setFilter(f)}
- className={`px-5 py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
- filter === f 
- ? 'bg-zinc-950 text-white border-zinc-950 shadow-sm' 
- : 'bg-surface text-muted hover:bg-zinc-50 border-border'
- }`}
- >
- {f}
- </button>
- ))}
- </div>
+  {/* Filter Tabs */}
+  <div className="flex flex-col sm:flex-row gap-4 mb-8">
+    <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+    {['OPEN', 'FULL', 'COMPLETED'].map(f => (
+    <button
+    key={f}
+    onClick={() => setFilter(f)}
+    className={`px-5 py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap cursor-pointer ${
+    filter === f 
+    ? 'bg-zinc-950 text-white border-zinc-950 shadow-sm' 
+    : 'bg-surface text-muted hover:bg-zinc-50 border-border'
+    }`}
+    >
+    {f}
+    </button>
+    ))}
+    </div>
+    
+    <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+    {[
+      { value: '', label: 'Any Date' },
+      { value: 'today', label: 'Today' },
+      { value: 'tomorrow', label: 'Tomorrow' },
+      { value: 'weekend', label: 'This Weekend' }
+    ].map(d => (
+      <button
+        key={d.value}
+        onClick={() => setDateFilter(d.value)}
+        className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all border whitespace-nowrap cursor-pointer ${
+          dateFilter === d.value
+          ? 'bg-primary-50 text-primary-700 border-primary-200'
+          : 'bg-surface text-muted hover:bg-zinc-50 border-border'
+        }`}
+      >
+        {d.label}
+      </button>
+    ))}
+    </div>
+  </div>
 
  {/* Matches Grid */}
  {isLoading ? (

@@ -94,3 +94,61 @@ export const useAddMatchComment = () => {
     },
   });
 };
+
+export const useEditMatchComment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ matchId, commentId, content }: { matchId: string; commentId: string; content: string }) => {
+      const { data } = await api.put(`/matches/${matchId}/comments/${commentId}`, { content });
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['matches', variables.matchId] });
+    },
+  });
+};
+
+export const useDeleteMatchComment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ matchId, commentId }: { matchId: string; commentId: string }) => {
+      const { data } = await api.delete(`/matches/${matchId}/comments/${commentId}`);
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['matches', variables.matchId] });
+    },
+  });
+};
+
+export const useUpdateMatchStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ matchId, status }: { matchId: string; status: string }) => {
+      const { data } = await api.put(`/matches/${matchId}/status`, { status });
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['matches', variables.matchId] });
+      queryClient.invalidateQueries({ queryKey: ['matches'] });
+    },
+  });
+};
+
+export const useBroadcastMessage = () => {
+  return useMutation({
+    mutationFn: async ({ matchId, content }: { matchId: string; content: string }) => {
+      const { data } = await api.post(`/matches/${matchId}/message`, { content });
+      return data;
+    },
+  });
+};
+
+export const useAddMatchReview = () => {
+  return useMutation({
+    mutationFn: async ({ matchId, rating, comment }: { matchId: string; rating: number; comment?: string }) => {
+      const { data } = await api.post(`/matches/${matchId}/reviews`, { rating, comment });
+      return data;
+    },
+  });
+};

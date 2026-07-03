@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased] - Phase 3: Match Engine Overhaul
+- **Match Engine**: Introduced `MatchLifecycleService` for background state transitions (`ONGOING`, `COMPLETED`, `ARCHIVED`, `EXPIRED`).
+- **Match Engine**: Added `WAITLISTED` logic for joining `FULL` matches.
+- **Match Engine**: Differentiated `WITHDRAW` (approved) vs `CANCEL_JOIN` (pending).
+- **Match API**: Added `PUT /matches/:id/edit`, `PUT /matches/:id/status`, `POST /matches/:id/message`.
+- **Reviews API**: Added `POST /matches/:id/reviews` for users to rate attended matches.
+- **Discussion System**: Added ability to edit and delete comments (`PUT /matches/:id/comments/:commentId`, `DELETE ...`).
+- **Frontend**: Overhauled `MatchDetail.tsx` with Host Dashboard, Reviews Section, Waitlist tracking, and manual status updates.
+- **Socket**: Connected `MatchDetail.tsx` to `socket.ts` for real-time `match_updated`, `participant_joined`, and `participant_left` events.
+
 ## [Phase 3] - Profile Redesign & Overhaul
 
 ### Added

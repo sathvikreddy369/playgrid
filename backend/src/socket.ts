@@ -114,6 +114,19 @@ export const initializeSocket = (server: Server) => {
       }
     });
 
+    // Match Rooms
+    socket.on('join_match', (data: { matchId: string }) => {
+      if (data.matchId) {
+        socket.join(`match:${data.matchId}`);
+      }
+    });
+
+    socket.on('leave_match', (data: { matchId: string }) => {
+      if (data.matchId) {
+        socket.leave(`match:${data.matchId}`);
+      }
+    });
+
     socket.on('disconnect', () => {
       // Cleanup if needed
     });

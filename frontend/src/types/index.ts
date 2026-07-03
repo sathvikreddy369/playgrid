@@ -22,6 +22,39 @@ export interface UserProfile {
   sports?: string[];
 }
 
+export interface MatchComment {
+  id: string;
+  matchId: string;
+  userId: string;
+  content: string;
+  parentId?: string;
+  isEdited?: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  user: {
+    name: string;
+    profile?: {
+      avatarUrl?: string;
+    };
+  };
+  replies?: MatchComment[];
+}
+
+export interface MatchReview {
+  id: string;
+  matchId: string;
+  userId: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+  user?: {
+    name: string;
+    profile?: {
+      avatarUrl?: string;
+    };
+  };
+}
+
 export interface Match {
   id: string;
   title: string;
@@ -32,15 +65,28 @@ export interface Match {
   longitude?: number;
   maxPlayers: number;
   costPerPerson?: number;
-  skillLevel: 'ALL' | 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'PRO';
-  status: 'OPEN' | 'FULL' | 'CANCELLED' | 'COMPLETED';
+  skillLevel?: string;
+  status: 'OPEN' | 'FULL' | 'ONGOING' | 'COMPLETED' | 'ARCHIVED' | 'CANCELLED' | 'EXPIRED';
   creatorId: string;
-  creator?: User;
-  community?: any;
-  players?: MatchPlayer[];
-  comments?: MatchComment[];
+  communityId?: string;
+  createdAt: string;
+  updatedAt: string;
+  creator: {
+    id: string;
+    name: string;
+    profile?: {
+      avatarUrl?: string;
+    };
+  };
+  community?: {
+    id: string;
+    name: string;
+  };
+  players: MatchPlayer[];
+  comments: MatchComment[];
+  reviews?: MatchReview[];
   _count?: {
-    players?: number;
+    players: number;
   };
 }
 

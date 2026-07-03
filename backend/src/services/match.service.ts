@@ -41,6 +41,31 @@ export class MatchService {
     if (filters.sport) where.sport = filters.sport;
     if (filters.status) where.status = filters.status;
     if (filters.communityId) where.communityId = filters.communityId;
+    
+    if (filters.date) {
+      const now = new Date();
+      if (filters.date === 'today') {
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+        where.date = { gte: now, lte: endOfDay };
+      } else if (filters.date === 'tomorrow') {
+        const tomorrowStart = new Date();
+        tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+        tomorrowStart.setHours(0, 0, 0, 0);
+        const tomorrowEnd = new Date(tomorrowStart);
+        tomorrowEnd.setHours(23, 59, 59, 999);
+        where.date = { gte: tomorrowStart, lte: tomorrowEnd };
+      } else if (filters.date === 'weekend') {
+        // Find next Saturday
+        const saturday = new Date();
+        saturday.setDate(saturday.getDate() + (6 - saturday.getDay()));
+        saturday.setHours(0, 0, 0, 0);
+        const sunday = new Date(saturday);
+        sunday.setDate(sunday.getDate() + 1);
+        sunday.setHours(23, 59, 59, 999);
+        where.date = { gte: saturday, lte: sunday };
+      }
+    }
 
     return prisma.match.findMany({
       where,
@@ -114,15 +139,21 @@ export class MatchService {
   async requestToJoin(matchId: string, userId: string) {
     const match = await prisma.match.findUnique({ where: { id: matchId } });
     if (!match) throw new Error('Match not found');
-    if (match.status !== 'OPEN') throw new Error('Match is not open');
+    if (['COMPLETED', 'ARCHIVED', 'CANCELLED', 'EXPIRED'].includes(match.status)) {
+      throw new Error('Match is closed and cannot be joined');
+    }
 
     const existing = await prisma.matchPlayer.findUnique({
       where: { matchId_userId: { matchId, userId } }
     });
-    if (existing) throw new Error('Already requested to join');
+    if (existing && existing.status !== 'WITHDRAWN') throw new Error('Already requested to join');
 
-    const player = await prisma.matchPlayer.create({
-      data: { matchId, userId, status: 'PENDING' }
+    const status = match.status === 'FULL' ? 'WAITLISTED' : 'PENDING';
+
+    const player = await prisma.matchPlayer.upsert({
+      where: { matchId_userId: { matchId, userId } },
+      update: { status },
+      create: { matchId, userId, status }
     });
 
     // Notify creator
@@ -170,6 +201,9 @@ export class MatchService {
   async leaveMatch(matchId: string, userId: string) {
     const match = await prisma.match.findUnique({ where: { id: matchId } });
     if (!match) throw new Error('Match not found');
+    if (['COMPLETED', 'ARCHIVED', 'CANCELLED', 'EXPIRED'].includes(match.status)) {
+      throw new Error('Match is closed and cannot be modified');
+    }
 
     const player = await prisma.matchPlayer.findUnique({
       where: { matchId_userId: { matchId, userId } }
@@ -178,6 +212,15 @@ export class MatchService {
     if (!player) throw new Error('Player not found in this match');
     if (player.status === 'WITHDRAWN' || player.status === 'KICKED') throw new Error('Already left or removed from match');
 
+    // If they were just pending or waitlisted, we can just delete the request (CANCEL_JOIN)
+    if (player.status === 'PENDING' || player.status === 'WAITLISTED') {
+      await prisma.matchPlayer.delete({
+        where: { matchId_userId: { matchId, userId } }
+      });
+      return { status: 'CANCELLED_JOIN' };
+    }
+
+    // Otherwise, mark as withdrawn
     const updated = await prisma.matchPlayer.update({
       where: { matchId_userId: { matchId, userId } },
       data: { status: 'WITHDRAWN' }
@@ -189,6 +232,7 @@ export class MatchService {
         where: { id: matchId },
         data: { status: 'OPEN' }
       });
+      // Future Enhancement: Automatically move first WAITLISTED to PENDING
     }
 
     if (player.status === 'APPROVED') {
@@ -302,6 +346,102 @@ export class MatchService {
       include: {
         user: { select: { id: true, name: true, profile: { select: { avatarUrl: true } } } }
       }
+    });
+  }
+
+  async editComment(commentId: string, userId: string, content: string) {
+    const comment = await prisma.matchComment.findUnique({ where: { id: commentId } });
+    if (!comment || comment.userId !== userId) throw new Error('Unauthorized');
+
+    return prisma.matchComment.update({
+      where: { id: commentId },
+      data: { content, isEdited: true },
+      include: { user: { select: { id: true, name: true, profile: { select: { avatarUrl: true } } } } }
+    });
+  }
+
+  async deleteComment(commentId: string, userId: string) {
+    const comment = await prisma.matchComment.findUnique({
+      where: { id: commentId },
+      include: { match: { select: { creatorId: true } } }
+    });
+    if (!comment) throw new Error('Comment not found');
+
+    if (comment.userId !== userId && comment.match.creatorId !== userId) {
+      throw new Error('Unauthorized');
+    }
+
+    await prisma.matchComment.delete({ where: { id: commentId } });
+    return { success: true };
+  }
+
+  async editMatch(matchId: string, creatorId: string, data: any) {
+    const match = await prisma.match.findUnique({ where: { id: matchId } });
+    if (!match || match.creatorId !== creatorId) throw new Error('Unauthorized');
+    if (['COMPLETED', 'ARCHIVED', 'CANCELLED'].includes(match.status)) throw new Error('Cannot edit a closed match');
+
+    return prisma.match.update({
+      where: { id: matchId },
+      data: {
+        title: data.title,
+        location: data.location,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        date: data.date ? new Date(data.date) : undefined,
+        maxPlayers: data.maxPlayers ? parseInt(data.maxPlayers) : undefined,
+        costPerPerson: data.costPerPerson ? parseFloat(data.costPerPerson) : undefined,
+        skillLevel: data.skillLevel
+      }
+    });
+  }
+
+  async updateMatchStatus(matchId: string, creatorId: string, status: MatchStatus) {
+    const match = await prisma.match.findUnique({ where: { id: matchId } });
+    if (!match || match.creatorId !== creatorId) throw new Error('Unauthorized');
+    
+    // Only allow manual transitions to ONGOING or COMPLETED if within time boundaries
+    if (status === 'ONGOING' || status === 'COMPLETED') {
+      return prisma.match.update({
+        where: { id: matchId },
+        data: { status }
+      });
+    }
+    throw new Error('Invalid manual status transition');
+  }
+
+  async broadcastMessage(matchId: string, creatorId: string, content: string) {
+    const match = await prisma.match.findUnique({
+      where: { id: matchId },
+      include: { players: { where: { status: 'APPROVED' } } }
+    });
+    if (!match || match.creatorId !== creatorId) throw new Error('Unauthorized');
+
+    for (const player of match.players) {
+      if (player.userId !== creatorId) {
+        await notificationService.createNotification({
+          userId: player.userId,
+          type: 'SYSTEM_ALERT',
+          content: `Host message for ${match.title}: ${content}`,
+          link: `/matches/${matchId}`
+        });
+      }
+    }
+    return { success: true, count: match.players.length };
+  }
+
+  async addReview(matchId: string, userId: string, rating: number, comment?: string) {
+    const player = await prisma.matchPlayer.findUnique({
+      where: { matchId_userId: { matchId, userId } }
+    });
+
+    if (!player || player.status !== 'ATTENDED') {
+      throw new Error('Only participants who attended can review the match');
+    }
+
+    if (rating < 1 || rating > 5) throw new Error('Rating must be 1-5');
+
+    return prisma.matchReview.create({
+      data: { matchId, userId, rating, comment }
     });
   }
 }
