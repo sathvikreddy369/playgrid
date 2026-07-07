@@ -2,7 +2,7 @@
 
 > A modern, real-time social platform for community sports and localized match discovery.
 
-PlayGrid is designed to bridge the gap between digital social networks and real-world physical activity. It enables users to discover local sports matches, join geographically anchored communities, and build verifiable reputations based on reliability and skill.
+PlayGrid is a project designed to bridge the gap between digital social networks and real-world physical activity. It enables users to discover local sports matches, join geographically anchored communities, and build verifiable reputations based on reliability and skill.
 
 ---
 
