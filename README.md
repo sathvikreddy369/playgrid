@@ -1,4 +1,4 @@
-# PlayGrid
+# PlayGrid...
 
 > A modern, real-time social platform for community sports and localized match discovery.
 
