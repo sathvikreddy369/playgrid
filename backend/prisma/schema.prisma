@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  USER
+  GROUND_OWNER
+  POOL_OWNER // Adding pool owner as requested
+}
+
+enum VenueType {
+  GROUND
+  SWIMMING_POOL
+}
+
+enum MatchStatus {
+  AVAILABLE
+  FILLED
+  COMPLETED
+  CANCELLED
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id             String    @id @default(uuid())
+  supabaseId     String    @unique
+  email          String    @unique
+  role           Role      @default(USER)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  profile        Profile?
+  hostedMatches  Match[]   @relation("Host")
+  requests       Request[]
+  reviews        Review[]  @relation("ReviewAuthor")
+  receivedReviews Review[] @relation("ReviewedHost")
+  messages       Message[]
+  notifications  Notification[]
+}
+
+model Profile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  name            String?
+  gender          String?
+  age             Int?
+  bio             String?
+  latitude        Float?
+  longitude       Float?
+  
+  // Game/Sports details
+  favoriteSports  String[]
+  levels          String[] // e.g. beginner, medium
+  gameIds         String[] // e-sports generic IDs (legacy)
+  riotId          String?
+  steamId         String?
+  discordId       String?
+  achievements    String[]
+
+  // Stats
+  matchesAttended Int      @default(0)
+  matchesCancelled Int     @default(0)
+
+  // Venue details (if venue owner)
+  venueType       VenueType?
+  venueImages     String[]
+  amenities       String[]
+  pricing         Float?
+
+  @@index([latitude, longitude])
+}
+
+model Match {
+  id             String      @id @default(uuid())
+  hostId         String
+  host           User        @relation("Host", fields: [hostId], references: [id])
+  
+  title          String
+  description    String?
+  isOnline       Boolean     @default(false)
+  locationText   String?
+  mapLink        String?
+  latitude       Float?
+  longitude      Float?
+  
+  date           DateTime
+  isWeekend      Boolean     @default(false)
+  
+  totalSlots     Int
+  filledSlots    Int         @default(0)
+  
+  status         MatchStatus @default(AVAILABLE)
+  tags           String[]
+  pricePerHead   Float?
+  
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  requests       Request[]
+  reviews        Review[]
+  messages       Message[]
+
+  @@index([latitude, longitude])
+}
+
+model Request {
+  id        String        @id @default(uuid())
+  matchId   String
+  match     Match         @relation(fields: [matchId], references: [id])
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  
+  status    RequestStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@unique([matchId, userId])
+}
+
+model Review {
+  id           String   @id @default(uuid())
+  matchId      String
+  match        Match    @relation(fields: [matchId], references: [id])
+  
+  authorId     String
+  author       User     @relation("ReviewAuthor", fields: [authorId], references: [id])
+  
+  hostId       String
+  host         User     @relation("ReviewedHost", fields: [hostId], references: [id])
+  
+  rating       Int
+  comment      String?
+  
+  createdAt    DateTime @default(now())
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  matchId   String
+  match     Match    @relation(fields: [matchId], references: [id])
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  
+  text      String
+  name      String
+  
+  createdAt DateTime @default(now())
+  
+  @@index([matchId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  link      String?  // Optional link to redirect user when clicked
+  
+  createdAt DateTime @default(now())
+}
