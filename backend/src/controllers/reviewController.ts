@@ -103,10 +103,11 @@ export const markAttendance = async (req: AuthenticatedRequest, res: Response) =
     const updatedProfile = await prisma.profile.update({
       where: { userId },
       data: {
-        matchesAttended: attended ? { increment: 1 } : undefined,
-        matchesCancelled: !attended ? { increment: 1 } : undefined
+        attendedGames: attended ? { increment: 1 } : undefined,
+        missedGames: !attended ? { increment: 1 } : undefined
       }
     });
+
 
     res.json({ message: 'Attendance updated successfully', profile: updatedProfile });
   } catch (error) {

@@ -11,12 +11,17 @@ datasource db {
 enum Role {
   USER
   GROUND_OWNER
-  POOL_OWNER // Adding pool owner as requested
+  POOL_OWNER
 }
 
 enum VenueType {
   GROUND
   SWIMMING_POOL
+}
+
+enum MatchType {
+  PHYSICAL
+  E_GAME
 }
 
 enum MatchStatus {
@@ -32,52 +37,75 @@ enum RequestStatus {
   REJECTED
 }
 
-model User {
-  id             String    @id @default(uuid())
-  supabaseId     String    @unique
-  email          String    @unique
-  role           Role      @default(USER)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+enum AttendanceStatus {
+  ATTENDED
+  MISSED
+  PENDING
+}
 
-  profile        Profile?
-  hostedMatches  Match[]   @relation("Host")
-  requests       Request[]
-  reviews        Review[]  @relation("ReviewAuthor")
-  receivedReviews Review[] @relation("ReviewedHost")
-  messages       Message[]
-  notifications  Notification[]
+enum MessageRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model User {
+  id                      String           @id @default(uuid())
+  supabaseId              String           @unique
+  email                   String           @unique
+  role                    Role             @default(USER)
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  profile                 Profile?
+  hostedMatches           Match[]          @relation("Host")
+  requests                Request[]
+  attendances             Attendance[]
+  reviews                 Review[]         @relation("ReviewAuthor")
+  receivedReviews         Review[]         @relation("ReviewedHost")
+  messages                Message[]
+  sentMessageRequests     MessageRequest[] @relation("SentMessageRequests")
+  receivedMessageRequests MessageRequest[] @relation("ReceivedMessageRequests")
+  notifications           Notification[]
 }
 
 model Profile {
-  id              String   @id @default(uuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id])
-  name            String?
-  gender          String?
-  age             Int?
-  bio             String?
-  latitude        Float?
-  longitude       Float?
+  id                    String    @id @default(uuid())
+  userId                String    @unique
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                  String?
+  gender                String?
+  age                   Int?
+  bio                   String?
+  avatarId              String    @default("avatar_01")
+  latitude              Float?
+  longitude             Float?
   
   // Game/Sports details
-  favoriteSports  String[]
-  levels          String[] // e.g. beginner, medium
-  gameIds         String[] // e-sports generic IDs (legacy)
-  riotId          String?
-  steamId         String?
-  discordId       String?
-  achievements    String[]
+  physicalSports        String[]  @default([])
+  eSports               String[]  @default([])
+  favoriteSports        String[]  @default([])
+  levels                String[]  @default([])
+  gameIds               String[]  @default([])
+  riotId                String?
+  steamId               String?
+  discordId             String?
+  achievements          String[]  @default([])
 
-  // Stats
-  matchesAttended Int      @default(0)
-  matchesCancelled Int     @default(0)
+  // Preferences & Settings
+  allowMessageRequests  Boolean   @default(true)
 
-  // Venue details (if venue owner)
-  venueType       VenueType?
-  venueImages     String[]
-  amenities       String[]
-  pricing         Float?
+  // Reliability & Attendance Statistics
+  attendedGames         Int       @default(0)
+  missedGames           Int       @default(0)
+  hostedGames           Int       @default(0)
+  reliabilityScore      Int       @default(100)
+
+  // Venue details (if ground/pool owner)
+  venueType             VenueType?
+  venueImages           String[]  @default([])
+  amenities             String[]  @default([])
+  pricing               Float?
 
   @@index([latitude, longitude])
 }
@@ -85,10 +113,16 @@ model Profile {
 model Match {
   id             String      @id @default(uuid())
   hostId         String
-  host           User        @relation("Host", fields: [hostId], references: [id])
+  host           User        @relation("Host", fields: [hostId], references: [id], onDelete: Cascade)
   
   title          String
   description    String?
+  matchType      MatchType   @default(PHYSICAL)
+  eGameName      String?
+  eGameMode      String?
+  ePlatform      String?
+  roomCode       String?
+
   isOnline       Boolean     @default(false)
   locationText   String?
   mapLink        String?
@@ -102,43 +136,81 @@ model Match {
   filledSlots    Int         @default(0)
   
   status         MatchStatus @default(AVAILABLE)
-  tags           String[]
+  tags           String[]    @default([])
   pricePerHead   Float?
   
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
   requests       Request[]
+  attendances    Attendance[]
   reviews        Review[]
   messages       Message[]
 
   @@index([latitude, longitude])
+  @@index([date])
+  @@index([status])
+  @@index([matchType])
 }
 
 model Request {
   id        String        @id @default(uuid())
   matchId   String
-  match     Match         @relation(fields: [matchId], references: [id])
+  match     Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
   userId    String
-  user      User          @relation(fields: [userId], references: [id])
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   status    RequestStatus @default(PENDING)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
   @@unique([matchId, userId])
+  @@index([userId])
+  @@index([matchId])
+}
+
+model Attendance {
+  id        String           @id @default(uuid())
+  matchId   String
+  match     Match            @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  status    AttendanceStatus @default(PENDING)
+  markedAt  DateTime?
+  createdAt DateTime         @default(now())
+
+  @@unique([matchId, userId])
+  @@index([userId])
+  @@index([matchId])
+}
+
+model MessageRequest {
+  id         String               @id @default(uuid())
+  senderId   String
+  sender     User                 @relation("SentMessageRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User                 @relation("ReceivedMessageRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  
+  status     MessageRequestStatus @default(PENDING)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId])
+  @@index([senderId])
 }
 
 model Review {
   id           String   @id @default(uuid())
   matchId      String
-  match        Match    @relation(fields: [matchId], references: [id])
+  match        Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
   
   authorId     String
-  author       User     @relation("ReviewAuthor", fields: [authorId], references: [id])
+  author       User     @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   
   hostId       String
-  host         User     @relation("ReviewedHost", fields: [hostId], references: [id])
+  host         User     @relation("ReviewedHost", fields: [hostId], references: [id], onDelete: Cascade)
   
   rating       Int
   comment      String?
@@ -149,9 +221,9 @@ model Review {
 model Message {
   id        String   @id @default(uuid())
   matchId   String
-  match     Match    @relation(fields: [matchId], references: [id])
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
   senderId  String
-  sender    User     @relation(fields: [senderId], references: [id])
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   
   text      String
   name      String
@@ -164,12 +236,14 @@ model Message {
 model Notification {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   title     String
   body      String
   isRead    Boolean  @default(false)
-  link      String?  // Optional link to redirect user when clicked
+  link      String?
   
   createdAt DateTime @default(now())
+  
+  @@index([userId])
 }

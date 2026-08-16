@@ -14,7 +14,8 @@ export const createMatch = async (req: AuthenticatedRequest, res: Response) => {
     }
 
     const {
-      title, description, isOnline, locationText, mapLink, 
+      title, description, matchType, eGameName, eGameMode, ePlatform, roomCode,
+      isOnline, locationText, mapLink, 
       latitude, longitude, date, totalSlots, tags, pricePerHead
     } = req.body;
 
@@ -27,24 +28,32 @@ export const createMatch = async (req: AuthenticatedRequest, res: Response) => {
     if (!finalTags.map(t => t.toLowerCase()).includes(timeTag)) {
       finalTags.push(timeTag);
     }
+    if (matchType === 'E_GAME' && eGameName && !finalTags.includes(eGameName)) {
+      finalTags.push(eGameName);
+    }
 
     const match = await prisma.match.create({
       data: {
         hostId: req.user.id,
         title,
         description,
-        isOnline,
-        locationText,
+        matchType: matchType === 'E_GAME' ? 'E_GAME' : 'PHYSICAL',
+        eGameName,
+        eGameMode,
+        ePlatform,
+        roomCode,
+        isOnline: matchType === 'E_GAME' ? true : Boolean(isOnline),
+        locationText: matchType === 'E_GAME' ? 'Online / Custom Room' : (locationText || 'Hyderabad'),
         mapLink,
-        latitude,
-        longitude,
+        latitude: matchType === 'E_GAME' ? null : latitude,
+        longitude: matchType === 'E_GAME' ? null : longitude,
         date: parsedDate,
         isWeekend: weekendFlag,
-        totalSlots,
+        totalSlots: parseInt(totalSlots, 10) || 10,
         filledSlots: 0,
         status: 'AVAILABLE',
         tags: finalTags,
-        pricePerHead: pricePerHead || 0
+        pricePerHead: parseFloat(pricePerHead) || 0
       }
     });
 
@@ -57,10 +66,10 @@ export const createMatch = async (req: AuthenticatedRequest, res: Response) => {
 
 export const getMatches = async (req: Request, res: Response) => {
   try {
-    const { status, tag, search, latitude, longitude, radius, page, limit } = req.query;
+    const { status, tag, type, sport, search, latitude, longitude, radius, sort, page, limit } = req.query;
 
-    const pageNum = parseInt(page as string) || 1;
-    const limitNum = parseInt(limit as string) || 10;
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(50, parseInt(limit as string) || 12);
     const skip = (pageNum - 1) * limitNum;
 
     // Build the query where clause
@@ -69,31 +78,40 @@ export const getMatches = async (req: Request, res: Response) => {
     if (status) {
       where.status = status;
     } else {
-      // By default only show available and filled matches
       where.status = { in: ['AVAILABLE', 'FILLED'] };
     }
 
-    if (tag) {
-      where.tags = { has: (tag as string).toLowerCase() };
+    if (type === 'PHYSICAL') where.matchType = 'PHYSICAL';
+    if (type === 'E_GAME') where.matchType = 'E_GAME';
+
+    if (sport && sport !== 'ALL') {
+      where.tags = { hasSome: [(sport as string), (sport as string).toLowerCase()] };
+    } else if (tag && tag !== 'ALL') {
+      where.tags = { hasSome: [(tag as string), (tag as string).toLowerCase()] };
     }
 
-    if (search) {
+    if (search && (search as string).trim().length > 0) {
+      const q = (search as string).trim();
       where.OR = [
-        { title: { contains: search as string, mode: 'insensitive' } },
-        { locationText: { contains: search as string, mode: 'insensitive' } }
+        { title: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+        { locationText: { contains: q, mode: 'insensitive' } },
+        { eGameName: { contains: q, mode: 'insensitive' } }
       ];
     }
 
-    let matches;
+    let orderBy: any = { date: 'asc' };
+    if (sort === 'price_low') orderBy = { pricePerHead: 'asc' };
+    if (sort === 'price_high') orderBy = { pricePerHead: 'desc' };
 
-    // Post-process for distance if lat/lng/radius are provided
-    if (latitude && longitude && radius) {
+    let matches: any[] = [];
+
+    // Haversine bounding-box distance query for physical matches when lat/lng/radius provided
+    if (latitude && longitude && radius && type !== 'E_GAME') {
       const lat = parseFloat(latitude as string);
       const lng = parseFloat(longitude as string);
       const rad = parseFloat(radius as string); // in km
       
-      // Using raw SQL for Haversine formula to find matches within radius
-      // Prisma doesn't support advanced spatial queries out-of-the-box without PostGIS
       const rawMatches = await prisma.$queryRaw<any[]>`
         SELECT m.*, 
         (6371 * acos(cos(radians(${lat})) * cos(radians(m.latitude)) * cos(radians(m.longitude) - radians(${lng})) + sin(radians(${lat})) * sin(radians(m.latitude)))) AS distance
@@ -101,17 +119,16 @@ export const getMatches = async (req: Request, res: Response) => {
         WHERE m.latitude IS NOT NULL 
           AND m.longitude IS NOT NULL
           AND m.status IN ('AVAILABLE', 'FILLED')
+          AND m."matchType" = 'PHYSICAL'
         HAVING (6371 * acos(cos(radians(${lat})) * cos(radians(m.latitude)) * cos(radians(m.longitude) - radians(${lng})) + sin(radians(${lat})) * sin(radians(m.latitude)))) <= ${rad}
         ORDER BY distance ASC
         LIMIT ${limitNum} OFFSET ${skip}
       `;
 
-      // We need to fetch the relations since queryRaw doesn't include nested objects automatically
       const matchIds = rawMatches.map(m => m.id);
 
-      // If no matches found in radius, return empty early
       if (matchIds.length === 0) {
-        return res.json({ matches: [], hasMore: false });
+        return res.json({ matches: [], hasMore: false, page: pageNum });
       }
       
       matches = await prisma.match.findMany({
@@ -124,7 +141,7 @@ export const getMatches = async (req: Request, res: Response) => {
             include: { profile: true }
           }
         },
-        orderBy: { date: 'asc' }
+        orderBy
       });
     } else {
       matches = await prisma.match.findMany({
@@ -136,18 +153,19 @@ export const getMatches = async (req: Request, res: Response) => {
             include: { profile: true }
           }
         },
-        orderBy: { date: 'asc' }
+        orderBy
       });
     }
 
     const hasMore = matches.length === limitNum;
 
-    res.json({ matches, hasMore });
+    res.json({ matches, hasMore, page: pageNum });
   } catch (error) {
     console.error('Error fetching matches:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 
 export const getMatchById = async (req: Request, res: Response) => {
   try {

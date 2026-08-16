@@ -1,91 +1,94 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../components/AuthProvider';
-import { motion } from 'framer-motion';
-import MapboxPicker from '../components/MapboxPicker';
-import { Camera, Save, User, MapPin } from 'lucide-react';
+import { Trophy, Save, CheckCircle, Calendar, AlertTriangle } from 'lucide-react';
+
 import { api } from '../api';
-import { useEffect } from 'react';
+import AvatarSelector from '../components/AvatarSelector';
+import InterestPresets from '../components/InterestPresets';
+import MobileNav from '../components/MobileNav';
+import { getAvatarEmoji } from '../constants/sportsPresets';
 
 export default function UserProfile() {
   const { user } = useAuth();
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
-  const [age, setAge] = useState('');
-  const [gender, setGender] = useState('Prefer not to say');
-  const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
-  
-  const [favoriteSports, setFavoriteSports] = useState<string[]>([]);
-  const [sportInput, setSportInput] = useState('');
-  const [level, setLevel] = useState('Beginner');
-  const [riotId, setRiotId] = useState('');
-  const [steamId, setSteamId] = useState('');
-  const [discordId, setDiscordId] = useState('');
+  const [avatarId, setAvatarId] = useState('avatar_01');
+  const [allowMessageRequests, setAllowMessageRequests] = useState(true);
+  const [physicalSports, setPhysicalSports] = useState<string[]>([]);
+  const [eSports, setESports] = useState<string[]>([]);
+
+  // Statistics
+  const [reliabilityScore, setReliabilityScore] = useState(100);
+  const [attendedGames, setAttendedGames] = useState(0);
+  const [missedGames, setMissedGames] = useState(0);
+  const [hostedGames, setHostedGames] = useState(0);
+
+  // History tab
+  const [historyFilter, setHistoryFilter] = useState<'ALL' | 'ATTENDED' | 'MISSED' | 'HOSTED'>('ALL');
+  const [historyItems, setHistoryItems] = useState<any[]>([]);
 
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileData = async () => {
       try {
-        const res = await api.get('/users/profile');
-        if (res.data.profile) {
-          const p = res.data.profile;
+        setLoading(true);
+        const [profileRes, historyRes] = await Promise.all([
+          api.get('/users/profile').catch(() => null),
+          api.get(`/users/history?filter=${historyFilter}`).catch(() => null)
+        ]);
+
+        if (profileRes?.data?.profile) {
+          const p = profileRes.data.profile;
           setName(p.name || '');
           setBio(p.bio || '');
-          setAge(p.age ? p.age.toString() : '');
-          setGender(p.gender || 'Prefer not to say');
-          if (p.latitude && p.longitude) setLocation({ lat: p.latitude, lng: p.longitude });
-          setFavoriteSports(p.favoriteSports || []);
-          setLevel(p.levels?.[0] || 'Beginner');
-          setRiotId(p.riotId || '');
-          setSteamId(p.steamId || '');
-          setDiscordId(p.discordId || '');
+          setAvatarId(p.avatarId || 'avatar_01');
+          setAllowMessageRequests(p.allowMessageRequests !== false);
+          setPhysicalSports(p.physicalSports || []);
+          setESports(p.eSports || []);
+          setReliabilityScore(p.reliabilityScore ?? 100);
+          setAttendedGames(p.attendedGames ?? 0);
+          setMissedGames(p.missedGames ?? 0);
+          setHostedGames(p.hostedGames ?? 0);
+        }
+
+        if (historyRes?.data) {
+          if (historyFilter === 'HOSTED') {
+            setHistoryItems(historyRes.data.hostedMatches || []);
+          } else {
+            setHistoryItems(historyRes.data.attendances || []);
+          }
         }
       } catch (err) {
-        console.error('Failed to fetch profile', err);
+        console.error('Failed to load profile data', err);
       } finally {
         setLoading(false);
       }
     };
-    if (user) fetchProfile();
-  }, [user]);
 
-  const handleAddSport = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && sportInput.trim()) {
-      e.preventDefault();
-      if (!favoriteSports.includes(sportInput.trim())) {
-        setFavoriteSports([...favoriteSports, sportInput.trim()]);
-      }
-      setSportInput('');
-    }
-  };
-
-  const removeSport = (sport: string) => {
-    setFavoriteSports(favoriteSports.filter(s => s !== sport));
-  };
+    if (user) fetchProfileData();
+  }, [user, historyFilter]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    
+    setSaveSuccess(false);
+
     try {
       await api.post('/users/profile', {
         name,
         bio,
-        age: age ? parseInt(age) : null,
-        gender,
-        latitude: location?.lat,
-        longitude: location?.lng,
-        favoriteSports,
-        levels: [level],
-        riotId,
-        steamId,
-        discordId
+        avatarId,
+        allowMessageRequests,
+        physicalSports,
+        eSports
       });
-      alert('Profile saved successfully!');
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
       console.error('Failed to save profile', err);
-      alert('Failed to save profile');
     } finally {
       setSaving(false);
     }
@@ -100,202 +103,203 @@ export default function UserProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-4 lg:p-8">
-      <div className="max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl"
-        >
-          {/* Header Banner */}
-          <div className="h-32 lg:h-48 bg-gradient-to-r from-blue-600/40 to-purple-600/40 relative">
-            <div className="absolute -bottom-12 left-8">
-              <div className="w-24 h-24 rounded-2xl bg-zinc-800 border-4 border-zinc-900 flex items-center justify-center relative group cursor-pointer overflow-hidden">
-                <User className="w-10 h-10 text-zinc-500" />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                  <Camera className="w-6 h-6 text-white" />
-                </div>
-              </div>
+    <div className="min-h-screen bg-zinc-950 text-white font-sans pb-24 sm:pb-12">
+      {/* Header */}
+      <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-md sticky top-0 z-40">
+        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+          <span className="text-base font-bold text-white">Player Profile & Stats</span>
+          {saveSuccess && (
+            <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
+              ✓ Saved!
+            </span>
+          )}
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-4 py-6 space-y-8">
+        {/* Profile Card Header */}
+        <section className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-center text-3xl shadow-inner">
+              {getAvatarEmoji(avatarId)}
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white">{name || 'PlayGrid Player'}</h1>
+              <p className="text-xs text-zinc-400 max-w-md line-clamp-2 mt-0.5">
+                {bio || 'No bio added yet. Add a short bio to let other players know your favorite sports!'}
+              </p>
             </div>
           </div>
 
-          <form onSubmit={handleSave} className="p-8 pt-16 grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <User className="w-5 h-5 text-blue-400" />
-                  Personal Info
-                </h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-xs font-medium text-zinc-400 ml-1">Full Name</label>
-                    <input 
-                      type="text" 
-                      value={name}
-                      onChange={e => setName(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 mt-1 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all outline-none"
-                      placeholder="John Doe"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-medium text-zinc-400 ml-1">Age</label>
-                      <input 
-                        type="number" 
-                        value={age}
-                        onChange={e => setAge(e.target.value)}
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 mt-1 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all outline-none"
-                        placeholder="24"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-zinc-400 ml-1">Gender</label>
-                      <select 
-                        value={gender}
-                        onChange={e => setGender(e.target.value)}
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 mt-1 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all outline-none appearance-none"
-                      >
-                        <option>Male</option>
-                        <option>Female</option>
-                        <option>Other</option>
-                        <option>Prefer not to say</option>
-                      </select>
-                    </div>
-                  </div>
+          {/* Reliability Score Badge */}
+          <div className="bg-zinc-950 border border-zinc-800 rounded-xl px-5 py-3 text-center min-w-[140px]">
+            <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">PlayGrid Score</p>
+            <p className="text-2xl font-extrabold text-indigo-400 mt-0.5">{reliabilityScore}</p>
+            <p className="text-[10px] text-zinc-500 mt-0.5 font-medium">Reliable Player</p>
+          </div>
+        </section>
 
-                  <div>
-                    <label className="text-xs font-medium text-zinc-400 ml-1">Bio</label>
-                    <textarea 
-                      value={bio}
-                      onChange={e => setBio(e.target.value)}
-                      rows={3}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 mt-1 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all outline-none resize-none"
-                      placeholder="Tell others about yourself..."
-                    />
-                  </div>
-                </div>
-              </div>
+        {/* Stats Grid */}
+        <section className="grid grid-cols-3 gap-3">
+          <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 text-center">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto mb-1">
+              <CheckCircle className="w-4 h-4" />
+            </div>
+            <p className="text-xl font-bold text-white">{attendedGames}</p>
+            <p className="text-xs text-zinc-400 font-medium">Attended</p>
+          </div>
 
-              <div>
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-red-400" />
-                  Location
-                </h2>
-                <div className="mb-2">
-                  <button type="button" className="text-xs text-blue-400 hover:text-blue-300">
-                    Use my current location
-                  </button>
-                </div>
-                <MapboxPicker onLocationSelect={(lat, lng) => setLocation({lat, lng})} />
-                {location && (
-                  <p className="text-xs text-zinc-500 mt-2">
-                    Lat: {location.lat.toFixed(4)}, Lng: {location.lng.toFixed(4)}
-                  </p>
-                )}
-              </div>
+          <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 text-center">
+            <div className="w-8 h-8 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center mx-auto mb-1">
+              <AlertTriangle className="w-4 h-4" />
+            </div>
+            <p className="text-xl font-bold text-white">{missedGames}</p>
+            <p className="text-xs text-zinc-400 font-medium">Missed</p>
+          </div>
+
+          <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 text-center">
+            <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center mx-auto mb-1">
+              <Trophy className="w-4 h-4" />
+            </div>
+            <p className="text-xl font-bold text-white">{hostedGames}</p>
+            <p className="text-xs text-zinc-400 font-medium">Hosted</p>
+          </div>
+        </section>
+
+        {/* Profile Edit Form */}
+        <form onSubmit={handleSave} className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 space-y-6">
+          <h2 className="text-base font-bold text-white">Edit Profile & Interests</h2>
+
+          <div className="space-y-4">
+            {/* Name */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-400">Display Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Sathvik Reddy"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500"
+              />
             </div>
 
-            <div className="space-y-6">
+            {/* Bio */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-400">Bio / About You</label>
+              <textarea
+                rows={3}
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="e.g. Weekend cricket player. Usually around Gachibowli. Always up for a good game!"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            {/* Avatar Selector */}
+            <AvatarSelector selectedAvatarId={avatarId} onSelectAvatar={(id) => setAvatarId(id)} />
+
+            {/* Physical & E-Sports Interests */}
+            <InterestPresets
+              selectedPhysical={physicalSports}
+              selectedEsports={eSports}
+              onChangePhysical={setPhysicalSports}
+              onChangeEsports={setESports}
+            />
+
+            {/* Message Request Toggle */}
+            <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold mb-4">Sports & Gaming</h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-xs font-medium text-zinc-400 ml-1">Favorite Sports / Games (Press Enter to add)</label>
-                    <input 
-                      type="text" 
-                      value={sportInput}
-                      onChange={e => setSportInput(e.target.value)}
-                      onKeyDown={handleAddSport}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 mt-1 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all outline-none"
-                      placeholder="e.g. Cricket, BGMI, Football"
-                    />
-                    
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {favoriteSports.map(sport => (
-                        <span key={sport} className="px-3 py-1 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-full text-xs flex items-center gap-1">
-                          {sport}
-                          <button type="button" onClick={() => removeSport(sport)} className="hover:text-white">&times;</button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="text-xs font-medium text-zinc-400 ml-1">Skill Level</label>
-                    <select 
-                      value={level}
-                      onChange={e => setLevel(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 mt-1 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all outline-none appearance-none"
-                    >
-                      <option>Beginner</option>
-                      <option>Intermediate</option>
-                      <option>Advanced</option>
-                      <option>Pro / Esports</option>
-                    </select>
-                  </div>
-
-                  {level === 'Pro / Esports' && (
-                    <div className="pt-4 space-y-4 border-t border-zinc-800">
-                      <h3 className="text-sm font-bold text-zinc-300">Esports Identifiers</h3>
-                      
-                      <div>
-                        <label className="text-xs font-medium text-zinc-400 ml-1">Riot ID</label>
-                        <input 
-                          type="text" 
-                          value={riotId}
-                          onChange={e => setRiotId(e.target.value)}
-                          className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 mt-1 focus:ring-2 focus:ring-purple-500/50 outline-none"
-                          placeholder="Player#NA1"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-zinc-400 ml-1">Steam ID</label>
-                        <input 
-                          type="text" 
-                          value={steamId}
-                          onChange={e => setSteamId(e.target.value)}
-                          className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 mt-1 focus:ring-2 focus:ring-purple-500/50 outline-none"
-                          placeholder="STEAM_0:1:12345678"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-zinc-400 ml-1">Discord Tag</label>
-                        <input 
-                          type="text" 
-                          value={discordId}
-                          onChange={e => setDiscordId(e.target.value)}
-                          className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 mt-1 focus:ring-2 focus:ring-purple-500/50 outline-none"
-                          placeholder="player#1234"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <p className="text-sm font-semibold text-white">Allow Direct Message Requests</p>
+                <p className="text-xs text-zinc-400">Let other players send you message requests before starting a chat.</p>
               </div>
+              <input
+                type="checkbox"
+                checked={allowMessageRequests}
+                onChange={(e) => setAllowMessageRequests(e.target.checked)}
+                className="w-5 h-5 accent-indigo-600 rounded cursor-pointer"
+              />
+            </div>
+          </div>
 
-              <div className="pt-6 border-t border-zinc-800">
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+          >
+            {saving ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                <Save className="w-4 h-4" /> Save Profile & Settings
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Player Game History */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-indigo-400" />
+              Game History
+            </h2>
+
+            {/* Filter Pills */}
+            <div className="flex items-center gap-1.5">
+              {(['ALL', 'ATTENDED', 'MISSED', 'HOSTED'] as const).map((f) => (
                 <button
-                  type="submit"
-                  disabled={saving}
-                  className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-xl font-medium shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  key={f}
+                  onClick={() => setHistoryFilter(f)}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                    historyFilter === f
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white'
+                  }`}
                 >
-                  {saving ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <Save className="w-5 h-5" />
-                      Save Profile
-                    </>
-                  )}
+                  {f}
                 </button>
-              </div>
+              ))}
             </div>
-          </form>
-        </motion.div>
-      </div>
+          </div>
+
+          {historyItems.length === 0 ? (
+            <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-8 text-center text-zinc-500 text-xs">
+              No game history records found for this filter.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {historyItems.map((item) => {
+                const isHostedTab = historyFilter === 'HOSTED';
+                const matchData = isHostedTab ? item : item.match;
+                if (!matchData) return null;
+
+                return (
+                  <div key={item.id} className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 flex items-center justify-between">
+                    <div>
+                      <h4 className="font-bold text-sm text-white">{matchData.title}</h4>
+                      <p className="text-xs text-zinc-400 mt-0.5">
+                        {new Date(matchData.date).toLocaleDateString()} • {matchData.locationText || 'Hyderabad'}
+                      </p>
+                    </div>
+
+                    <span className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                      isHostedTab 
+                        ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                        : item.status === 'ATTENDED'
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                    }`}>
+                      {isHostedTab ? 'HOSTED' : item.status}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </main>
+
+      <MobileNav />
     </div>
   );
 }

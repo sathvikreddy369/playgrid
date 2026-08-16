@@ -1,311 +1,347 @@
-import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { isWeekend, parseISO } from 'date-fns';
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, Trophy, Calendar, MapPin, Users, CheckCircle2 } from 'lucide-react';
 
-import MapboxPicker from '../components/MapboxPicker';
-import { CalendarPlus, MapPin, Globe, Users, DollarSign, Tag as TagIcon, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
+import MapboxPicker from '../components/MapboxPicker';
+import MobileNav from '../components/MobileNav';
+import { ESPORTS_PRESETS, PHYSICAL_SPORTS_PRESETS } from '../constants/sportsPresets';
 
 export default function CreateMatch() {
   const navigate = useNavigate();
-  
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [isOnline, setIsOnline] = useState(false);
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
-  
-  const [totalSlots, setTotalSlots] = useState('10');
-  const [pricePerHead, setPricePerHead] = useState('0');
-  
-  const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
-  const [addressLink, setAddressLink] = useState('');
-  
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
-  
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Automatically compute if selected date is a weekend
-  const weekendTag = useMemo(() => {
-    if (!date) return null;
-    try {
-      const parsedDate = parseISO(date);
-      return isWeekend(parsedDate) ? 'Weekend' : 'Weekday';
-    } catch (e) {
-      return null;
-    }
-  }, [date]);
+  // Match Type: PHYSICAL vs E_GAME
+  const [matchType, setMatchType] = useState<'PHYSICAL' | 'E_GAME'>('PHYSICAL');
 
-  const handleAddTag = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && tagInput.trim()) {
-      e.preventDefault();
-      const newTag = tagInput.trim().toLowerCase();
-      if (!tags.includes(newTag)) {
-        setTags([...tags, newTag]);
-      }
-      setTagInput('');
-    }
-  };
+  // Common Fields
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
+  const [totalSlots, setTotalSlots] = useState('10');
+  const [pricePerHead, setPricePerHead] = useState('0');
 
-  const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
-  };
+  // Physical Fields
+  const [sport, setSport] = useState('Cricket');
+  const [locationText, setLocationText] = useState('');
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  const handleCreate = async (e: React.FormEvent) => {
+  // E-Game Fields
+  const [eGameName, setEGameName] = useState('BGMI');
+  const [eGameMode, setEGameMode] = useState('Squad');
+  const [ePlatform, setEPlatform] = useState('Mobile');
+  const [roomCode, setRoomCode] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
+    setLoading(true);
     setError(null);
-    
-    try {
-      const matchDateTime = new Date(`${date}T${time || '00:00'}:00`).toISOString();
-      const payload = {
-        title,
-        description: description || undefined,
-        isOnline,
-        locationText: addressLink || undefined,
-        mapLink: addressLink.startsWith('http') ? addressLink : undefined,
-        latitude: location?.lat,
-        longitude: location?.lng,
-        date: matchDateTime,
-        totalSlots: parseInt(totalSlots) || 10,
-        pricePerHead: parseFloat(pricePerHead) || 0,
-        tags
-      };
 
-      const res = await api.post('/matches', payload);
-      navigate(`/match/${res.data.match.id}`);
+    try {
+      const dateTimeString = `${date}T${time}:00`;
+
+      await api.post('/matches', {
+        title,
+        description,
+        matchType,
+        eGameName: matchType === 'E_GAME' ? eGameName : undefined,
+        eGameMode: matchType === 'E_GAME' ? eGameMode : undefined,
+        ePlatform: matchType === 'E_GAME' ? ePlatform : undefined,
+        roomCode: matchType === 'E_GAME' ? roomCode : undefined,
+        isOnline: matchType === 'E_GAME',
+        locationText: matchType === 'PHYSICAL' ? locationText : 'Online Custom Room',
+        latitude: matchType === 'PHYSICAL' ? coords?.lat : undefined,
+        longitude: matchType === 'PHYSICAL' ? coords?.lng : undefined,
+        date: dateTimeString,
+        totalSlots: parseInt(totalSlots, 10),
+        pricePerHead: parseFloat(pricePerHead) || 0,
+        tags: matchType === 'PHYSICAL' ? [sport] : [eGameName, 'Gaming']
+      });
+
+      navigate('/dashboard');
     } catch (err: any) {
       console.error('Failed to create match', err);
-      setError(err?.response?.data?.error || err?.response?.data?.issues?.[0]?.message || 'Failed to create match. Please check inputs.');
+      setError(err?.response?.data?.error || 'Failed to create match');
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
-
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-4 lg:p-8">
-      <div className="max-w-3xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl p-8"
-        >
-          <div className="flex items-center gap-4 mb-8 pb-8 border-b border-zinc-800">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <CalendarPlus className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">Host a Match</h1>
-              <p className="text-zinc-400 text-sm">Organize a game and let others join you</p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-zinc-950 text-white font-sans pb-24 sm:pb-12">
+      {/* Header */}
+      <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-md sticky top-0 z-40">
+        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
+          <Link to="/dashboard" className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white font-medium transition">
+            <ArrowLeft className="w-4 h-4" /> Cancel
+          </Link>
+          <span className="text-sm font-bold text-white">Host a Game</span>
+          <div className="w-10" />
+        </div>
+      </header>
 
+      {/* Main Container */}
+      <main className="max-w-3xl mx-auto px-4 py-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleCreate} className="space-y-8">
-
-            {/* Basic Details */}
-            <div className="space-y-5">
-              <div>
-                <label className="text-sm font-medium text-zinc-300 ml-1">Match Title</label>
-                <input 
-                  type="text" 
-                  required
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl px-4 py-3 mt-1 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all outline-none"
-                  placeholder="e.g. Sunday Morning Football"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-zinc-300 ml-1">Description</label>
-                <textarea 
-                  required
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  rows={3}
-                  className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl px-4 py-3 mt-1 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all outline-none resize-none"
-                  placeholder="Rules, requirements, or what to expect..."
-                />
-              </div>
+          {/* Section 1: Choose Game Category */}
+          <section className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-5 space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-zinc-800/80">
+              <Trophy className="w-4 h-4 text-indigo-400" />
+              <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-300">1. Game Category & Details</h2>
             </div>
 
-            {/* Date & Time */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-zinc-300 ml-1">Date</label>
-                <div className="relative mt-1">
-                  <CalendarPlus className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-                  <input 
-                    type="date" 
-                    required
-                    value={date}
-                    onChange={e => setDate(e.target.value)}
-                    className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all outline-none text-white [&::-webkit-calendar-picker-indicator]:filter-[invert(1)]"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-zinc-300 ml-1">Time</label>
-                <div className="relative mt-1">
-                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-                  <input 
-                    type="time" 
-                    required
-                    value={time}
-                    onChange={e => setTime(e.target.value)}
-                    className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all outline-none text-white [&::-webkit-calendar-picker-indicator]:filter-[invert(1)]"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Type & Location */}
-            <div className="space-y-5 pt-6 border-t border-zinc-800/50">
-              <div className="flex items-center gap-8">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    checked={!isOnline} 
-                    onChange={() => setIsOnline(false)}
-                    className="w-4 h-4 text-indigo-500 bg-zinc-900 border-zinc-700 focus:ring-indigo-500/50" 
-                  />
-                  <MapPin className={`w-5 h-5 ${!isOnline ? 'text-indigo-400' : 'text-zinc-500'}`} />
-                  <span className={!isOnline ? 'text-white font-medium' : 'text-zinc-400'}>In-Person Match</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    checked={isOnline} 
-                    onChange={() => setIsOnline(true)}
-                    className="w-4 h-4 text-indigo-500 bg-zinc-900 border-zinc-700 focus:ring-indigo-500/50" 
-                  />
-                  <Globe className={`w-5 h-5 ${isOnline ? 'text-indigo-400' : 'text-zinc-500'}`} />
-                  <span className={isOnline ? 'text-white font-medium' : 'text-zinc-400'}>Online (e-Sports)</span>
-                </label>
-              </div>
-
-              {!isOnline ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-zinc-300 ml-1">Google Maps Link / Address Details</label>
-                    <input 
-                      type="text" 
-                      value={addressLink}
-                      onChange={e => setAddressLink(e.target.value)}
-                      className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl px-4 py-3 mt-1 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all outline-none"
-                      placeholder="Paste google maps link here..."
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-zinc-300 ml-1 mb-2 block">Pin Location on Map</label>
-                    <MapboxPicker onLocationSelect={(lat, lng) => setLocation({ lat, lng })} />
-
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <label className="text-sm font-medium text-zinc-300 ml-1">Game Link or Server Info</label>
-                  <input 
-                    type="text" 
-                    className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl px-4 py-3 mt-1 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all outline-none"
-                    placeholder="e.g. Discord server link or lobby code..."
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Slots & Pricing */}
-            <div className="grid grid-cols-2 gap-4 pt-6 border-t border-zinc-800/50">
-              <div>
-                <label className="text-sm font-medium text-zinc-300 ml-1">Total Slots</label>
-                <div className="relative mt-1">
-                  <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-                  <input 
-                    type="number" 
-                    min="2"
-                    required
-                    value={totalSlots}
-                    onChange={e => setTotalSlots(e.target.value)}
-                    className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all outline-none"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-zinc-300 ml-1">Price Per Head (₹)</label>
-                <div className="relative mt-1">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-                  <input 
-                    type="number"
-                    min="0"
-                    value={pricePerHead}
-                    onChange={e => setPricePerHead(e.target.value)}
-                    className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all outline-none"
-                    placeholder="Leave 0 if free"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Tags */}
-            <div className="pt-6 border-t border-zinc-800/50">
-              <label className="text-sm font-medium text-zinc-300 ml-1">Tags (Press Enter)</label>
-              <div className="relative mt-1">
-                <TagIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-                <input 
-                  type="text" 
-                  value={tagInput}
-                  onChange={e => setTagInput(e.target.value)}
-                  onKeyDown={handleAddTag}
-                  className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all outline-none"
-                  placeholder="e.g. cricket, hyderabad, beginner"
-                />
-              </div>
-              <div className="flex flex-wrap gap-2 mt-4">
-                {weekendTag && (
-                  <span className="px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 rounded-lg text-sm font-medium">
-                    # {weekendTag}
-                  </span>
-                )}
-                {tags.map(tag => (
-                  <span key={tag} className="px-3 py-1.5 bg-zinc-800 border border-zinc-700 text-zinc-300 rounded-lg text-sm font-medium flex items-center gap-2 group">
-                    # {tag}
-                    <button type="button" onClick={() => removeTag(tag)} className="text-zinc-500 group-hover:text-white transition-colors">
-                      &times;
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Submit */}
-            <div className="pt-6">
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                disabled={saving}
-                type="submit"
-                className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl font-bold shadow-lg shadow-indigo-500/20 flex items-center justify-center transition-all disabled:opacity-50 text-lg"
+            {/* Selector: Physical vs E-Game */}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setMatchType('PHYSICAL')}
+                className={`py-3.5 px-4 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition-all ${
+                  matchType === 'PHYSICAL'
+                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/25 ring-2 ring-indigo-500/50'
+                    : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-white'
+                }`}
               >
-                {saving ? (
-                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  "Post Match"
-                )}
-              </motion.button>
+                ⚽ Physical Sport
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMatchType('E_GAME')}
+                className={`py-3.5 px-4 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition-all ${
+                  matchType === 'E_GAME'
+                    ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-500/25 ring-2 ring-purple-500/50'
+                    : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-white'
+                }`}
+              >
+                🎮 E-Sports & Gaming
+              </button>
             </div>
-          </form>
-        </motion.div>
-      </div>
+
+            {/* Match Title */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-400">Match / Tournament Title</label>
+              <input
+                type="text"
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={matchType === 'PHYSICAL' ? 'e.g. Sunday Box Cricket Championship' : 'e.g. BGMI Squad Custom Room Challenge'}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            {/* Conditional Selection Fields */}
+            {matchType === 'PHYSICAL' ? (
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-400">Select Sport</label>
+                <select
+                  value={sport}
+                  onChange={(e) => setSport(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                >
+                  {PHYSICAL_SPORTS_PRESETS.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-400">Select Game</label>
+                  <select
+                    value={eGameName}
+                    onChange={(e) => setEGameName(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white focus:outline-none focus:border-purple-500"
+                  >
+                    {ESPORTS_PRESETS.map((g) => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-400">Game Mode</label>
+                  <select
+                    value={eGameMode}
+                    onChange={(e) => setEGameMode(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white focus:outline-none focus:border-purple-500"
+                  >
+                    <option value="Squad">Squad</option>
+                    <option value="Duo">Duo</option>
+                    <option value="Solo">Solo</option>
+                    <option value="5v5">5v5 TDM</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-zinc-400">Platform</label>
+                  <select
+                    value={ePlatform}
+                    onChange={(e) => setEPlatform(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white focus:outline-none focus:border-purple-500"
+                  >
+                    <option value="Mobile">Mobile</option>
+                    <option value="PC">PC</option>
+                    <option value="Console">Console</option>
+                    <option value="Cross-Platform">Cross-Platform</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Room Code (Optional for E-Games) */}
+            {matchType === 'E_GAME' && (
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-400">Custom Room Code / Passcode (Optional)</label>
+                <input
+                  type="text"
+                  value={roomCode}
+                  onChange={(e) => setRoomCode(e.target.value)}
+                  placeholder="e.g. Room ID: 884920, Pass: 1234"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500"
+                />
+              </div>
+            )}
+
+            {/* Description */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-400">Description & Rules</label>
+              <textarea
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe rules, reporting time, and gear required..."
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </section>
+
+          {/* Section 2: Date & Time */}
+          <section className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-5 space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-zinc-800/80">
+              <Calendar className="w-4 h-4 text-indigo-400" />
+              <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-300">2. Schedule Date & Time</h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-400">Match Date</label>
+                <input
+                  type="date"
+                  required
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-400">Start Time</label>
+                <input
+                  type="time"
+                  required
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Section 3: Venue (Only for Physical) */}
+          {matchType === 'PHYSICAL' && (
+            <section className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-zinc-800/80">
+                <MapPin className="w-4 h-4 text-indigo-400" />
+                <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-300">3. Venue Location</h2>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-400">Venue Name / Area</label>
+                <input
+                  type="text"
+                  required
+                  value={locationText}
+                  onChange={(e) => setLocationText(e.target.value)}
+                  placeholder="e.g. SkyTurf Gachibowli, Hyderabad"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-400">Pin Location on Map (Optional)</label>
+                <div className="border border-zinc-800 rounded-xl overflow-hidden h-52">
+                  <MapboxPicker onLocationSelect={(lat, lng) => setCoords({ lat, lng })} />
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Section 4: Slots & Pricing */}
+          <section className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-5 space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-zinc-800/80">
+              <Users className="w-4 h-4 text-indigo-400" />
+              <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-300">
+                {matchType === 'PHYSICAL' ? '3. Slots & Pricing' : '3. Room Capacity & Entry Fee'}
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-400">Total Available Slots</label>
+                <input
+                  type="number"
+                  min="2"
+                  max="100"
+                  required
+                  value={totalSlots}
+                  onChange={(e) => setTotalSlots(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-400">Price per Head (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={pricePerHead}
+                  onChange={(e) => setPricePerHead(e.target.value)}
+                  placeholder="0 for free match"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Submit CTA */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm rounded-xl shadow-xl shadow-indigo-500/25 flex items-center justify-center gap-2 transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+          >
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                <CheckCircle2 className="w-5 h-5" /> Host Game Now
+              </>
+            )}
+          </button>
+
+        </form>
+      </main>
+
+      <MobileNav />
     </div>
   );
 }

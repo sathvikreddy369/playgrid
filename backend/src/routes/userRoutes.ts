@@ -1,20 +1,32 @@
 import { Router } from 'express';
-import { getProfile, upsertProfile, updateRole, getNotifications, markNotificationsRead } from '../controllers/userController';
+import { 
+  getProfile, getPublicProfile, getUserGameHistory, upsertProfile, 
+  updateRole, getNotifications, markNotificationsRead 
+} from '../controllers/userController';
+import { getMatchAttendance, markAttendance } from '../controllers/attendanceController';
+import { sendRequest, getIncomingRequests, handleRequestAction } from '../controllers/messageRequestController';
 import { requireAuth } from '../middleware/auth';
-import { validate } from '../middleware/validate';
-import { upsertProfileSchema, updateRoleSchema } from '../schemas/userSchemas';
 
 const router = Router();
 
-// All user routes require authentication
+// Authentication middleware for all user endpoints
 router.use(requireAuth);
 
 router.get('/profile', getProfile);
-router.post('/profile', validate(upsertProfileSchema), upsertProfile);
-router.post('/role', validate(updateRoleSchema), updateRole);
+router.get('/public/:id', getPublicProfile);
+router.get('/history', getUserGameHistory);
+router.post('/profile', upsertProfile);
+router.post('/role', updateRole);
 router.get('/notifications', getNotifications);
 router.post('/notifications/read', markNotificationsRead);
 
+// Attendance routes
+router.get('/attendance/:matchId', getMatchAttendance);
+router.post('/attendance/:matchId', markAttendance);
+
+// Message Requests routes
+router.post('/message-requests', sendRequest);
+router.get('/message-requests', getIncomingRequests);
+router.post('/message-requests/:id/action', handleRequestAction);
+
 export default router;
-
-

@@ -1,9 +1,12 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Analytics } from "@vercel/analytics/react";
 import Login from './pages/Login';
 import Register from './pages/Register';
 import UserProfile from './pages/UserProfile';
+import PublicProfile from './pages/PublicProfile';
+
 import GroundOwnerProfile from './pages/GroundOwnerProfile';
 import Dashboard from './pages/Dashboard';
 import CreateMatch from './pages/CreateMatch';
@@ -40,7 +43,9 @@ function App() {
   return (
     <AuthProvider>
       <SpeedInsights />
+      <Analytics />
       <Router>
+
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
@@ -61,6 +66,15 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/profile/:id"
+            element={
+              <ProtectedRoute>
+                <PublicProfile />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/create-match"
             element={

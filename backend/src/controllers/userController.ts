@@ -17,30 +17,138 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
+export const getPublicProfile = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const targetUserId = req.params.id as string;
+    const profile = await prisma.profile.findUnique({
+      where: { userId: targetUserId },
+      include: {
+        user: {
+          select: { id: true, email: true, role: true, createdAt: true }
+        }
+      }
+    });
+
+    if (!profile) return res.status(404).json({ error: 'User profile not found' });
+
+    // Check message request status
+    let messageRequestStatus: string | null = null;
+    if (req.user && req.user.id !== targetUserId) {
+      const msgReq = await prisma.messageRequest.findUnique({
+        where: {
+          senderId_receiverId: {
+            senderId: req.user.id,
+            receiverId: targetUserId
+          }
+        }
+      });
+      if (msgReq) messageRequestStatus = msgReq.status;
+    }
+
+    res.json({
+      profile: {
+        id: profile.id,
+        userId: profile.userId,
+        name: profile.name || 'Player',
+        bio: profile.bio || '',
+        avatarId: profile.avatarId || 'avatar_01',
+        physicalSports: profile.physicalSports || [],
+        eSports: profile.eSports || [],
+        reliabilityScore: profile.reliabilityScore ?? 100,
+        attendedGames: profile.attendedGames ?? 0,
+        missedGames: profile.missedGames ?? 0,
+        hostedGames: profile.hostedGames ?? 0,
+        allowMessageRequests: profile.allowMessageRequests ?? true
+      },
+      messageRequestStatus
+    });
+  } catch (error) {
+    console.error('Error fetching public profile:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getUserGameHistory = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit as string) || 10);
+    const filter = (req.query.filter as string) || 'ALL'; // ALL, ATTENDED, MISSED, HOSTED
+
+    const skip = (page - 1) * limit;
+
+    let attendances: any[] = [];
+    let hostedMatches: any[] = [];
+
+    if (filter === 'HOSTED') {
+      hostedMatches = await prisma.match.findMany({
+        where: { hostId: req.user.id },
+        orderBy: { date: 'desc' },
+        skip,
+        take: limit
+      });
+    } else {
+      let statusWhere: any = {};
+      if (filter === 'ATTENDED') statusWhere = { status: 'ATTENDED' };
+      if (filter === 'MISSED') statusWhere = { status: 'MISSED' };
+
+      attendances = await prisma.attendance.findMany({
+        where: {
+          userId: req.user.id,
+          ...statusWhere
+        },
+        include: {
+          match: {
+            include: { host: { include: { profile: true } } }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit
+      });
+    }
+
+    res.json({ attendances, hostedMatches, page, limit });
+  } catch (error) {
+    console.error('Error fetching user game history:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const upsertProfile = async (req: AuthenticatedRequest, res: Response) => {
   try {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
 
     const { 
-      name, gender, age, bio, latitude, longitude, 
-      favoriteSports, levels, gameIds, achievements,
-      venueImages, amenities, pricing,
+      name, gender, age, bio, avatarId, latitude, longitude, 
+      physicalSports, eSports, favoriteSports, levels, gameIds, achievements,
+      allowMessageRequests, venueImages, amenities, pricing,
       riotId, steamId, discordId
     } = req.body;
 
     const profile = await prisma.profile.upsert({
       where: { userId: req.user.id },
       update: {
-        name, gender, age, bio, latitude, longitude,
-        favoriteSports, levels, gameIds, achievements,
+        name, gender, age, bio, avatarId, latitude, longitude,
+        physicalSports, eSports, favoriteSports, levels, gameIds, achievements,
+        allowMessageRequests: allowMessageRequests !== undefined ? Boolean(allowMessageRequests) : undefined,
         venueImages, amenities, pricing,
         riotId, steamId, discordId
       },
       create: {
         userId: req.user.id,
-        name, gender, age, bio, latitude, longitude,
-        favoriteSports, levels, gameIds, achievements,
-        venueImages, amenities, pricing,
+        name, gender, age, bio, avatarId: avatarId || 'avatar_01', latitude, longitude,
+        physicalSports: physicalSports || [],
+        eSports: eSports || [],
+        favoriteSports: favoriteSports || [],
+        levels: levels || [],
+        gameIds: gameIds || [],
+        achievements: achievements || [],
+        allowMessageRequests: allowMessageRequests !== undefined ? Boolean(allowMessageRequests) : true,
+        venueImages: venueImages || [],
+        amenities: amenities || [],
+        pricing,
         riotId, steamId, discordId
       }
     });
@@ -51,6 +159,7 @@ export const upsertProfile = async (req: AuthenticatedRequest, res: Response) =>
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 
 export const updateRole = async (req: AuthenticatedRequest, res: Response) => {
   try {
