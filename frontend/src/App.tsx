@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './components/AuthProvider';
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import Login from './pages/Login';
 import Register from './pages/Register';
 import UserProfile from './pages/UserProfile';
@@ -11,6 +11,7 @@ import MatchDetails from './pages/MatchDetails';
 import MatchManagement from './pages/MatchManagement';
 import Messaging from './pages/Messaging';
 import MatchReview from './pages/MatchReview';
+
 
 // Protected Route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -36,7 +37,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <AuthProvider>
+      <SpeedInsights />
       <Router>
+
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
