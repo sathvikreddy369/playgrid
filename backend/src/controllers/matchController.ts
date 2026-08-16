@@ -106,18 +106,26 @@ export const getMatches = async (req: Request, res: Response) => {
 
     let matches: any[] = [];
 
-    // Haversine bounding-box distance query for physical matches when lat/lng/radius provided
-    if (latitude && longitude && radius && type !== 'E_GAME') {
+    // Bounding-box pre-filtering + Haversine calculation for radius / nearest sort
+    if ((latitude && longitude && radius) || (sort === 'nearest' && latitude && longitude && type !== 'E_GAME')) {
       const lat = parseFloat(latitude as string);
       const lng = parseFloat(longitude as string);
-      const rad = parseFloat(radius as string); // in km
+      const rad = parseFloat(radius as string) || 50; // km
       
+      const latDelta = rad / 111.0;
+      const lngDelta = rad / (111.0 * Math.cos(lat * (Math.PI / 180)));
+
+      const minLat = lat - latDelta;
+      const maxLat = lat + latDelta;
+      const minLng = lng - lngDelta;
+      const maxLng = lng + lngDelta;
+
       const rawMatches = await prisma.$queryRaw<any[]>`
         SELECT m.*, 
         (6371 * acos(cos(radians(${lat})) * cos(radians(m.latitude)) * cos(radians(m.longitude) - radians(${lng})) + sin(radians(${lat})) * sin(radians(m.latitude)))) AS distance
         FROM "Match" m
-        WHERE m.latitude IS NOT NULL 
-          AND m.longitude IS NOT NULL
+        WHERE m.latitude BETWEEN ${minLat} AND ${maxLat}
+          AND m.longitude BETWEEN ${minLng} AND ${maxLng}
           AND m.status IN ('AVAILABLE', 'FILLED')
           AND m."matchType" = 'PHYSICAL'
         HAVING (6371 * acos(cos(radians(${lat})) * cos(radians(m.latitude)) * cos(radians(m.longitude) - radians(${lng})) + sin(radians(${lat})) * sin(radians(m.latitude)))) <= ${rad}
@@ -140,9 +148,12 @@ export const getMatches = async (req: Request, res: Response) => {
           host: {
             include: { profile: true }
           }
-        },
-        orderBy
+        }
       });
+
+      // Sort by raw distance
+      const distanceMap = new Map(rawMatches.map((rm) => [rm.id, Number(rm.distance)]));
+      matches.sort((a, b) => (distanceMap.get(a.id) || 0) - (distanceMap.get(b.id) || 0));
     } else {
       matches = await prisma.match.findMany({
         where,
@@ -156,6 +167,7 @@ export const getMatches = async (req: Request, res: Response) => {
         orderBy
       });
     }
+
 
     const hasMore = matches.length === limitNum;
 

@@ -270,7 +270,7 @@ export default function MatchDetails() {
           <section className="space-y-2">
             <h2 className="text-base font-bold text-white">Venue Location Pin</h2>
             <div className="border border-zinc-800 rounded-2xl overflow-hidden h-64">
-              <MapboxPicker initialLat={match.latitude} initialLng={match.longitude} />
+              <MapboxPicker initialLat={match.latitude} initialLng={match.longitude} readOnly={true} />
             </div>
           </section>
         )}
@@ -282,8 +282,9 @@ export default function MatchDetails() {
         </div>
       </main>
 
-      {/* Sticky Bottom Bar Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/95 border-t border-zinc-800 backdrop-blur-xl p-4 sm:p-5">
+      {/* Sticky Bottom Bar Action Bar (offset for mobile nav) */}
+      <div className="fixed bottom-16 sm:bottom-0 left-0 right-0 z-40 bg-zinc-950/95 border-t border-zinc-800 backdrop-blur-xl p-3.5 sm:p-5 shadow-2xl">
+
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
           <div>
             <p className="text-xs font-medium text-zinc-400">Match Entry Fee</p>

@@ -3,8 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MessageSquare, Trophy, CheckCircle, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../components/AuthProvider';
-import { getAvatarEmoji } from '../constants/sportsPresets';
+import { getAvatarEmoji, formatReliabilityScore } from '../constants/sportsPresets';
 import MobileNav from '../components/MobileNav';
+
 
 export default function PublicProfile() {
   const { id } = useParams<{ id: string }>();
@@ -97,11 +98,17 @@ export default function PublicProfile() {
           </div>
 
           {/* Reliability Score */}
-          <div className="bg-zinc-950 border border-zinc-800 rounded-xl px-5 py-3 text-center min-w-[140px]">
-            <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">PlayGrid Score</p>
-            <p className="text-2xl font-extrabold text-indigo-400 mt-0.5">{profile.reliabilityScore}</p>
-            <p className="text-[10px] text-zinc-500 font-medium">Reliable Player</p>
-          </div>
+          {(() => {
+            const scoreInfo = formatReliabilityScore(profile.attendedGames, profile.missedGames, profile.reliabilityScore);
+            return (
+              <div className="bg-zinc-950 border border-zinc-800 rounded-xl px-5 py-3 text-center min-w-[140px]">
+                <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">PlayGrid Score</p>
+                <p className="text-2xl font-extrabold text-indigo-400 mt-0.5">{scoreInfo.label}</p>
+                <p className="text-[10px] text-zinc-500 font-medium">{scoreInfo.status}</p>
+              </div>
+            );
+          })()}
+
         </section>
 
         {/* Stats Grid */}

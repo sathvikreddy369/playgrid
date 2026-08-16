@@ -268,9 +268,11 @@ export default function Dashboard() {
               className="bg-zinc-900 border border-zinc-800 rounded-xl py-2.5 px-3 text-xs text-zinc-300 font-semibold focus:outline-none focus:border-indigo-500 w-full sm:w-auto"
             >
               <option value="soonest">Sort: Soonest First</option>
+              {userLocation && <option value="nearest">Sort: Nearest First</option>}
               <option value="price_low">Price: Low to High</option>
               <option value="price_high">Price: High to Low</option>
             </select>
+
           </div>
         </section>
 

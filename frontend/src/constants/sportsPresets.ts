@@ -40,3 +40,15 @@ export function getAvatarEmoji(avatarId?: string | null): string {
   const found = PRESET_AVATARS.find((a) => a.id === avatarId);
   return found ? found.emoji : '🧑‍🦱';
 }
+
+export function formatReliabilityScore(attended: number, missed: number, score: number) {
+  const total = (attended || 0) + (missed || 0);
+  if (total === 0) {
+    return { label: 'New', status: 'New Player' };
+  }
+  if (total < 3) {
+    return { label: `${score}`, status: 'Early Player' };
+  }
+  return { label: `${score}`, status: 'Reliable Player' };
+}
+

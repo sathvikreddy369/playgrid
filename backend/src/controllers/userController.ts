@@ -6,9 +6,20 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
   try {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
 
-    const profile = await prisma.profile.findUnique({
+    let profile = await prisma.profile.findUnique({
       where: { userId: req.user.id }
     });
+
+    if (!profile) {
+      profile = await prisma.profile.create({
+        data: {
+          userId: req.user.id,
+          name: req.user.email?.split('@')[0] || 'Player',
+          avatarId: 'avatar_01',
+          reliabilityScore: 100
+        }
+      });
+    }
 
     res.json({ user: req.user, profile });
   } catch (error) {
@@ -16,6 +27,7 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 
 export const getPublicProfile = async (req: AuthenticatedRequest, res: Response) => {
   try {

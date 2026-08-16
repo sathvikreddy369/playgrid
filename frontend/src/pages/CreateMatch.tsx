@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Trophy, Calendar, MapPin, Users, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Trophy, Calendar, MapPin, Users, CheckCircle2, Link2 } from 'lucide-react';
 
 import { api } from '../api';
 import MapboxPicker from '../components/MapboxPicker';
@@ -26,6 +26,7 @@ export default function CreateMatch() {
   // Physical Fields
   const [sport, setSport] = useState('Cricket');
   const [locationText, setLocationText] = useState('');
+  const [mapLink, setMapLink] = useState('');
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   // E-Game Fields
@@ -34,13 +35,37 @@ export default function CreateMatch() {
   const [ePlatform, setEPlatform] = useState('Mobile');
   const [roomCode, setRoomCode] = useState('');
 
+  // Extract lat/lng from pasted Google Maps link
+  const handleMapLinkChange = (val: string) => {
+    setMapLink(val);
+    const parsed = val.match(/@?(-?\d+\.\d+),\s*(-?\d+\.\d+)/) || val.match(/q=(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+    if (parsed && parsed[1] && parsed[2]) {
+      const lat = parseFloat(parsed[1]);
+      const lng = parseFloat(parsed[2]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setCoords({ lat, lng });
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const dateTimeString = `${date}T${time}:00`;
+      if (!date || !time) {
+        setError('Please select both match date and start time.');
+        setLoading(false);
+        return;
+      }
+
+      const dateTimeObj = new Date(`${date}T${time}:00`);
+      if (isNaN(dateTimeObj.getTime())) {
+        setError('Invalid match date or time selected.');
+        setLoading(false);
+        return;
+      }
 
       await api.post('/matches', {
         title,
@@ -51,11 +76,12 @@ export default function CreateMatch() {
         ePlatform: matchType === 'E_GAME' ? ePlatform : undefined,
         roomCode: matchType === 'E_GAME' ? roomCode : undefined,
         isOnline: matchType === 'E_GAME',
-        locationText: matchType === 'PHYSICAL' ? locationText : 'Online Custom Room',
-        latitude: matchType === 'PHYSICAL' ? coords?.lat : undefined,
-        longitude: matchType === 'PHYSICAL' ? coords?.lng : undefined,
-        date: dateTimeString,
-        totalSlots: parseInt(totalSlots, 10),
+        locationText: matchType === 'PHYSICAL' ? (locationText || 'Hyderabad') : 'Online Custom Room',
+        mapLink: matchType === 'PHYSICAL' ? mapLink : undefined,
+        latitude: matchType === 'PHYSICAL' ? (coords?.lat ?? null) : null,
+        longitude: matchType === 'PHYSICAL' ? (coords?.lng ?? null) : null,
+        date: dateTimeObj.toISOString(),
+        totalSlots: parseInt(totalSlots, 10) || 10,
         pricePerHead: parseFloat(pricePerHead) || 0,
         tags: matchType === 'PHYSICAL' ? [sport] : [eGameName, 'Gaming']
       });
@@ -68,6 +94,8 @@ export default function CreateMatch() {
       setLoading(false);
     }
   };
+
+  const todayStr = new Date().toISOString().split('T')[0];
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white font-sans pb-24 sm:pb-12">
@@ -87,8 +115,8 @@ export default function CreateMatch() {
         <form onSubmit={handleSubmit} className="space-y-6">
           
           {error && (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-              {error}
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium">
+              ⚠️ {error}
             </div>
           )}
 
@@ -238,9 +266,10 @@ export default function CreateMatch() {
                 <input
                   type="date"
                   required
+                  min={todayStr}
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white focus:outline-none focus:border-indigo-500 color-scheme-dark"
                 />
               </div>
 
@@ -251,7 +280,7 @@ export default function CreateMatch() {
                   required
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white focus:outline-none focus:border-indigo-500 color-scheme-dark"
                 />
               </div>
             </div>
@@ -277,10 +306,30 @@ export default function CreateMatch() {
                 />
               </div>
 
+              {/* Google Maps Link / Coordinates Input */}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-zinc-400">Pin Location on Map (Optional)</label>
+                <label className="text-xs font-semibold text-zinc-400 flex items-center gap-1.5">
+                  <Link2 className="w-3.5 h-3.5 text-indigo-400" />
+                  Google Maps Link or Coordinates (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={mapLink}
+                  onChange={(e) => handleMapLinkChange(e.target.value)}
+                  placeholder="Paste Google Maps URL or coordinates (e.g. https://maps.google.com/?q=17.4401,78.3489)"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500"
+                />
+                {coords && (
+                  <p className="text-[11px] text-emerald-400 font-semibold mt-1">
+                    ✓ Pin Coordinates Set: {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-400">Or Select Location on Interactive Map</label>
                 <div className="border border-zinc-800 rounded-xl overflow-hidden h-52">
-                  <MapboxPicker onLocationSelect={(lat, lng) => setCoords({ lat, lng })} />
+                  <MapboxPicker onLocationSelect={(lat, lng) => setCoords({ lat, lng })} readOnly={false} />
                 </div>
               </div>
             </section>
@@ -291,7 +340,7 @@ export default function CreateMatch() {
             <div className="flex items-center gap-2 pb-2 border-b border-zinc-800/80">
               <Users className="w-4 h-4 text-indigo-400" />
               <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-300">
-                {matchType === 'PHYSICAL' ? '3. Slots & Pricing' : '3. Room Capacity & Entry Fee'}
+                {matchType === 'PHYSICAL' ? '4. Slots & Pricing' : '3. Room Capacity & Entry Fee'}
               </h2>
             </div>
 
