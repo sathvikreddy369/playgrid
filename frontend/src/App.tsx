@@ -34,15 +34,25 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 
 
+import LandingPage from './pages/LandingPage';
+
 function App() {
   return (
     <AuthProvider>
       <SpeedInsights />
       <Router>
-
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/profile"
             element={
@@ -99,18 +109,11 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
         </Routes>
       </Router>
     </AuthProvider>
   );
 }
+
 
 export default App;

@@ -34,14 +34,39 @@ export function initializeSocket(httpServer: HttpServer) {
       const authHeader = socket.handshake.headers?.authorization;
       const authToken = socket.handshake.auth?.token || (authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null);
 
-      if (!authToken) {
-        return next(new Error('Authentication error: Missing JWT token'));
+      if (authToken?.startsWith('demo-token-')) {
+        const isHost = authToken === 'demo-token-host';
+        const demoEmail = isHost ? 'demo.host@playgrid.com' : 'demo.player@playgrid.com';
+        let user = await prisma.user.findUnique({
+          where: { email: demoEmail },
+          include: { profile: true }
+        });
+        if (!user) {
+          user = await prisma.user.create({
+            data: {
+              supabaseId: `demo-id-${isHost ? 'host' : 'player'}`,
+              email: demoEmail,
+              role: isHost ? 'GROUND_OWNER' : 'USER',
+              profile: {
+                create: {
+                  name: isHost ? 'Rahul Verma (Demo Host)' : 'Ananya Sharma (Demo Player)',
+                  favoriteSports: ['Cricket', 'Football'],
+                  levels: ['Intermediate']
+                }
+              }
+            },
+            include: { profile: true }
+          });
+        }
+        socket.data.user = user;
+        return next();
       }
 
       const { data: { user: supabaseUser }, error } = await supabase.auth.getUser(authToken);
       if (error || !supabaseUser) {
         return next(new Error('Authentication error: Invalid token'));
       }
+
 
       let user = await prisma.user.findUnique({
         where: { supabaseId: supabaseUser.id },

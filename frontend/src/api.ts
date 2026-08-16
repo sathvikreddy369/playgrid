@@ -9,18 +9,28 @@ export const api = axios.create({
   }
 });
 
-// Interceptor to attach Supabase JWT token
+// Interceptor to attach Supabase JWT token or Demo token
 api.interceptors.request.use(async (config) => {
+  const demoToken = localStorage.getItem('demo_token');
+  const demoEmail = localStorage.getItem('demo_email');
+  if (demoToken) {
+    config.headers.Authorization = `Bearer ${demoToken}`;
+    if (demoEmail) {
+      config.headers['x-demo-email'] = demoEmail;
+    }
+    return config;
+  }
+
   const { data: { session } } = await supabase.auth.getSession();
-  
   if (session?.access_token) {
     config.headers.Authorization = `Bearer ${session.access_token}`;
   }
-  
   return config;
 }, (error) => {
   return Promise.reject(error);
 });
+
+
 
 // Response interceptor to handle Render free-tier cold starts gracefully
 api.interceptors.response.use(

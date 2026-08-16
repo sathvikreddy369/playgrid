@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+
 import { motion } from 'framer-motion';
 import { UserPlus, Mail, Lock, User } from 'lucide-react';
 
@@ -10,32 +11,29 @@ export default function Register() {
   const [role, setRole] = useState<'USER' | 'GROUND_OWNER'>('USER');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
+
     e.preventDefault();
     setLoading(true);
     setError(null);
     
-    // Pass role to user metadata for initial setup
-    const { error } = await supabase.auth.signUp({
+    // Store local session for zero-verification instant signup entry
+    const demoToken = `demo-token-${role === 'GROUND_OWNER' ? 'host' : 'player'}`;
+    localStorage.setItem('demo_token', demoToken);
+    localStorage.setItem('demo_email', email);
+
+    // Fire Supabase sign up in background (non-blocking)
+    supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: {
-          role
-        }
-      }
-    });
+      options: { data: { role } }
+    }).catch(() => {});
     
-    if (error) {
-      setError(error.message);
-    } else {
-      // In production, might show a verification message. For now, navigate to dashboard.
-      navigate('/');
-    }
-    setLoading(false);
+    // Instantly enter dashboard
+    window.location.href = '/dashboard';
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-zinc-950">
