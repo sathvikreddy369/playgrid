@@ -21,3 +21,23 @@ api.interceptors.request.use(async (config) => {
 }, (error) => {
   return Promise.reject(error);
 });
+
+// Response interceptor to handle Render free-tier cold starts gracefully
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error.config;
+    if (
+      config &&
+      !config._retry &&
+      (error.code === 'ECONNABORTED' || error.response?.status === 504 || !error.response)
+    ) {
+      config._retry = true;
+      // Wait 2.5s for Render free-tier instance cold start
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+      return api(config);
+    }
+    return Promise.reject(error);
+  }
+);
+

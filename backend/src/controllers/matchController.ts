@@ -210,3 +210,49 @@ export const getMyMatches = async (req: AuthenticatedRequest, res: Response) => 
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+export const cancelMatch = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const id = req.params.id as string;
+
+    const match = await prisma.match.findUnique({
+      where: { id },
+      include: { requests: true }
+    });
+
+    if (!match) return res.status(404).json({ error: 'Match not found' });
+    if (match.hostId !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden: Only host can cancel this match' });
+    }
+
+    if (match.status === 'CANCELLED' || match.status === 'COMPLETED') {
+      return res.status(400).json({ error: `Cannot cancel a match with status ${match.status}` });
+    }
+
+    const updatedMatch = await prisma.match.update({
+      where: { id },
+      data: { status: 'CANCELLED' }
+    });
+
+    // Notify all accepted participants
+    const acceptedRequests = match.requests.filter(r => r.status === 'ACCEPTED');
+    for (const request of acceptedRequests) {
+      await prisma.notification.create({
+        data: {
+          userId: request.userId,
+          title: 'Match Cancelled',
+          body: `The match "${match.title}" has been cancelled by the host.`,
+          link: `/match/${match.id}`
+        }
+      });
+    }
+
+    res.json({ match: updatedMatch });
+  } catch (error) {
+    console.error('Error cancelling match:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+

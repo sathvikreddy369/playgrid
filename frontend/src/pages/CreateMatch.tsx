@@ -5,9 +5,9 @@ import { isWeekend, parseISO } from 'date-fns';
 import MapboxPicker from '../components/MapboxPicker';
 import { CalendarPlus, MapPin, Globe, Users, DollarSign, Tag as TagIcon, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../api';
 
 export default function CreateMatch() {
-  // const { user } = useAuth();
   const navigate = useNavigate();
   
   const [title, setTitle] = useState('');
@@ -19,13 +19,14 @@ export default function CreateMatch() {
   const [totalSlots, setTotalSlots] = useState('10');
   const [pricePerHead, setPricePerHead] = useState('0');
   
-  // const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
   const [addressLink, setAddressLink] = useState('');
   
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Automatically compute if selected date is a weekend
   const weekendTag = useMemo(() => {
@@ -56,15 +57,34 @@ export default function CreateMatch() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setError(null);
     
-    // Simulate DB save
-    await new Promise(r => setTimeout(r, 1000));
-    
-    // In actual implementation, we would save to our Node/Prisma backend here
-    setSaving(false);
-    alert('Match Created Successfully!');
-    navigate('/');
+    try {
+      const matchDateTime = new Date(`${date}T${time || '00:00'}:00`).toISOString();
+      const payload = {
+        title,
+        description: description || undefined,
+        isOnline,
+        locationText: addressLink || undefined,
+        mapLink: addressLink.startsWith('http') ? addressLink : undefined,
+        latitude: location?.lat,
+        longitude: location?.lng,
+        date: matchDateTime,
+        totalSlots: parseInt(totalSlots) || 10,
+        pricePerHead: parseFloat(pricePerHead) || 0,
+        tags
+      };
+
+      const res = await api.post('/matches', payload);
+      navigate(`/match/${res.data.match.id}`);
+    } catch (err: any) {
+      console.error('Failed to create match', err);
+      setError(err?.response?.data?.error || err?.response?.data?.issues?.[0]?.message || 'Failed to create match. Please check inputs.');
+    } finally {
+      setSaving(false);
+    }
   };
+
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white p-4 lg:p-8">
@@ -84,7 +104,14 @@ export default function CreateMatch() {
             </div>
           </div>
 
+          {error && (
+            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleCreate} className="space-y-8">
+
             {/* Basic Details */}
             <div className="space-y-5">
               <div>
@@ -181,7 +208,8 @@ export default function CreateMatch() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-zinc-300 ml-1 mb-2 block">Pin Location on Map</label>
-                    <MapboxPicker />
+                    <MapboxPicker onLocationSelect={(lat, lng) => setLocation({ lat, lng })} />
+
                   </div>
                 </div>
               ) : (

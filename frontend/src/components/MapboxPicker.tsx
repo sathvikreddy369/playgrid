@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useCallback } from 'react';
 import Map, { Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -25,8 +24,11 @@ export default function MapboxPicker({ onLocationSelect, initialLat = 17.3850, i
     const lat = e.lngLat.lat;
     const lng = e.lngLat.lng;
     setMarker({ lat, lng });
-    onLocationSelect(lat, lng);
+    if (onLocationSelect) {
+      onLocationSelect(lat, lng);
+    }
   }, [onLocationSelect]);
+
 
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
 

@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import { api } from '../api';
 import { useAuth } from '../components/AuthProvider';
+import { supabase } from '../lib/supabase';
 
 export default function Messaging() {
   const { user } = useAuth();
@@ -15,15 +16,30 @@ export default function Messaging() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Initialize socket
+  // Initialize socket with Supabase JWT auth token
   useEffect(() => {
-    const newSocket = io(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000');
-    setSocket(newSocket);
+    let newSocket: Socket | null = null;
+    
+    const initSocket = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      
+      newSocket = io(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000', {
+        auth: { token },
+        withCredentials: true
+      });
+      
+      setSocket(newSocket);
+    };
+    
+    if (user) {
+      initSocket();
+    }
     
     return () => {
-      newSocket.close();
+      if (newSocket) newSocket.close();
     };
-  }, []);
+  }, [user]);
 
   // Fetch user's matches to build chat list
   useEffect(() => {
@@ -42,7 +58,7 @@ export default function Messaging() {
   useEffect(() => {
     if (!activeChat || !socket) return;
     
-    socket.emit('join_room', activeChat);
+    socket.emit('join_match_room', activeChat);
     
     const fetchHistory = async () => {
       try {
@@ -76,17 +92,13 @@ export default function Messaging() {
     e.preventDefault();
     if (!inputMessage.trim() || !activeChat || !socket || !user) return;
 
-    const data = {
+    socket.emit('send_message', {
       matchId: activeChat,
-      senderId: user.id,
-      text: inputMessage,
-      name: user.email?.split('@')[0] || 'Unknown User', // Temporary fallback
-      time: new Date().toISOString()
-    };
-
-    socket.emit('send_message', data);
+      text: inputMessage.trim()
+    });
     setInputMessage('');
   };
+
 
   // End of logic
 

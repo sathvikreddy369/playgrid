@@ -1,21 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import MapboxPicker from '../components/MapboxPicker';
 import ImageUpload from '../components/ImageUpload';
 import { Save, Store, MapPin, DollarSign, Building } from 'lucide-react';
+import { api } from '../api';
+import { useNavigate } from 'react-router-dom';
 
 export default function GroundOwnerProfile() {
+  const navigate = useNavigate();
   const [venueName, setVenueName] = useState('');
   const [description, setDescription] = useState('');
-  // const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
   
   // Venue specific
+
   const [amenities, setAmenities] = useState<string[]>([]);
   const [amenityInput, setAmenityInput] = useState('');
   const [pricing, setPricing] = useState('');
   const [venueType, setVenueType] = useState('Box Cricket');
 
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await api.get('/users/profile');
+        if (res.data.profile) {
+          setVenueName(res.data.profile.venueName || '');
+          setDescription(res.data.profile.bio || '');
+          setVenueType(res.data.profile.venueType || 'Box Cricket');
+        }
+      } catch (err) {
+        console.error('Failed to load profile', err);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const handleAddAmenity = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && amenityInput.trim()) {
@@ -34,10 +54,25 @@ export default function GroundOwnerProfile() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    await new Promise(r => setTimeout(r, 1000));
-    setSaving(false);
-    alert('Ground Profile saved successfully!');
+    setError(null);
+
+    try {
+      await api.post('/users/profile', {
+        name: venueName || 'Ground Owner',
+        venueName: venueName || undefined,
+        venueType: venueType || undefined,
+        venueAddress: description || undefined,
+        bio: description || undefined
+      });
+      navigate('/profile');
+    } catch (err: any) {
+      console.error('Failed to save venue profile', err);
+      setError(err?.response?.data?.error || 'Failed to save venue profile');
+    } finally {
+      setSaving(false);
+    }
   };
+
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white p-4 lg:p-8">
@@ -52,7 +87,14 @@ export default function GroundOwnerProfile() {
             <Store className="w-16 h-16 text-emerald-400/50 absolute" />
           </div>
 
+          {error && (
+            <div className="mx-8 mt-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSave} className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+
             <div className="space-y-6">
               <div>
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2">

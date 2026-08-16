@@ -49,6 +49,19 @@ export default function MatchDetails() {
     }
   };
 
+  const handleWithdrawRequest = async () => {
+    if (!id || !user) return;
+    setRequesting(true);
+    try {
+      await api.delete(`/requests/${id}`);
+      setRequestStatus('NONE');
+    } catch (err) {
+      console.error('Failed to withdraw request', err);
+    } finally {
+      setRequesting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
@@ -166,9 +179,18 @@ export default function MatchDetails() {
                 )}
 
                 {requestStatus === 'PENDING' && (
-                  <div className="w-full py-3.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-xl font-medium flex items-center justify-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    Request Pending Approval
+                  <div className="space-y-3">
+                    <div className="w-full py-3.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-xl font-medium flex items-center justify-center gap-2 text-sm">
+                      <Clock className="w-5 h-5" />
+                      Request Pending Approval
+                    </div>
+                    <button 
+                      onClick={handleWithdrawRequest}
+                      disabled={requesting}
+                      className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white rounded-xl text-xs font-medium transition-colors"
+                    >
+                      Withdraw Request
+                    </button>
                   </div>
                 )}
 
@@ -178,13 +200,14 @@ export default function MatchDetails() {
                       <CheckCircle className="w-5 h-5" />
                       You're In!
                     </div>
-                    <Link to="/review/1" className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 transition-all">
+                    <Link to={`/review/${match.id}`} className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 transition-all">
                       <Star className="w-5 h-5" />
                       Review Match
                     </Link>
                   </div>
                 )}
               </div>
+
 
               <div className="bg-zinc-950/50 p-4 rounded-2xl border border-zinc-800/50 flex items-start gap-3 text-sm text-zinc-400">
                 <ShieldAlert className="w-5 h-5 text-zinc-500 shrink-0" />

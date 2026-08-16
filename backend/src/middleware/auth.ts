@@ -25,16 +25,36 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
       return;
     }
 
-    // Upsert user into our Prisma database to ensure they exist
-    const user = await prisma.user.upsert({
-      where: { supabaseId: supabaseUser.id },
-      update: { email: supabaseUser.email! },
-      create: {
-        supabaseId: supabaseUser.id,
-        email: supabaseUser.email!,
-        // We can default to USER, but the frontend passes role on signup
-      }
+    // Read-only lookup by default to prevent write-on-read overhead on every request
+    let user = await prisma.user.findUnique({
+      where: { supabaseId: supabaseUser.id }
     });
+
+    // Safe user provisioning fallback if user does not exist in DB yet
+    if (!user) {
+      try {
+        user = await prisma.user.create({
+          data: {
+            supabaseId: supabaseUser.id,
+            email: supabaseUser.email!
+          }
+        });
+      } catch (err: any) {
+        // Handle potential concurrent creation race condition (Prisma P2002 unique constraint error)
+        if (err?.code === 'P2002') {
+          user = await prisma.user.findUnique({
+            where: { supabaseId: supabaseUser.id }
+          });
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    if (!user) {
+      res.status(500).json({ error: 'Failed to synchronize user account' });
+      return;
+    }
 
     req.user = user;
     next();
@@ -43,3 +63,4 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
     res.status(500).json({ error: 'Internal server error during authentication' });
   }
 };
+

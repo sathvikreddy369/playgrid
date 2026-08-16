@@ -57,9 +57,10 @@ export const updateRole = async (req: AuthenticatedRequest, res: Response) => {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
 
     const { role } = req.body;
-    if (role !== 'USER' && role !== 'GROUND_OWNER') {
+    if (role !== 'USER' && role !== 'GROUND_OWNER' && role !== 'POOL_OWNER') {
       return res.status(400).json({ error: 'Invalid role' });
     }
+
 
     const updatedUser = await prisma.user.update({
       where: { id: req.user.id },
@@ -72,3 +73,37 @@ export const updateRole = async (req: AuthenticatedRequest, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+export const getNotifications = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const notifications = await prisma.notification.findMany({
+      where: { userId: req.user.id },
+      orderBy: { createdAt: 'desc' },
+      take: 20
+    });
+
+    res.json({ notifications });
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const markNotificationsRead = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+    await prisma.notification.updateMany({
+      where: { userId: req.user.id, isRead: false },
+      data: { isRead: true }
+    });
+
+    res.json({ message: 'Notifications marked as read' });
+  } catch (error) {
+    console.error('Error marking notifications read:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+

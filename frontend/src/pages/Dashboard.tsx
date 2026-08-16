@@ -7,7 +7,10 @@ import { Search, MapPin, Filter, Calendar, Users, Plus, Settings, MessageCircle 
 import { useEffect } from 'react';
 import { api } from '../api';
 
+import NotificationBell from '../components/NotificationBell';
+
 export interface Match {
+
   id: string;
   hostId: string;
   title: string;
@@ -104,10 +107,12 @@ export default function Dashboard() {
             </div>
             <span className="text-xl font-bold tracking-tight">Playgrid</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <NotificationBell />
             <Link to="/messages" className="text-zinc-400 hover:text-white transition p-2">
               <MessageCircle className="w-5 h-5" />
             </Link>
+
             <Link to="/profile" className="text-sm font-medium text-zinc-400 hover:text-white transition">Profile</Link>
             <button onClick={signOut} className="text-sm font-medium text-zinc-400 hover:text-white transition">Sign Out</button>
             {profile?.venueType !== 'SWIMMING_POOL' && (

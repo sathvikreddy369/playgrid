@@ -9,7 +9,10 @@ export const createMatchSchema = z.object({
     mapLink: z.string().url().optional().or(z.literal('')),
     latitude: z.number().optional(),
     longitude: z.number().optional(),
-    date: z.string().datetime(), // ISO string
+    date: z.string().datetime().refine(val => new Date(val) > new Date(), {
+      message: 'Match date must be in the future'
+    }),
+
     totalSlots: z.number().int().positive(),
     tags: z.array(z.string()).optional(),
     pricePerHead: z.number().nonnegative().optional()

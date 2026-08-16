@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './components/AuthProvider';
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import Login from './pages/Login';
 import Register from './pages/Register';
 import UserProfile from './pages/UserProfile';
@@ -14,7 +15,7 @@ import MatchReview from './pages/MatchReview';
 // Protected Route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
@@ -22,11 +23,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   if (!session) {
     return <Navigate to="/login" />;
   }
-  
+
   return children;
 }
 
@@ -39,69 +40,69 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route 
-            path="/profile" 
+          <Route
+            path="/profile"
             element={
               <ProtectedRoute>
                 <UserProfile />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/create-match" 
+          <Route
+            path="/create-match"
             element={
               <ProtectedRoute>
                 <CreateMatch />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/match/:id" 
+          <Route
+            path="/match/:id"
             element={
               <ProtectedRoute>
                 <MatchDetails />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/manage/:id" 
+          <Route
+            path="/manage/:id"
             element={
               <ProtectedRoute>
                 <MatchManagement />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/messages" 
+          <Route
+            path="/messages"
             element={
               <ProtectedRoute>
                 <Messaging />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/review/:id" 
+          <Route
+            path="/review/:id"
             element={
               <ProtectedRoute>
                 <MatchReview />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/venue" 
+          <Route
+            path="/venue"
             element={
               <ProtectedRoute>
                 <GroundOwnerProfile />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/" 
+          <Route
+            path="/"
             element={
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
-            } 
+            }
           />
         </Routes>
       </Router>
