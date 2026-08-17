@@ -41,8 +41,10 @@ vi.mock('../db', () => ({
       }),
       findMany: vi.fn(async ({ where, skip = 0, take = 10 }) => {
         let res = [...mockMatches];
-        if (where?.matchType) res = res.filter((m) => m.matchType === where.matchType);
-        if (where?.status?.in) res = res.filter((m) => where.status.in.includes(m.status));
+        const matchTypeFilter = where?.matchType || where?.AND?.find((c: any) => c.matchType)?.matchType;
+        if (matchTypeFilter) res = res.filter((m) => m.matchType === matchTypeFilter);
+        const statusIn = where?.status?.in || where?.AND?.find((c: any) => c.status?.in)?.status?.in;
+        if (statusIn) res = res.filter((m) => statusIn.includes(m.status));
         return res.slice(skip, skip + take);
       }),
       create: vi.fn(async ({ data }) => {
@@ -291,6 +293,7 @@ describe('PlayGrid Community Expansion Suite', () => {
     });
 
     it('filters matches by type (PHYSICAL vs E_GAME)', async () => {
+      mockMatches.length = 0;
       mockMatches.push({ id: 'm1', title: 'Cricket', matchType: 'PHYSICAL', status: 'AVAILABLE' });
       mockMatches.push({ id: 'm2', title: 'Valorant Tournament', matchType: 'E_GAME', status: 'AVAILABLE' });
 

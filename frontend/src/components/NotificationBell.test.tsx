@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import NotificationBell from './NotificationBell';
 import { MemoryRouter } from 'react-router-dom';
+import { AuthProvider } from './AuthProvider';
 
 vi.mock('../api', () => ({
   api: {
@@ -25,9 +26,11 @@ vi.mock('../api', () => ({
 describe('NotificationBell Component', () => {
   it('renders notification bell button', async () => {
     render(
-      <MemoryRouter>
-        <NotificationBell />
-      </MemoryRouter>
+      <AuthProvider>
+        <MemoryRouter>
+          <NotificationBell />
+        </MemoryRouter>
+      </AuthProvider>
     );
 
     const button = screen.getByRole('button', { name: /notifications/i });
@@ -36,9 +39,11 @@ describe('NotificationBell Component', () => {
 
   it('opens notification dropdown on click', async () => {
     render(
-      <MemoryRouter>
-        <NotificationBell />
-      </MemoryRouter>
+      <AuthProvider>
+        <MemoryRouter>
+          <NotificationBell />
+        </MemoryRouter>
+      </AuthProvider>
     );
 
     const button = screen.getByRole('button', { name: /notifications/i });
