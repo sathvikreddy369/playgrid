@@ -20,7 +20,18 @@ declare module 'react-map-gl' {
     children?: React.ReactNode;
   }
 
+  export interface PopupProps {
+    longitude: number;
+    latitude: number;
+    anchor?: string;
+    onClose?: () => void;
+    closeOnClick?: boolean;
+    className?: string;
+    children?: React.ReactNode;
+  }
+
   export const Map: React.ComponentType<MapProps>;
   export const Marker: React.ComponentType<MarkerProps>;
+  export const Popup: React.ComponentType<PopupProps>;
   export default Map;
 }

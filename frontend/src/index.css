@@ -1,9 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --color-gamevia-cobalt: #2457D6;
+  --color-gamevia-cobalt-hover: #1D4ED8;
+  --color-gamevia-tangerine: #FF7A3D;
+  --color-gamevia-tangerine-hover: #EA622D;
+  --color-gamevia-warm-bg: #F7F7F2;
+  --color-gamevia-surface: #FFFFFF;
+  --color-gamevia-text-primary: #172033;
+  --color-gamevia-text-secondary: #667085;
+  --color-gamevia-text-muted: #98A2B3;
+  --color-gamevia-border: #E6E8EC;
+  --color-gamevia-success: #16803C;
+  --color-gamevia-warning: #D97706;
+  --color-gamevia-error: #DC2626;
 }
 
 body {
-  @apply bg-zinc-950 text-zinc-50 antialiased;
+  @apply bg-[#F7F7F2] text-[#172033] antialiased selection:bg-[#2457D6] selection:text-white;
 }

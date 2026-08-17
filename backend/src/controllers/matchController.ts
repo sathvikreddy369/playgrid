@@ -64,114 +64,129 @@ export const createMatch = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export const getMatches = async (req: Request, res: Response) => {
   try {
     const { status, tag, type, sport, search, latitude, longitude, radius, sort, page, limit } = req.query;
 
-    const pageNum = Math.max(1, parseInt(page as string) || 1);
-    const limitNum = Math.min(50, parseInt(limit as string) || 12);
-    const skip = (pageNum - 1) * limitNum;
+    const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
+    const limitNum = Math.min(50, parseInt(limit as string, 10) || 12);
 
-    // Build the query where clause
-    const where: any = {};
+    const whereConditions: any[] = [];
 
-    if (status) {
-      where.status = status;
+    // Filter by status
+    if (status && status !== 'ALL') {
+      whereConditions.push({ status: String(status) });
     } else {
-      where.status = { in: ['AVAILABLE', 'FILLED'] };
+      whereConditions.push({ status: { in: ['AVAILABLE', 'FILLED'] } });
     }
 
-    if (type === 'PHYSICAL') where.matchType = 'PHYSICAL';
-    if (type === 'E_GAME') where.matchType = 'E_GAME';
-
-    if (sport && sport !== 'ALL') {
-      where.tags = { hasSome: [(sport as string), (sport as string).toLowerCase()] };
-    } else if (tag && tag !== 'ALL') {
-      where.tags = { hasSome: [(tag as string), (tag as string).toLowerCase()] };
+    // Filter by match type
+    if (type === 'PHYSICAL') {
+      whereConditions.push({ matchType: 'PHYSICAL' });
+    } else if (type === 'E_GAME') {
+      whereConditions.push({ matchType: 'E_GAME' });
     }
 
-    if (search && (search as string).trim().length > 0) {
-      const q = (search as string).trim();
-      where.OR = [
-        { title: { contains: q, mode: 'insensitive' } },
-        { description: { contains: q, mode: 'insensitive' } },
-        { locationText: { contains: q, mode: 'insensitive' } },
-        { eGameName: { contains: q, mode: 'insensitive' } }
-      ];
+    // Filter by sport / tag
+    const activeSport = (sport as string) || (tag as string);
+    if (activeSport && activeSport !== 'ALL') {
+      const s = activeSport.trim();
+      const lower = s.toLowerCase();
+      const upper = s.toUpperCase();
+      const capitalized = s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+
+      whereConditions.push({
+        OR: [
+          { tags: { hasSome: [s, lower, upper, capitalized] } },
+          { eGameName: { contains: s, mode: 'insensitive' } },
+          { title: { contains: s, mode: 'insensitive' } }
+        ]
+      });
     }
 
+    // Search query across title, description, locationText, eGameName, and tags
+    if (search && String(search).trim().length > 0) {
+      const q = String(search).trim();
+      whereConditions.push({
+        OR: [
+          { title: { contains: q, mode: 'insensitive' } },
+          { description: { contains: q, mode: 'insensitive' } },
+          { locationText: { contains: q, mode: 'insensitive' } },
+          { eGameName: { contains: q, mode: 'insensitive' } },
+          { tags: { hasSome: [q, q.toLowerCase(), q.toUpperCase()] } }
+        ]
+      });
+    }
+
+    const where = whereConditions.length > 0 ? { AND: whereConditions } : {};
+
+    // Determine sorting
     let orderBy: any = { date: 'asc' };
     if (sort === 'price_low') orderBy = { pricePerHead: 'asc' };
     if (sort === 'price_high') orderBy = { pricePerHead: 'desc' };
 
-    let matches: any[] = [];
-
-    // Bounding-box pre-filtering + Haversine calculation for radius / nearest sort
-    if ((latitude && longitude && radius) || (sort === 'nearest' && latitude && longitude && type !== 'E_GAME')) {
-      const lat = parseFloat(latitude as string);
-      const lng = parseFloat(longitude as string);
-      const rad = parseFloat(radius as string) || 50; // km
-      
-      const latDelta = rad / 111.0;
-      const lngDelta = rad / (111.0 * Math.cos(lat * (Math.PI / 180)));
-
-      const minLat = lat - latDelta;
-      const maxLat = lat + latDelta;
-      const minLng = lng - lngDelta;
-      const maxLng = lng + lngDelta;
-
-      const rawMatches = await prisma.$queryRaw<any[]>`
-        SELECT m.*, 
-        (6371 * acos(cos(radians(${lat})) * cos(radians(m.latitude)) * cos(radians(m.longitude) - radians(${lng})) + sin(radians(${lat})) * sin(radians(m.latitude)))) AS distance
-        FROM "Match" m
-        WHERE m.latitude BETWEEN ${minLat} AND ${maxLat}
-          AND m.longitude BETWEEN ${minLng} AND ${maxLng}
-          AND m.status IN ('AVAILABLE', 'FILLED')
-          AND m."matchType" = 'PHYSICAL'
-        HAVING (6371 * acos(cos(radians(${lat})) * cos(radians(m.latitude)) * cos(radians(m.longitude) - radians(${lng})) + sin(radians(${lat})) * sin(radians(m.latitude)))) <= ${rad}
-        ORDER BY distance ASC
-        LIMIT ${limitNum} OFFSET ${skip}
-      `;
-
-      const matchIds = rawMatches.map(m => m.id);
-
-      if (matchIds.length === 0) {
-        return res.json({ matches: [], hasMore: false, page: pageNum });
-      }
-      
-      matches = await prisma.match.findMany({
-        where: {
-          ...where,
-          id: { in: matchIds }
-        },
-        include: {
-          host: {
-            include: { profile: true }
-          }
+    // Fetch matching records from DB
+    let matches = await prisma.match.findMany({
+      where,
+      include: {
+        host: {
+          include: { profile: true }
         }
+      },
+      orderBy: sort === 'nearest' ? undefined : orderBy
+    });
+
+    // Haversine radius filtering & distance sorting if geolocation coordinates are provided
+    const userLat = latitude ? parseFloat(String(latitude)) : null;
+    const userLng = longitude ? parseFloat(String(longitude)) : null;
+    const maxRadius = radius ? parseFloat(String(radius)) : null;
+
+    if (userLat !== null && !isNaN(userLat) && userLng !== null && !isNaN(userLng)) {
+      matches = matches.map((m: any) => {
+        if (m.latitude !== null && m.latitude !== undefined && m.longitude !== null && m.longitude !== undefined) {
+          const dist = haversineDistance(userLat, userLng, Number(m.latitude), Number(m.longitude));
+          return { ...m, distance: Math.round(dist * 10) / 10 };
+        }
+        return m;
       });
 
-      // Sort by raw distance
-      const distanceMap = new Map(rawMatches.map((rm) => [rm.id, Number(rm.distance)]));
-      matches.sort((a, b) => (distanceMap.get(a.id) || 0) - (distanceMap.get(b.id) || 0));
-    } else {
-      matches = await prisma.match.findMany({
-        where,
-        skip,
-        take: limitNum,
-        include: {
-          host: {
-            include: { profile: true }
-          }
-        },
-        orderBy
-      });
+      // Filter by max radius (in km)
+      if (maxRadius !== null && !isNaN(maxRadius) && maxRadius > 0) {
+        matches = matches.filter((m: any) => {
+          if (m.matchType === 'E_GAME') return true;
+          return m.distance !== undefined && m.distance <= maxRadius;
+        });
+      }
+
+      // Sort by nearest
+      if (sort === 'nearest') {
+        matches.sort((a: any, b: any) => {
+          const distA = a.distance !== undefined ? a.distance : 999999;
+          const distB = b.distance !== undefined ? b.distance : 999999;
+          return distA - distB;
+        });
+      }
     }
 
+    // In-memory pagination after distance calculations & sorting
+    const totalCount = matches.length;
+    const skip = (pageNum - 1) * limitNum;
+    const paginatedMatches = matches.slice(skip, skip + limitNum);
+    const hasMore = skip + limitNum < totalCount;
 
-    const hasMore = matches.length === limitNum;
-
-    res.json({ matches, hasMore, page: pageNum });
+    res.json({ matches: paginatedMatches, hasMore, page: pageNum, total: totalCount });
   } catch (error) {
     console.error('Error fetching matches:', error);
     res.status(500).json({ error: 'Internal server error' });

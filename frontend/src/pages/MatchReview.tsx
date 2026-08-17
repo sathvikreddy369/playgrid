@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Star, CheckCircle, XCircle } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api';
@@ -111,29 +110,25 @@ export default function MatchReview() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-4 lg:p-8">
+    <div className="min-h-screen bg-[#F7F7F2] text-[#172033] p-4 lg:p-8 font-sans">
       <div className="max-w-2xl mx-auto space-y-6">
         
         {error && (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          <div className="p-4 rounded-xl bg-[#DC2626]/10 border border-[#DC2626]/20 text-[#DC2626] text-sm font-semibold">
             {error}
           </div>
         )}
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 shadow-2xl"
-        >
-          <div className="text-center mb-8 pb-8 border-b border-zinc-800">
-            <h1 className="text-2xl font-bold mb-2">Post-Match Summary</h1>
-            <p className="text-zinc-400">{match.title} • {new Date(match.date).toLocaleDateString()}</p>
+        <div className="bg-white border border-[#E6E8EC] rounded-xl p-8 shadow-sm">
+          <div className="text-center mb-8 pb-8 border-b border-[#E6E8EC]">
+            <h1 className="text-2xl font-black mb-2 uppercase text-[#172033] tracking-wider">Post-Match Summary</h1>
+            <p className="text-[#667085] text-xs font-medium">{match.title} • {new Date(match.date).toLocaleDateString()}</p>
           </div>
 
           {!isHost ? (
             <form onSubmit={handleSubmitReview} className="space-y-8">
               <div className="text-center">
-                <h2 className="text-lg font-bold mb-4">How was the match & host?</h2>
+                <h2 className="text-lg font-bold mb-4 text-[#172033]">How was the match & host?</h2>
                 <div className="flex justify-center gap-2 mb-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
@@ -147,50 +142,48 @@ export default function MatchReview() {
                       <Star 
                         className={`w-10 h-10 transition-colors ${
                           star <= (hoverRating || rating) 
-                            ? 'text-yellow-400 fill-yellow-400' 
-                            : 'text-zinc-700'
+                            ? 'text-[#FF7A3D] fill-[#FF7A3D]' 
+                            : 'text-[#E6E8EC]'
                         }`} 
                       />
                     </button>
                   ))}
                 </div>
-                <p className="text-sm text-zinc-500">Tap a star to rate</p>
+                <p className="text-xs text-[#98A2B3]">Tap a star to rate</p>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-zinc-300 ml-1">Write a Review (Optional)</label>
+                <label className="text-xs font-bold text-[#667085] ml-1">Write a Review (Optional)</label>
                 <textarea 
                   value={reviewText}
                   onChange={e => setReviewText(e.target.value)}
                   rows={4}
-                  className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl px-4 py-3 mt-2 focus:ring-2 focus:ring-indigo-500/50 outline-none resize-none"
+                  className="w-full bg-white border border-[#E6E8EC] text-[#172033] rounded-xl px-4 py-3 mt-2 focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors resize-none placeholder:text-[#98A2B3]"
                   placeholder="How was the turf? Was the host friendly?"
                 />
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button
                 disabled={saving || rating === 0}
                 type="submit"
-                className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl font-bold flex items-center justify-center transition-all disabled:opacity-50"
+                className="w-full py-3.5 bg-[#FF7A3D] hover:bg-[#EA622D] text-white rounded-xl font-bold text-sm shadow-sm transition-colors uppercase tracking-wider disabled:opacity-50 flex justify-center items-center"
               >
                 {saving ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   "Submit Review"
                 )}
-              </motion.button>
+              </button>
             </form>
           ) : (
             <div className="space-y-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold">Mark Attendance</h2>
-                <p className="text-sm text-zinc-400">Update player stats</p>
+                <h2 className="text-lg font-extrabold uppercase text-[#172033]">Mark Attendance</h2>
+                <p className="text-xs text-[#667085]">Update player stats</p>
               </div>
 
               {participants.length === 0 ? (
-                <p className="text-center text-zinc-500 py-6">No accepted participants to mark attendance for.</p>
+                <p className="text-center text-[#98A2B3] py-6 text-xs italic">No accepted participants to mark attendance for.</p>
               ) : (
                 <div className="space-y-3">
                   {participants.map(p => {
@@ -198,20 +191,20 @@ export default function MatchReview() {
                     const isAttended = attendanceMap[p.id];
 
                     return (
-                      <div key={p.id} className="bg-zinc-950/50 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between">
+                      <div key={p.id} className="bg-[#F7F7F2] border border-[#E6E8EC] rounded-xl p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-sm text-indigo-400">
+                          <div className="w-10 h-10 rounded-full bg-[#2457D6] flex items-center justify-center font-bold text-sm text-white shadow-sm">
                             {userName.charAt(0).toUpperCase()}
                           </div>
-                          <span className="font-medium">{userName}</span>
+                          <span className="font-bold text-xs text-[#172033]">{userName}</span>
                         </div>
 
                         <div className="flex items-center gap-2">
                           <button 
                             type="button"
                             onClick={() => handleAttendanceToggle(p.id, false)}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors ${
-                              isAttended === false ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-red-400'
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                              isAttended === false ? 'bg-[#DC2626]/20 text-[#DC2626] border border-[#DC2626]/30' : 'bg-white border border-[#E6E8EC] text-[#667085] hover:text-[#DC2626]'
                             }`}
                           >
                             <XCircle className="w-4 h-4" />
@@ -220,8 +213,8 @@ export default function MatchReview() {
                           <button 
                             type="button"
                             onClick={() => handleAttendanceToggle(p.id, true)}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors ${
-                              isAttended === true ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-emerald-400'
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                              isAttended === true ? 'bg-[#16803C]/20 text-[#16803C] border border-[#16803C]/30' : 'bg-white border border-[#E6E8EC] text-[#667085] hover:text-[#16803C]'
                             }`}
                           >
                             <CheckCircle className="w-4 h-4" />
@@ -234,22 +227,20 @@ export default function MatchReview() {
                 </div>
               )}
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.99 }}
+              <button
                 onClick={handleSaveAttendance}
                 disabled={saving || Object.keys(attendanceMap).length === 0}
-                className="w-full mt-6 py-3.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl font-bold flex items-center justify-center transition-all disabled:opacity-50"
+                className="w-full mt-6 py-3.5 bg-[#2457D6] hover:bg-[#1D4ED8] text-white rounded-xl font-bold text-sm shadow-sm transition-colors uppercase tracking-wider disabled:opacity-50 flex items-center justify-center"
               >
                 {saving ? (
-                  <div className="w-5 h-5 border-2 border-zinc-400 border-t-white rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   "Save Attendance"
                 )}
-              </motion.button>
+              </button>
             </div>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   );

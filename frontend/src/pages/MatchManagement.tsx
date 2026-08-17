@@ -127,11 +127,11 @@ export default function MatchManagement() {
   const acceptedRequests = requests.filter((r) => r.status === 'ACCEPTED');
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white font-sans p-4 lg:p-8 pb-24 sm:pb-12">
+    <div className="min-h-screen bg-[#F7F7F2] text-[#172033] font-sans p-4 lg:p-8 pb-24 sm:pb-12">
       <div className="max-w-5xl mx-auto space-y-6">
         
         {error && (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          <div className="p-4 rounded-xl bg-[#DC2626]/10 border border-[#DC2626]/20 text-[#DC2626] text-sm font-semibold">
             {error}
           </div>
         )}
@@ -139,10 +139,10 @@ export default function MatchManagement() {
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white">{match.title}</h1>
-            <p className="text-xs text-zinc-400 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-black text-[#172033]">{match.title}</h1>
+            <p className="text-xs text-[#667085] mt-1 font-medium">
               {new Date(match.date).toLocaleDateString()} • Status:{' '}
-              <span className="font-semibold text-indigo-400 uppercase">{match.status}</span>
+              <span className="font-bold text-[#2457D6] uppercase">{match.status}</span>
             </p>
           </div>
 
@@ -150,22 +150,22 @@ export default function MatchManagement() {
             {match.status !== 'CANCELLED' && match.status !== 'COMPLETED' && (
               <button 
                 onClick={handleCancelMatch}
-                className="px-3.5 py-2 bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 rounded-xl flex items-center gap-1.5 font-bold text-xs transition"
+                className="px-3.5 py-2 bg-[#DC2626]/10 border border-[#DC2626]/30 text-[#DC2626] hover:bg-[#DC2626]/20 rounded-xl flex items-center gap-1.5 font-bold text-xs transition"
               >
                 <Ban className="w-4 h-4" /> Cancel Match
               </button>
             )}
             <Link 
               to={`/review/${match.id}`} 
-              className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl px-4 py-2 flex items-center font-bold text-xs shadow-lg transition"
+              className="bg-[#2457D6] hover:bg-[#1D4ED8] text-white rounded-xl px-4 py-2 flex items-center font-bold text-xs shadow-sm transition uppercase tracking-wider"
             >
               <Star className="w-4 h-4 mr-1.5" /> Review Match
             </Link>
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-1.5 text-center min-w-[90px]">
-              <p className="text-[10px] text-zinc-400 font-semibold uppercase">Slots</p>
-              <p className="text-base font-extrabold text-white">
-                <span className={filledSlots >= totalSlots ? 'text-emerald-400' : 'text-white'}>{filledSlots}</span>
-                <span className="text-zinc-500 text-xs"> / {totalSlots}</span>
+            <div className="bg-white border border-[#E6E8EC] rounded-xl px-4 py-1.5 text-center min-w-[90px] shadow-sm">
+              <p className="text-[10px] text-[#98A2B3] font-bold uppercase tracking-wider">Slots</p>
+              <p className="text-base font-black text-[#172033]">
+                <span className={filledSlots >= totalSlots ? 'text-[#16803C]' : 'text-[#172033]'}>{filledSlots}</span>
+                <span className="text-[#98A2B3] text-xs"> / {totalSlots}</span>
               </p>
             </div>
           </div>
@@ -174,14 +174,14 @@ export default function MatchManagement() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Pending Requests */}
           <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <Clock className="w-4 h-4 text-amber-400" />
+            <h2 className="text-base font-extrabold text-[#172033] flex items-center gap-2">
+              <Clock className="w-4 h-4 text-[#D97706]" />
               Pending Join Requests ({pendingRequests.length})
             </h2>
             
             <AnimatePresence>
               {pendingRequests.length === 0 ? (
-                <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-8 text-center text-zinc-500 text-xs">
+                <div className="bg-white border border-[#E6E8EC] rounded-xl p-8 text-center text-[#98A2B3] text-xs shadow-sm">
                   No pending join requests.
                 </div>
               ) : (
@@ -196,16 +196,16 @@ export default function MatchManagement() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       key={req.id}
-                      className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                      className="bg-white border border-[#E6E8EC] rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center font-bold text-sm text-indigo-400">
+                        <div className="w-10 h-10 rounded-xl bg-[#2457D6] flex items-center justify-center font-bold text-sm text-white shadow-sm">
                           {userName.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <h3 className="font-bold text-sm text-white">{userName}</h3>
-                          <p className="text-xs text-zinc-400 mt-0.5">
-                            PlayGrid Score: <span className="font-bold text-indigo-400">{reliability}</span>
+                          <h3 className="font-bold text-sm text-[#172033]">{userName}</h3>
+                          <p className="text-xs text-[#667085] mt-0.5 font-medium">
+                            GAMEVIA Score: <span className="font-bold text-[#2457D6]">{reliability}</span>
                           </p>
                         </div>
                       </div>
@@ -214,14 +214,14 @@ export default function MatchManagement() {
                         <button 
                           onClick={() => handleAction(req.id, 'REJECTED')}
                           disabled={actionLoading === req.id}
-                          className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 text-xs font-bold transition disabled:opacity-50 flex items-center gap-1"
+                          className="px-3 py-1.5 rounded-xl bg-white border border-[#E6E8EC] hover:bg-[#DC2626]/10 text-[#667085] hover:text-[#DC2626] text-xs font-bold transition disabled:opacity-50 flex items-center gap-1"
                         >
                           <XCircle className="w-3.5 h-3.5" /> Reject
                         </button>
                         <button 
                           onClick={() => handleAction(req.id, 'ACCEPTED')}
                           disabled={actionLoading === req.id || filledSlots >= totalSlots}
-                          className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center gap-1 transition disabled:opacity-50 shadow"
+                          className="px-4 py-1.5 bg-[#FF7A3D] hover:bg-[#EA622D] text-white font-bold text-xs rounded-xl flex items-center gap-1 transition disabled:opacity-50 shadow-sm uppercase tracking-wider"
                         >
                           <CheckCircle className="w-3.5 h-3.5" /> Accept
                         </button>
@@ -235,21 +235,21 @@ export default function MatchManagement() {
 
           {/* Right: Confirmed Roster & Host Attendance Flow */}
           <div className="space-y-4">
-            <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-5 space-y-4">
+            <div className="bg-white border border-[#E6E8EC] rounded-xl p-5 space-y-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <Users className="w-4 h-4 text-indigo-400" />
+                <h2 className="text-base font-extrabold text-[#172033] flex items-center gap-2">
+                  <Users className="w-4 h-4 text-[#2457D6]" />
                   Match Roster & Attendance
                 </h2>
                 {attendanceSuccess && (
-                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                  <span className="text-[10px] font-bold text-[#16803C] bg-[#16803C]/10 px-2 py-0.5 rounded border border-[#16803C]/20">
                     ✓ Saved!
                   </span>
                 )}
               </div>
 
               {acceptedRequests.length === 0 ? (
-                <p className="text-xs text-zinc-500 italic">No confirmed participants yet.</p>
+                <p className="text-xs text-[#98A2B3] italic">No confirmed participants yet.</p>
               ) : (
                 <div className="space-y-3">
                   {acceptedRequests.map((req) => {
@@ -257,15 +257,15 @@ export default function MatchManagement() {
                     const currentStatus = attendances[req.userId] || 'PENDING';
 
                     return (
-                      <div key={req.id} className="bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/80 space-y-2">
+                      <div key={req.id} className="bg-[#F7F7F2] p-3 rounded-xl border border-[#E6E8EC] space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-xs text-white">{userName}</span>
+                          <span className="font-bold text-xs text-[#172033]">{userName}</span>
                           <span className={`text-[10px] font-extrabold uppercase ${
                             currentStatus === 'ATTENDED'
-                              ? 'text-emerald-400'
+                              ? 'text-[#16803C]'
                               : currentStatus === 'MISSED'
-                              ? 'text-red-400'
-                              : 'text-zinc-500'
+                              ? 'text-[#DC2626]'
+                              : 'text-[#D97706]'
                           }`}>
                             {currentStatus}
                           </span>
@@ -278,8 +278,8 @@ export default function MatchManagement() {
                             onClick={() => handleToggleAttendance(req.userId, 'ATTENDED')}
                             className={`flex-1 py-1 rounded text-[11px] font-bold transition-all ${
                               currentStatus === 'ATTENDED'
-                                ? 'bg-emerald-600 text-white'
-                                : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
+                                ? 'bg-[#16803C] text-white shadow-sm'
+                                : 'bg-white text-[#667085] hover:text-[#172033] border border-[#E6E8EC]'
                             }`}
                           >
                             ✓ Present
@@ -289,8 +289,8 @@ export default function MatchManagement() {
                             onClick={() => handleToggleAttendance(req.userId, 'MISSED')}
                             className={`flex-1 py-1 rounded text-[11px] font-bold transition-all ${
                               currentStatus === 'MISSED'
-                                ? 'bg-red-600 text-white'
-                                : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'
+                                ? 'bg-[#DC2626] text-white shadow-sm'
+                                : 'bg-white text-[#667085] hover:text-[#172033] border border-[#E6E8EC]'
                             }`}
                           >
                             ✕ Missed
@@ -303,7 +303,7 @@ export default function MatchManagement() {
                   <button
                     onClick={handleSaveAttendance}
                     disabled={attendanceSaving}
-                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+                    className="w-full py-2.5 bg-[#2457D6] hover:bg-[#1D4ED8] text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-colors uppercase tracking-wider disabled:opacity-50"
                   >
                     {attendanceSaving ? (
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { LogIn, Mail, Lock } from 'lucide-react';
 
 export default function Login() {
@@ -69,51 +68,33 @@ export default function Login() {
 
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-zinc-950">
-      {/* Decorative background gradients */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/30 blur-[120px] rounded-full mix-blend-screen pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full mix-blend-screen pointer-events-none" />
-      
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-md bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 rounded-3xl p-8 shadow-2xl relative z-10"
-      >
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#F7F7F2] font-sans">
+      <div className="w-full max-w-md bg-white border border-[#E6E8EC] rounded-xl p-8 shadow-sm relative z-10">
         <div className="text-center mb-8">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
-            className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg shadow-purple-500/20"
-          >
+          <div className="w-16 h-16 bg-[#2457D6] rounded-xl mx-auto flex items-center justify-center mb-4 shadow-sm">
             <LogIn className="w-8 h-8 text-white" />
-          </motion.div>
-          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Welcome back</h1>
-          <p className="text-zinc-400 text-sm">Sign in to your Playgrid account</p>
+          </div>
+          <h1 className="text-3xl font-black text-[#172033] mb-2 tracking-tight uppercase">Welcome to GAMEVIA</h1>
+          <p className="text-[#667085] text-sm">Sign in to your GAMEVIA account</p>
         </div>
 
         {error && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
-          >
+          <div className="mb-6 p-4 rounded-xl bg-[#DC2626]/10 border border-[#DC2626]/20 text-[#DC2626] text-sm font-semibold">
             {error}
-          </motion.div>
+          </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div className="space-y-1">
-            <label className="text-sm font-medium text-zinc-300 ml-1">Email</label>
+            <label className="text-xs font-bold text-[#667085] ml-1">Email</label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#98A2B3]" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl py-3 pl-12 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all duration-300"
+                className="w-full bg-white border border-[#E6E8EC] rounded-xl py-3 pl-12 pr-4 text-[#172033] placeholder:text-[#98A2B3] focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors"
                 placeholder="you@example.com"
               />
             </div>
@@ -121,40 +102,38 @@ export default function Login() {
           
           <div className="space-y-1">
             <div className="flex justify-between items-center ml-1">
-              <label className="text-sm font-medium text-zinc-300">Password</label>
-              <Link to="#" className="text-xs text-purple-400 hover:text-purple-300 transition-colors">Forgot password?</Link>
+              <label className="text-xs font-bold text-[#667085]">Password</label>
+              <Link to="#" className="text-xs text-[#2457D6] font-bold hover:underline transition-colors">Forgot password?</Link>
             </div>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#98A2B3]" />
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl py-3 pl-12 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all duration-300"
+                className="w-full bg-white border border-[#E6E8EC] rounded-xl py-3 pl-12 pr-4 text-[#172033] placeholder:text-[#98A2B3] focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors"
                 placeholder="••••••••"
               />
             </div>
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             disabled={loading}
             type="submit"
-            className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl font-medium shadow-lg shadow-purple-500/25 transition-all duration-300 disabled:opacity-50 flex justify-center items-center"
+            className="w-full py-3 px-4 bg-[#2457D6] hover:bg-[#1D4ED8] text-white rounded-xl font-bold text-sm shadow-sm transition-colors uppercase tracking-wider disabled:opacity-50 flex justify-center items-center"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-              "Sign in"
+              "Sign In"
             )}
-          </motion.button>
+          </button>
         </form>
 
         {/* Demo Quick Sign-In */}
-        <div className="mt-6 pt-6 border-t border-zinc-800/80">
-          <p className="text-xs font-semibold text-zinc-400 text-center mb-3 uppercase tracking-wider">
+        <div className="mt-6 pt-6 border-t border-[#E6E8EC]">
+          <p className="text-xs font-bold text-[#98A2B3] text-center mb-3 uppercase tracking-wider">
             ⚡ Quick Demo Accounts
           </p>
           <div className="grid grid-cols-2 gap-3">
@@ -162,7 +141,7 @@ export default function Login() {
               type="button"
               disabled={loading}
               onClick={() => handleDemoLogin('demo.player@playgrid.com')}
-              className="py-2.5 px-3 bg-zinc-950 border border-zinc-800 hover:border-indigo-500 text-zinc-300 hover:text-white rounded-xl text-xs font-semibold transition-all text-center"
+              className="py-2.5 px-3 bg-white border border-[#E6E8EC] hover:border-[#2457D6] hover:text-[#2457D6] text-[#172033] rounded-xl text-xs font-bold transition-all text-center shadow-sm"
             >
               Demo Player
             </button>
@@ -170,21 +149,20 @@ export default function Login() {
               type="button"
               disabled={loading}
               onClick={() => handleDemoLogin('demo.host@playgrid.com')}
-              className="py-2.5 px-3 bg-zinc-950 border border-zinc-800 hover:border-purple-500 text-zinc-300 hover:text-white rounded-xl text-xs font-semibold transition-all text-center"
+              className="py-2.5 px-3 bg-white border border-[#E6E8EC] hover:border-[#2457D6] hover:text-[#2457D6] text-[#172033] rounded-xl text-xs font-bold transition-all text-center shadow-sm"
             >
               Demo Host
             </button>
           </div>
         </div>
 
-        <p className="text-center mt-6 text-sm text-zinc-400">
+        <div className="mt-6 text-center text-xs text-[#667085]">
           Don't have an account?{' '}
-          <Link to="/register" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
-            Sign up for free
+          <Link to="/register" className="text-[#2457D6] font-bold hover:underline">
+            Register for free
           </Link>
-        </p>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 }
-

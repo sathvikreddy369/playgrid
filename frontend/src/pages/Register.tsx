@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
-
-import { motion } from 'framer-motion';
 import { UserPlus, Mail, Lock, User } from 'lucide-react';
 
 export default function Register() {
@@ -36,66 +34,48 @@ export default function Register() {
 
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-zinc-950">
-      {/* Decorative background gradients */}
-      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/30 blur-[120px] rounded-full mix-blend-screen pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/20 blur-[120px] rounded-full mix-blend-screen pointer-events-none" />
-      
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-md bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 rounded-3xl p-8 shadow-2xl relative z-10"
-      >
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#F7F7F2] font-sans">
+      <div className="w-full max-w-md bg-white border border-[#E6E8EC] rounded-xl p-8 shadow-sm relative z-10">
         <div className="text-center mb-8">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
-            className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg shadow-blue-500/20"
-          >
+          <div className="w-16 h-16 bg-[#2457D6] rounded-xl mx-auto flex items-center justify-center mb-4 shadow-sm">
             <UserPlus className="w-8 h-8 text-white" />
-          </motion.div>
-          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Create Account</h1>
-          <p className="text-zinc-400 text-sm">Join the Playgrid community today</p>
+          </div>
+          <h1 className="text-3xl font-black text-[#172033] mb-2 tracking-tight uppercase">Create Account</h1>
+          <p className="text-[#667085] text-sm">Join the GAMEVIA sports community today</p>
         </div>
 
         {error && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
-          >
+          <div className="mb-6 p-4 rounded-xl bg-[#DC2626]/10 border border-[#DC2626]/20 text-[#DC2626] text-sm font-semibold">
             {error}
-          </motion.div>
+          </div>
         )}
 
         <form onSubmit={handleRegister} className="space-y-5">
           <div className="space-y-1">
-            <label className="text-sm font-medium text-zinc-300 ml-1">Email</label>
+            <label className="text-xs font-bold text-[#667085] ml-1">Email</label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#98A2B3]" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl py-3 pl-12 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300"
+                className="w-full bg-white border border-[#E6E8EC] rounded-xl py-3 pl-12 pr-4 text-[#172033] placeholder:text-[#98A2B3] focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors"
                 placeholder="you@example.com"
               />
             </div>
           </div>
           
           <div className="space-y-1">
-            <label className="text-sm font-medium text-zinc-300 ml-1">Password</label>
+            <label className="text-xs font-bold text-[#667085] ml-1">Password</label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#98A2B3]" />
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl py-3 pl-12 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all duration-300"
+                className="w-full bg-white border border-[#E6E8EC] rounded-xl py-3 pl-12 pr-4 text-[#172033] placeholder:text-[#98A2B3] focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors"
                 placeholder="••••••••"
                 minLength={6}
               />
@@ -103,15 +83,15 @@ export default function Register() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-medium text-zinc-300 ml-1">I am a...</label>
+            <label className="text-xs font-bold text-[#667085] ml-1">I am a...</label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setRole('USER')}
-                className={`py-3 px-4 rounded-xl border flex items-center justify-center gap-2 transition-all duration-300 ${
+                className={`py-3 px-4 rounded-xl border flex items-center justify-center gap-2 transition-all ${
                   role === 'USER' 
-                    ? 'bg-blue-500/10 border-blue-500 text-blue-400' 
-                    : 'bg-zinc-950/50 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                    ? 'bg-[#2457D6]/10 border-[#2457D6] text-[#2457D6] font-bold' 
+                    : 'bg-white border-[#E6E8EC] text-[#667085] hover:border-[#2457D6]/50'
                 }`}
               >
                 <User className="w-4 h-4" />
@@ -120,10 +100,10 @@ export default function Register() {
               <button
                 type="button"
                 onClick={() => setRole('GROUND_OWNER')}
-                className={`py-3 px-4 rounded-xl border flex items-center justify-center gap-2 transition-all duration-300 ${
+                className={`py-3 px-4 rounded-xl border flex items-center justify-center gap-2 transition-all ${
                   role === 'GROUND_OWNER' 
-                    ? 'bg-purple-500/10 border-purple-500 text-purple-400' 
-                    : 'bg-zinc-950/50 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                    ? 'bg-[#2457D6]/10 border-[#2457D6] text-[#2457D6] font-bold' 
+                    : 'bg-white border-[#E6E8EC] text-[#667085] hover:border-[#2457D6]/50'
                 }`}
               >
                 <Lock className="w-4 h-4" />
@@ -132,28 +112,26 @@ export default function Register() {
             </div>
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             disabled={loading}
             type="submit"
-            className="w-full py-3 px-4 mt-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-medium shadow-lg shadow-blue-500/25 transition-all duration-300 disabled:opacity-50 flex justify-center items-center"
+            className="w-full py-3 px-4 mt-2 bg-[#2457D6] hover:bg-[#1D4ED8] text-white rounded-xl font-bold text-sm shadow-sm transition-colors uppercase tracking-wider disabled:opacity-50 flex justify-center items-center"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               "Create Account"
             )}
-          </motion.button>
+          </button>
         </form>
 
-        <p className="text-center mt-8 text-sm text-zinc-400">
+        <div className="mt-8 text-center text-xs text-[#667085]">
           Already have an account?{' '}
-          <Link to="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+          <Link to="/login" className="text-[#2457D6] font-bold hover:underline">
             Sign in instead
           </Link>
-        </p>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 }

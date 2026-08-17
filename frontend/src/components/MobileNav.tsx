@@ -13,7 +13,7 @@ export default function MobileNav() {
   ];
 
   return (
-    <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-zinc-950/95 border-t border-zinc-800 backdrop-blur-lg px-2 py-2">
+    <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 border-t border-[#E6E8EC] backdrop-blur-md px-2 py-2 shadow-lg">
       <div className="flex items-center justify-around">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -22,13 +22,13 @@ export default function MobileNav() {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center py-1 px-3 rounded-xl text-xs font-medium transition-colors ${
+              className={`flex flex-col items-center py-1 px-3 rounded-lg text-xs font-bold transition-colors ${
                 isActive
-                  ? 'text-indigo-400 font-bold'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'text-[#2457D6]'
+                  : 'text-[#667085] hover:text-[#172033]'
               }`}
             >
-              <Icon className={`w-5 h-5 mb-1 ${isActive ? 'text-indigo-400' : 'text-zinc-400'}`} />
+              <Icon className={`w-5 h-5 mb-1 ${isActive ? 'text-[#2457D6]' : 'text-[#667085]'}`} />
               <span>{item.label}</span>
             </Link>
           );

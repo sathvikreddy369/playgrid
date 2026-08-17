@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 import { Send, ArrowLeft, CheckCircle, XCircle, Clock } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
@@ -119,26 +118,26 @@ export default function Messaging() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col md:flex-row h-screen overflow-hidden pb-16 md:pb-0">
+    <div className="min-h-screen bg-[#F7F7F2] text-[#172033] flex flex-col md:flex-row h-screen overflow-hidden pb-16 md:pb-0 font-sans">
       
       {/* Sidebar - Chat & Message Requests */}
-      <div className={`w-full md:w-80 border-r border-zinc-800 bg-zinc-950/80 backdrop-blur-xl flex flex-col h-full ${activeChat ? 'hidden md:flex' : 'flex'}`}>
-        <div className="p-4 border-b border-zinc-800 space-y-3">
+      <div className={`w-full md:w-80 border-r border-[#E6E8EC] bg-white flex flex-col h-full ${activeChat ? 'hidden md:flex' : 'flex'}`}>
+        <div className="p-4 border-b border-[#E6E8EC] space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Link to="/dashboard" className="p-2 hover:bg-zinc-900 rounded-full transition-colors text-zinc-400 hover:text-white">
+              <Link to="/dashboard" className="p-2 hover:bg-[#F7F7F2] rounded-full transition-colors text-[#667085] hover:text-[#172033]">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
-              <h1 className="text-xl font-bold">Messages</h1>
+              <h1 className="text-xl font-extrabold uppercase tracking-wider text-[#172033]">Messages</h1>
             </div>
           </div>
           
           {/* Tab Switcher */}
-          <div className="flex bg-zinc-900 border border-zinc-800 rounded-xl p-1">
+          <div className="flex bg-[#F7F7F2] border border-[#E6E8EC] rounded-xl p-1">
             <button
               onClick={() => setActiveTab('CHATS')}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                activeTab === 'CHATS' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white'
+                activeTab === 'CHATS' ? 'bg-[#2457D6] text-white shadow-sm' : 'text-[#667085] hover:text-[#172033]'
               }`}
             >
               Match Rooms
@@ -146,7 +145,7 @@ export default function Messaging() {
             <button
               onClick={() => setActiveTab('REQUESTS')}
               className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all relative ${
-                activeTab === 'REQUESTS' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-white'
+                activeTab === 'REQUESTS' ? 'bg-[#2457D6] text-white shadow-sm' : 'text-[#667085] hover:text-[#172033]'
               }`}
             >
               Requests {incomingRequests.length > 0 && `(${incomingRequests.length})`}
@@ -157,7 +156,7 @@ export default function Messaging() {
         {activeTab === 'CHATS' ? (
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {chats.length === 0 ? (
-              <div className="py-12 text-center text-xs text-zinc-500">
+              <div className="py-12 text-center text-xs text-[#98A2B3]">
                 No active match chat rooms yet. Join a match to start chatting!
               </div>
             ) : (
@@ -166,15 +165,15 @@ export default function Messaging() {
                   key={chat.id}
                   onClick={() => setActiveChat(chat.id)}
                   className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-colors ${
-                    activeChat === chat.id ? 'bg-zinc-800' : 'hover:bg-zinc-900'
+                    activeChat === chat.id ? 'bg-[#F7F7F2] border border-[#E6E8EC]' : 'hover:bg-[#F7F7F2]/60'
                   }`}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-sm">
+                  <div className="w-10 h-10 rounded-xl bg-[#2457D6] flex items-center justify-center font-bold text-sm text-white shadow-sm">
                     {chat.title.charAt(0)}
                   </div>
                   <div className="flex-1 overflow-hidden">
-                    <h3 className="font-bold text-sm truncate text-white">{chat.title}</h3>
-                    <p className="text-xs text-zinc-400 truncate">Host: {chat.host?.profile?.name || 'Player'}</p>
+                    <h3 className="font-bold text-sm truncate text-[#172033]">{chat.title}</h3>
+                    <p className="text-xs text-[#667085] truncate">Host: {chat.host?.profile?.name || 'Player'}</p>
                   </div>
                 </button>
               ))
@@ -183,29 +182,29 @@ export default function Messaging() {
         ) : (
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
             {incomingRequests.length === 0 ? (
-              <div className="py-12 text-center text-xs text-zinc-500">
+              <div className="py-12 text-center text-xs text-[#98A2B3]">
                 No pending message requests.
               </div>
             ) : (
               incomingRequests.map((req) => (
-                <div key={req.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 space-y-2">
+                <div key={req.id} className="bg-white border border-[#E6E8EC] rounded-xl p-3 space-y-2 shadow-sm">
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs font-bold text-white">
+                    <Clock className="w-4 h-4 text-[#D97706]" />
+                    <span className="text-xs font-bold text-[#172033]">
                       {req.sender?.profile?.name || req.sender?.email?.split('@')[0]}
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-400">Wants to start a conversation with you.</p>
+                  <p className="text-xs text-[#667085]">Wants to start a conversation with you.</p>
                   <div className="flex items-center gap-2 pt-1">
                     <button
                       onClick={() => handleMessageRequestAction(req.id, 'ACCEPTED')}
-                      className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-1"
+                      className="flex-1 py-1.5 bg-[#FF7A3D] hover:bg-[#EA622D] text-white font-bold text-xs rounded-lg flex items-center justify-center gap-1 shadow-sm uppercase tracking-wider"
                     >
                       <CheckCircle className="w-3.5 h-3.5" /> Accept
                     </button>
                     <button
                       onClick={() => handleMessageRequestAction(req.id, 'DECLINED')}
-                      className="flex-1 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 font-bold text-xs rounded-lg flex items-center justify-center gap-1"
+                      className="flex-1 py-1.5 bg-white border border-[#E6E8EC] hover:bg-[#DC2626]/10 text-[#667085] hover:text-[#DC2626] font-bold text-xs rounded-lg flex items-center justify-center gap-1"
                     >
                       <XCircle className="w-3.5 h-3.5" /> Decline
                     </button>
@@ -219,63 +218,61 @@ export default function Messaging() {
 
       {/* Main Chat Area */}
       {activeChat ? (
-        <div className="flex-1 flex flex-col h-full bg-zinc-950 relative">
+        <div className="flex-1 flex flex-col h-full bg-[#F7F7F2] relative">
           
           {/* Chat Header */}
-          <div className="h-16 border-b border-zinc-800 flex items-center px-4 bg-zinc-950/80 backdrop-blur-xl shrink-0 gap-4">
-            <button onClick={() => setActiveChat(null)} className="md:hidden p-2 hover:bg-zinc-900 rounded-full text-zinc-400">
+          <div className="h-16 border-b border-[#E6E8EC] flex items-center px-4 bg-white/95 backdrop-blur-md shrink-0 gap-4">
+            <button onClick={() => setActiveChat(null)} className="md:hidden p-2 hover:bg-[#F7F7F2] rounded-full text-[#667085]">
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-[#2457D6] flex items-center justify-center font-bold text-white shadow-sm">
               {chats.find(c => c.id === activeChat)?.title?.charAt(0)}
             </div>
             <div>
-              <h2 className="font-bold text-sm text-white">{chats.find(c => c.id === activeChat)?.title}</h2>
-              <p className="text-xs text-zinc-400">Host: {chats.find(c => c.id === activeChat)?.host?.profile?.name || 'Player'}</p>
+              <h2 className="font-bold text-sm text-[#172033]">{chats.find(c => c.id === activeChat)?.title}</h2>
+              <p className="text-xs text-[#667085]">Host: {chats.find(c => c.id === activeChat)?.host?.profile?.name || 'Player'}</p>
             </div>
           </div>
 
           {/* Messages List */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.map((msg: any) => (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+              <div
                 key={msg.id || Math.random()}
                 className={`flex flex-col ${msg.senderId === user?.id ? 'items-end' : 'items-start'}`}
               >
-                <span className="text-[10px] text-zinc-500 mb-1 px-1">{msg.name}</span>
+                <span className="text-[10px] text-[#98A2B3] mb-1 px-1 font-semibold">{msg.name}</span>
                 <div 
                   className={`max-w-[75%] lg:max-w-[50%] px-4 py-2.5 rounded-2xl ${
                     msg.senderId === user?.id 
-                      ? 'bg-indigo-600 text-white rounded-tr-sm' 
-                      : 'bg-zinc-800 text-zinc-100 rounded-tl-sm'
+                      ? 'bg-[#2457D6] text-white rounded-tr-sm font-medium shadow-sm' 
+                      : 'bg-white border border-[#E6E8EC] text-[#172033] rounded-tl-sm shadow-sm'
                   }`}
                 >
                   <p className="text-sm">{msg.text}</p>
                 </div>
-                <span className="text-[10px] text-zinc-500 mt-1 px-1">
+                <span className="text-[10px] text-[#98A2B3] mt-1 px-1">
                   {new Date(msg.time || msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
-              </motion.div>
+              </div>
             ))}
             <div ref={messagesEndRef} />
           </div>
 
           {/* Message Input */}
-          <div className="p-4 border-t border-zinc-800 bg-zinc-950 shrink-0">
+          <div className="p-4 border-t border-[#E6E8EC] bg-white shrink-0">
             <form onSubmit={handleSendMessage} className="flex items-center gap-2">
               <input
                 type="text"
                 value={inputMessage}
                 onChange={e => setInputMessage(e.target.value)}
                 placeholder="Type a message..."
-                className="flex-1 bg-zinc-900 border border-zinc-800 rounded-full px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none transition"
+                className="flex-1 bg-white border border-[#E6E8EC] rounded-full px-4 py-3 text-sm text-[#172033] focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors placeholder:text-[#98A2B3]"
               />
               <button 
                 type="submit"
                 disabled={!inputMessage.trim()}
-                className="w-12 h-12 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-full flex items-center justify-center transition-colors shrink-0"
+                className="w-12 h-12 bg-[#FF7A3D] hover:bg-[#EA622D] disabled:opacity-50 text-white rounded-full flex items-center justify-center transition-colors shrink-0 shadow-sm"
               >
                 <Send className="w-5 h-5" />
               </button>
@@ -283,7 +280,7 @@ export default function Messaging() {
           </div>
         </div>
       ) : (
-        <div className="hidden md:flex flex-1 items-center justify-center text-zinc-500 text-sm">
+        <div className="hidden md:flex flex-1 items-center justify-center text-[#98A2B3] text-sm">
           Select a match room or message request to start messaging
         </div>
       )}

@@ -25,16 +25,16 @@ export const createMatchSchema = z.object({
 
 export const getMatchesSchema = z.object({
   query: z.object({
-    status: z.enum(['AVAILABLE', 'FILLED', 'COMPLETED', 'CANCELLED']).optional(),
-    type: z.enum(['PHYSICAL', 'E_GAME', 'ALL']).optional(),
+    status: z.string().optional(),
+    type: z.string().optional(),
     sport: z.string().optional(),
     tag: z.string().optional(),
     search: z.string().optional(),
-    latitude: z.string().optional(),
-    longitude: z.string().optional(),
-    radius: z.string().optional(),
-    sort: z.enum(['soonest', 'nearest', 'price_low', 'price_high']).optional(),
-    page: z.string().optional(),
-    limit: z.string().optional()
-  })
+    latitude: z.union([z.string(), z.number()]).optional(),
+    longitude: z.union([z.string(), z.number()]).optional(),
+    radius: z.union([z.string(), z.number()]).optional(),
+    sort: z.string().optional(),
+    page: z.union([z.string(), z.number()]).optional(),
+    limit: z.union([z.string(), z.number()]).optional()
+  }).passthrough()
 });

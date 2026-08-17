@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import MapboxPicker from '../components/MapboxPicker';
 import ImageUpload from '../components/ImageUpload';
 import { Save, Store, MapPin, DollarSign, Building } from 'lucide-react';
@@ -75,20 +74,16 @@ export default function GroundOwnerProfile() {
 
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-4 lg:p-8">
+    <div className="min-h-screen bg-[#F7F7F2] text-[#172033] p-4 lg:p-8 font-sans">
       <div className="max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl"
-        >
+        <div className="bg-white border border-[#E6E8EC] rounded-xl overflow-hidden shadow-sm">
           {/* Header Banner */}
-          <div className="h-32 lg:h-48 bg-gradient-to-r from-emerald-600/40 to-teal-600/40 relative flex items-center justify-center">
-            <Store className="w-16 h-16 text-emerald-400/50 absolute" />
+          <div className="h-32 lg:h-48 bg-[#F7F7F2] border-b border-[#E6E8EC] relative flex items-center justify-center">
+            <Store className="w-16 h-16 text-[#2457D6]/40 absolute" />
           </div>
 
           {error && (
-            <div className="mx-8 mt-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            <div className="mx-8 mt-6 p-4 rounded-xl bg-[#DC2626]/10 border border-[#DC2626]/20 text-[#DC2626] text-sm font-semibold">
               {error}
             </div>
           )}
@@ -97,30 +92,30 @@ export default function GroundOwnerProfile() {
 
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <Building className="w-5 h-5 text-emerald-400" />
+                <h2 className="text-xl font-extrabold mb-4 flex items-center gap-2 text-[#172033] uppercase tracking-wider">
+                  <Building className="w-5 h-5 text-[#2457D6]" />
                   Venue Details
                 </h2>
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-medium text-zinc-400 ml-1">Venue Name</label>
+                    <label className="text-xs font-bold text-[#667085] ml-1">Venue Name</label>
                     <input 
                       type="text" 
                       value={venueName}
                       onChange={e => setVenueName(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 mt-1 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all outline-none"
+                      className="w-full bg-white border border-[#E6E8EC] text-[#172033] rounded-xl px-4 py-2.5 mt-1 focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors"
                       placeholder="e.g. Skyline Box Cricket"
                     />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs font-medium text-zinc-400 ml-1">Venue Type</label>
+                      <label className="text-xs font-bold text-[#667085] ml-1">Venue Type</label>
                       <select 
                         value={venueType}
                         onChange={e => setVenueType(e.target.value)}
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 mt-1 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all outline-none appearance-none"
+                        className="w-full bg-white border border-[#E6E8EC] text-[#172033] rounded-xl px-4 py-2.5 mt-1 focus:outline-none focus:border-[#2457D6] transition-colors appearance-none font-semibold"
                       >
                         <option>Box Cricket</option>
                         <option>Football Turf</option>
@@ -130,14 +125,14 @@ export default function GroundOwnerProfile() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-zinc-400 ml-1">Price per Hour (₹)</label>
+                      <label className="text-xs font-bold text-[#667085] ml-1">Price per Hour (₹)</label>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#98A2B3]" />
                         <input 
                           type="number" 
                           value={pricing}
                           onChange={e => setPricing(e.target.value)}
-                          className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 mt-1 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all outline-none"
+                          className="w-full bg-white border border-[#E6E8EC] text-[#172033] rounded-xl pl-9 pr-4 py-2.5 mt-1 focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors font-semibold"
                           placeholder="1200"
                         />
                       </div>
@@ -145,12 +140,12 @@ export default function GroundOwnerProfile() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-medium text-zinc-400 ml-1">Description</label>
+                    <label className="text-xs font-bold text-[#667085] ml-1">Description</label>
                     <textarea 
                       value={description}
                       onChange={e => setDescription(e.target.value)}
                       rows={3}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 mt-1 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all outline-none resize-none"
+                      className="w-full bg-white border border-[#E6E8EC] text-[#172033] rounded-xl px-4 py-2.5 mt-1 focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors resize-none placeholder:text-[#98A2B3]"
                       placeholder="Describe your venue, rules, etc..."
                     />
                   </div>
@@ -158,51 +153,50 @@ export default function GroundOwnerProfile() {
               </div>
 
               <div>
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-red-400" />
+                <h2 className="text-xl font-extrabold mb-4 flex items-center gap-2 text-[#172033] uppercase tracking-wider">
+                  <MapPin className="w-5 h-5 text-[#2457D6]" />
                   Location
                 </h2>
-                {/* <MapboxPicker onLocationSelect={(lat, lng) => setLocation({lat, lng})} /> */}
                 <MapboxPicker />
               </div>
             </div>
 
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-bold mb-4">Venue Images</h2>
-                <p className="text-sm text-zinc-400 mb-4">Upload up to 3 high-quality images of your venue.</p>
+                <h2 className="text-xl font-extrabold mb-4 text-[#172033] uppercase tracking-wider">Venue Images</h2>
+                <p className="text-sm text-[#667085] mb-4">Upload up to 3 high-quality images of your venue.</p>
                 <ImageUpload maxImages={3} onUpload={() => {}} />
               </div>
 
               <div>
-                <h2 className="text-xl font-bold mb-4 mt-8">Amenities</h2>
+                <h2 className="text-xl font-extrabold mb-4 mt-8 text-[#172033] uppercase tracking-wider">Amenities</h2>
                 <div>
-                  <label className="text-xs font-medium text-zinc-400 ml-1">Add Amenity (Press Enter)</label>
+                  <label className="text-xs font-bold text-[#667085] ml-1">Add Amenity (Press Enter)</label>
                   <input 
                     type="text" 
                     value={amenityInput}
                     onChange={e => setAmenityInput(e.target.value)}
                     onKeyDown={handleAddAmenity}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 mt-1 focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all outline-none"
+                    className="w-full bg-white border border-[#E6E8EC] text-[#172033] rounded-xl px-4 py-2.5 mt-1 focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors placeholder:text-[#98A2B3]"
                     placeholder="e.g. Parking, Washroom, Floodlights"
                   />
                   
                   <div className="flex flex-wrap gap-2 mt-3">
                     {amenities.map(amenity => (
-                      <span key={amenity} className="px-3 py-1 bg-teal-500/10 border border-teal-500/20 text-teal-400 rounded-full text-xs flex items-center gap-1">
+                      <span key={amenity} className="px-3 py-1 bg-[#F7F7F2] border border-[#E6E8EC] text-[#2457D6] rounded-full text-xs font-bold flex items-center gap-1">
                         {amenity}
-                        <button type="button" onClick={() => removeAmenity(amenity)} className="hover:text-white">&times;</button>
+                        <button type="button" onClick={() => removeAmenity(amenity)} className="hover:text-[#172033]">&times;</button>
                       </span>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-zinc-800">
+              <div className="pt-6 border-t border-[#E6E8EC]">
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl font-medium shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  className="w-full py-3 bg-[#2457D6] hover:bg-[#1D4ED8] text-white font-bold text-sm rounded-xl shadow-sm flex items-center justify-center gap-2 transition-colors uppercase tracking-wider disabled:opacity-50"
                 >
                   {saving ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -216,7 +210,7 @@ export default function GroundOwnerProfile() {
               </div>
             </div>
           </form>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

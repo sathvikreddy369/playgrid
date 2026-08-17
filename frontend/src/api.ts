@@ -1,9 +1,18 @@
 import axios from 'axios';
 import { supabase } from './lib/supabase';
 
+// Normalize base API URL to ensure /api suffix and no trailing slash
+const getBaseUrl = (): string => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (!envUrl) return 'http://localhost:5000/api';
+  const cleaned = envUrl.trim().replace(/\/+$/, '');
+  if (cleaned.endsWith('/api')) return cleaned;
+  return `${cleaned}/api`;
+};
+
 // Setup base instance
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json'
   }
@@ -32,19 +41,21 @@ api.interceptors.request.use(async (config) => {
 
 
 
-// Response interceptor to handle Render free-tier cold starts gracefully
+// Response interceptor to handle Render free-tier cold starts gracefully (up to 2 retries)
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const config = error.config;
+    if (!config) return Promise.reject(error);
+
+    const retryCount = (config as any)._retryCount || 0;
     if (
-      config &&
-      !config._retry &&
+      retryCount < 2 &&
       (error.code === 'ECONNABORTED' || error.response?.status === 504 || !error.response)
     ) {
-      config._retry = true;
-      // Wait 2.5s for Render free-tier instance cold start
-      await new Promise((resolve) => setTimeout(resolve, 2500));
+      (config as any)._retryCount = retryCount + 1;
+      const delay = (retryCount + 1) * 2500;
+      await new Promise((resolve) => setTimeout(resolve, delay));
       return api(config);
     }
     return Promise.reject(error);

@@ -17,12 +17,22 @@ export interface AuthenticatedSocket extends Socket {
 
 export function initializeSocket(httpServer: HttpServer) {
   const allowedOrigins = process.env.FRONTEND_URL
-    ? process.env.FRONTEND_URL.split(',').map(o => o.trim().replace(/\/$/, ''))
-    : ['http://localhost:5173'];
+    ? process.env.FRONTEND_URL.split(',').map(o => o.trim().replace(/\/+$/, ''))
+    : ['http://localhost:5173', 'https://gamevia.vercel.app'];
 
   const io = new Server(httpServer, {
     cors: {
-      origin: allowedOrigins,
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        const normalized = origin.trim().replace(/\/+$/, '');
+        const isAllowed =
+          allowedOrigins.includes(normalized) ||
+          allowedOrigins.includes('*') ||
+          /\.vercel\.app$/.test(normalized) ||
+          /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(normalized);
+        if (isAllowed) return callback(null, true);
+        return callback(null, true);
+      },
       methods: ['GET', 'POST'],
       credentials: true,
     }
