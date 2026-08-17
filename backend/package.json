@@ -7,7 +7,9 @@
     "test": "npx vitest run src/__tests__",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "npx prisma generate && tsc",
+    "postinstall": "npm run build",
     "start": "node dist/index.js",
+
     "seed": "npx prisma db seed"
   },
   "prisma": {
