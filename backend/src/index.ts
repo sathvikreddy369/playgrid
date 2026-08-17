@@ -87,6 +87,15 @@ app.use('/venues', venueRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/reports', reportRoutes);
 
+// Global Error Handler Middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Unhandled server error:', err);
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: err?.message || 'An unexpected error occurred'
+  });
+});
+
 const PORT = process.env.PORT || 5000;
 
 httpServer.listen(PORT, () => {
