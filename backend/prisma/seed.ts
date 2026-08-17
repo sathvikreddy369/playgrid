@@ -3,29 +3,48 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding PlayGrid database with realistic Hyderabad sports matches...');
+  console.log('🌱 Seeding GAMEVIA database with realistic Hyderabad venues & sports matches...');
 
-  // Create demo host user
-  const hostUser = await prisma.user.upsert({
-    where: { email: 'demo.host@playgrid.com' },
-    update: {},
+  // Provision Admin User
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@gmail.com' },
+    update: { role: 'ADMIN' },
     create: {
-      supabaseId: 'demo-host-supabase-id-001',
-      email: 'demo.host@playgrid.com',
-      role: 'USER',
+      supabaseId: 'admin-supabase-id-000',
+      email: 'admin@gmail.com',
+      role: 'ADMIN',
       profile: {
         create: {
-          name: 'Rahul Verma',
-          bio: 'Passionate sports organizer in Gachibowli, Hyderabad.',
-          matchesAttended: 24,
-          favoriteSports: ['Cricket', 'Football', 'Badminton'],
-          levels: ['Intermediate']
+          name: 'Platform Administrator',
+          bio: 'GAMEVIA System Administrator & Moderation Lead',
+          favoriteSports: ['Cricket', 'Football'],
+          levels: ['Advanced']
         }
       }
     }
   });
 
-  const demoPlayer = await prisma.user.upsert({
+  // Demo Turf Owner User
+  const ownerUser = await prisma.user.upsert({
+    where: { email: 'owner@gamevia.com' },
+    update: { role: 'GROUND_OWNER' },
+    create: {
+      supabaseId: 'owner-supabase-id-001',
+      email: 'owner@gamevia.com',
+      role: 'GROUND_OWNER',
+      profile: {
+        create: {
+          name: 'Vikram Reddy',
+          bio: 'Owner of Skyline Box Cricket & Turf Arenas across Hyderabad.',
+          favoriteSports: ['Cricket', 'Football'],
+          levels: ['Professional']
+        }
+      }
+    }
+  });
+
+  // Demo Player User
+  const playerUser = await prisma.user.upsert({
     where: { email: 'demo.player@playgrid.com' },
     update: {},
     create: {
@@ -35,115 +54,192 @@ async function main() {
       profile: {
         create: {
           name: 'Ananya Sharma',
-          bio: 'Always up for weekend football and badminton games!',
-          matchesAttended: 12,
-          favoriteSports: ['Football', 'Badminton'],
-          levels: ['Beginner']
+          bio: 'Always up for weekend box cricket & badminton games!',
+          favoriteSports: ['Football', 'Badminton', 'Cricket'],
+          levels: ['Intermediate']
         }
       }
     }
   });
 
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(7, 30, 0, 0);
-
-  const thisWeekend = new Date();
-  thisWeekend.setDate(thisWeekend.getDate() + 3);
-  thisWeekend.setHours(18, 0, 0, 0);
-
-  const nextWeek = new Date();
-  nextWeek.setDate(nextWeek.getDate() + 5);
-  nextWeek.setHours(19, 0, 0, 0);
-
-  // Matches
-  const matchesData = [
+  // Seed Approved Venues around Narayanguda, Himayatnagar, Gachibowli, Madhapur
+  const venuesData = [
     {
-      hostId: hostUser.id,
-      title: 'Sunday Morning Box Cricket 8v8',
-      description: 'Looking for 6 enthusiastic players for a friendly 8v8 box cricket match at SkyTurf Gachibowli. Leather ball experience preferred!',
-      isOnline: false,
-      locationText: 'SkyTurf, Financial District, Gachibowli, Hyderabad',
-      mapLink: 'https://maps.google.com/?q=Gachibowli+Hyderabad',
+      ownerId: ownerUser.id,
+      name: 'Narayanguda Net Cricket & Turf Box',
+      description: 'Floodlit net cricket turf with high-quality artificial turf mats and digital scoreboard.',
+      category: 'Box Cricket',
+      sports: ['Cricket'],
+      address: 'Near Old MLA Quarters, Narayanguda, Hyderabad',
+      locality: 'Narayanguda',
+      latitude: 17.3968,
+      longitude: 78.4888,
+      pricePerHour: 1200,
+      ownerPhone: '+91 98765 43210',
+      images: [
+        'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&auto=format&fit=crop&q=60',
+        'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&auto=format&fit=crop&q=60'
+      ],
+      amenities: ['Floodlights', 'Cricket Kit', 'Digital Scoreboard', 'Parking', 'Mineral Water'],
+      status: 'APPROVED' as const,
+      rating: 4.8,
+      reviewCount: 14
+    },
+    {
+      ownerId: ownerUser.id,
+      name: 'Himayatnagar Smash Badminton Arena',
+      description: 'BWF synthetic indoor badminton courts with air-cooled seating and pro shop.',
+      category: 'Badminton Court',
+      sports: ['Badminton'],
+      address: 'Street No. 3, Himayatnagar, Hyderabad',
+      locality: 'Himayatnagar',
+      latitude: 17.4018,
+      longitude: 78.4815,
+      pricePerHour: 500,
+      ownerPhone: '+91 98765 43211',
+      images: [
+        'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&auto=format&fit=crop&q=60'
+      ],
+      amenities: ['Synthetic Flooring', 'Racket Rental', 'Changing Rooms', 'Drinking Water'],
+      status: 'APPROVED' as const,
+      rating: 4.7,
+      reviewCount: 9
+    },
+    {
+      ownerId: ownerUser.id,
+      name: 'Basheerbagh Kickoff 5v5 Football Turf',
+      description: 'FIFA-approved artificial grass turf for 5v5 and 7v7 football matches.',
+      category: 'Football Turf',
+      sports: ['Football'],
+      address: 'Main Road, Basheerbagh, Hyderabad',
+      locality: 'Basheerbagh',
+      latitude: 17.3995,
+      longitude: 78.4760,
+      pricePerHour: 1500,
+      ownerPhone: '+91 98765 43212',
+      images: [
+        'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&auto=format&fit=crop&q=60'
+      ],
+      amenities: ['Night Floodlights', 'Bibs & Balls', 'Shower Rooms', 'Cafeteria'],
+      status: 'APPROVED' as const,
+      rating: 4.9,
+      reviewCount: 22
+    },
+    {
+      ownerId: ownerUser.id,
+      name: 'Abids Aqua Splash Swimming Club',
+      description: 'Temperature-controlled half-Olympic swimming pool with certified lifeguard supervision.',
+      category: 'Swimming Pool',
+      sports: ['Swimming'],
+      address: 'Station Road, Abids, Hyderabad',
+      locality: 'Abids',
+      latitude: 17.3870,
+      longitude: 78.4770,
+      pricePerHour: 350,
+      ownerPhone: '+91 98765 43213',
+      images: [
+        'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=800&auto=format&fit=crop&q=60'
+      ],
+      amenities: ['Heated Pool', 'Lifeguard', 'Locker Rooms', 'Costume Rental'],
+      status: 'APPROVED' as const,
+      rating: 4.6,
+      reviewCount: 11
+    },
+    {
+      ownerId: ownerUser.id,
+      name: 'Gachibowli Pro Pickleball Courts',
+      description: 'Hard surface dedicated pickleball courts with tournament-grade net setup.',
+      category: 'Pickleball Court',
+      sports: ['Pickleball'],
+      address: 'Financial District, Gachibowli, Hyderabad',
+      locality: 'Gachibowli',
       latitude: 17.4401,
       longitude: 78.3489,
-      date: tomorrow,
-      isWeekend: true,
-      totalSlots: 12,
-      filledSlots: 6,
-      status: 'AVAILABLE' as const,
-      tags: ['cricket', 'gachibowli', 'weekend'],
-      pricePerHead: 250
+      pricePerHour: 600,
+      ownerPhone: '+91 98765 43214',
+      images: [
+        'https://images.unsplash.com/photo-1534158914592-062992fbe900?w=800&auto=format&fit=crop&q=60'
+      ],
+      amenities: ['Paddle Rental', 'Night Lights', 'Hydration Station'],
+      status: 'APPROVED' as const,
+      rating: 4.8,
+      reviewCount: 7
     },
     {
-      hostId: hostUser.id,
-      title: 'Weekend 7v7 Football Match',
-      description: 'Competitive 7v7 football friendly at Jubilee Hills Turf. Good turf shoes recommended. Water bottles provided.',
-      isOnline: false,
-      locationText: 'Jubilee Hills Turf Grounds, Road No. 36, Hyderabad',
-      mapLink: 'https://maps.google.com/?q=Jubilee+Hills+Hyderabad',
-      latitude: 17.4319,
-      longitude: 78.4072,
-      date: thisWeekend,
-      isWeekend: true,
-      totalSlots: 14,
-      filledSlots: 10,
-      status: 'AVAILABLE' as const,
-      tags: ['football', 'jubileehills', 'weekend'],
-      pricePerHead: 300
-    },
-    {
-      hostId: hostUser.id,
-      title: 'Intermediate Badminton Doubles Session',
-      description: 'Looking for 2 intermediate players for Yonex feather shuttle doubles session at Gopichand Badminton Academy.',
-      isOnline: false,
-      locationText: 'Gopichand Badminton Academy, Gachibowli, Hyderabad',
-      mapLink: 'https://maps.google.com/?q=Gopichand+Badminton+Academy',
-      latitude: 17.4447,
-      longitude: 78.3483,
-      date: nextWeek,
-      isWeekend: false,
-      totalSlots: 4,
-      filledSlots: 2,
-      status: 'AVAILABLE' as const,
-      tags: ['badminton', 'gachibowli', 'doubles'],
-      pricePerHead: 150
-    },
-    {
-      hostId: hostUser.id,
-      title: 'BGMI Squad Scrims & Customs',
-      description: 'Online BGMI squad custom rooms with tier-2 teams. Join room with active mic and Discord voice channel.',
-      isOnline: true,
-      locationText: 'Online (Discord Lobby)',
-      mapLink: null,
-      latitude: null,
-      longitude: null,
-      date: nextWeek,
-      isWeekend: false,
-      totalSlots: 16,
-      filledSlots: 16,
-      status: 'FILLED' as const,
-      tags: ['bgmi', 'esports', 'online'],
-      pricePerHead: 0
+      ownerId: ownerUser.id,
+      name: 'Pending Turf Application Demo',
+      description: 'Newly submitted venue application awaiting admin verification.',
+      category: 'Box Cricket',
+      sports: ['Cricket'],
+      address: 'RTC X Roads, Musheerabad, Hyderabad',
+      locality: 'RTC X Roads',
+      latitude: 17.4045,
+      longitude: 78.4980,
+      pricePerHour: 1100,
+      ownerPhone: '+91 98765 43215',
+      images: [],
+      amenities: ['Floodlights'],
+      status: 'PENDING_APPROVAL' as const,
+      rating: 5.0,
+      reviewCount: 0
     }
   ];
 
-  for (const m of matchesData) {
-    const createdMatch = await prisma.match.create({
-      data: m
-    });
+  for (const v of venuesData) {
+    await prisma.venue.create({ data: v });
+  }
 
-    // Create a pending request from demoPlayer
-    await prisma.request.create({
+  // Create Physical Matches linked to venues
+  const narayangudaVenue = await prisma.venue.findFirst({ where: { locality: 'Narayanguda' } });
+  const himayatnagarVenue = await prisma.venue.findFirst({ where: { locality: 'Himayatnagar' } });
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(18, 0, 0, 0);
+
+  if (narayangudaVenue) {
+    await prisma.match.create({
       data: {
-        matchId: createdMatch.id,
-        userId: demoPlayer.id,
-        status: 'PENDING'
+        hostId: ownerUser.id,
+        venueId: narayangudaVenue.id,
+        title: 'Narayanguda Evening Box Cricket 6v6',
+        description: 'Friendly 6v6 box cricket match at Narayanguda Net Turf. Tennis ball provided.',
+        matchType: 'PHYSICAL',
+        locationText: narayangudaVenue.address,
+        latitude: narayangudaVenue.latitude,
+        longitude: narayangudaVenue.longitude,
+        date: tomorrow,
+        totalSlots: 12,
+        filledSlots: 7,
+        status: 'AVAILABLE',
+        tags: ['cricket', 'narayanguda', 'boxcricket'],
+        pricePerHead: 150
       }
     });
   }
 
-  console.log('✅ Successfully seeded PlayGrid database with realistic Hyderabad sports matches!');
+  if (himayatnagarVenue) {
+    await prisma.match.create({
+      data: {
+        hostId: ownerUser.id,
+        venueId: himayatnagarVenue.id,
+        title: 'Himayatnagar Intermediate Badminton Doubles',
+        description: 'Need 2 intermediate players for feather shuttle doubles session.',
+        matchType: 'PHYSICAL',
+        locationText: himayatnagarVenue.address,
+        latitude: himayatnagarVenue.latitude,
+        longitude: himayatnagarVenue.longitude,
+        date: tomorrow,
+        totalSlots: 4,
+        filledSlots: 2,
+        status: 'AVAILABLE',
+        tags: ['badminton', 'himayatnagar', 'doubles'],
+        pricePerHead: 125
+      }
+    });
+  }
+
+  console.log('✅ Successfully seeded GAMEVIA database with admin user and Narayanguda/Himayatnagar venues!');
 }
 
 main()

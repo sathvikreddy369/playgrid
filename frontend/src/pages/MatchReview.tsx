@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Star, CheckCircle, XCircle } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Star, CheckCircle, XCircle, Trophy, Building, ArrowLeft } from 'lucide-react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../components/AuthProvider';
 
@@ -14,12 +14,17 @@ export default function MatchReview() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Player State
-  const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [reviewText, setReviewText] = useState('');
-  
-  // Host Attendance State: map of userId -> boolean (attended)
+  // Host Rating & Review State
+  const [hostRating, setHostRating] = useState(5);
+  const [hostHoverRating, setHostHoverRating] = useState(0);
+  const [hostReviewText, setHostReviewText] = useState('');
+
+  // Venue Rating & Review State
+  const [venueRating, setVenueRating] = useState(5);
+  const [venueHoverRating, setVenueHoverRating] = useState(0);
+  const [venueReviewText, setVenueReviewText] = useState('');
+
+  // Host Attendance State: map of userId -> boolean
   const [attendanceMap, setAttendanceMap] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
 
@@ -53,18 +58,29 @@ export default function MatchReview() {
     setAttendanceMap(prev => ({ ...prev, [userId]: attended }));
   };
 
-  const handleSubmitReview = async (e: React.FormEvent) => {
+  const handleSubmitPlayerReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id) return;
     setSaving(true);
     setError(null);
 
     try {
+      // 1. Submit review for host & match
       await api.post(`/reviews/${id}`, {
-        rating,
-        comment: reviewText
-      });
-      alert('Review submitted successfully!');
+        rating: hostRating,
+        comment: hostReviewText
+      }).catch(() => null);
+
+      // 2. Submit venue review if venueId exists
+      if (match?.venueId) {
+        await api.post(`/venues/${match.venueId}/reviews`, {
+          rating: venueRating,
+          comment: venueReviewText,
+          matchId: id
+        }).catch(() => null);
+      }
+
+      alert('Review & ratings submitted successfully!');
       navigate(`/match/${id}`);
     } catch (err: any) {
       console.error('Failed to submit review', err);
@@ -95,91 +111,141 @@ export default function MatchReview() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#F7F7F2] text-[#172033] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#2457D6] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!match) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
-        <h2 className="text-xl text-zinc-400">Match not found</h2>
+      <div className="min-h-screen bg-[#F7F7F2] text-[#172033] flex flex-col items-center justify-center p-4">
+        <h2 className="text-xl font-bold mb-2">Match Not Found</h2>
+        <Link to="/dashboard" className="px-4 py-2 bg-[#2457D6] text-white rounded-xl text-xs font-bold uppercase">
+          Return to Dashboard
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F7F2] text-[#172033] p-4 lg:p-8 font-sans">
+    <div className="min-h-screen bg-[#F7F7F2] text-[#172033] p-4 lg:p-8 font-sans pb-24">
       <div className="max-w-2xl mx-auto space-y-6">
         
+        <Link to={`/match/${match.id}`} className="inline-flex items-center gap-2 text-xs font-bold text-[#667085] hover:text-[#172033] uppercase tracking-wider">
+          <ArrowLeft className="w-4 h-4" /> Back to Match
+        </Link>
+
         {error && (
           <div className="p-4 rounded-xl bg-[#DC2626]/10 border border-[#DC2626]/20 text-[#DC2626] text-sm font-semibold">
             {error}
           </div>
         )}
 
-        <div className="bg-white border border-[#E6E8EC] rounded-xl p-8 shadow-sm">
-          <div className="text-center mb-8 pb-8 border-b border-[#E6E8EC]">
-            <h1 className="text-2xl font-black mb-2 uppercase text-[#172033] tracking-wider">Post-Match Summary</h1>
-            <p className="text-[#667085] text-xs font-medium">{match.title} • {new Date(match.date).toLocaleDateString()}</p>
+        <div className="bg-white border border-[#E6E8EC] rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="text-center pb-6 border-b border-[#E6E8EC]">
+            <span className="text-xs font-black uppercase px-3 py-1 bg-[#2457D6]/10 text-[#2457D6] rounded-full border border-[#2457D6]/20">
+              Post-Game Feedback & Rating
+            </span>
+            <h1 className="text-2xl font-black mt-3 uppercase text-[#172033] tracking-tight">{match.title}</h1>
+            <p className="text-[#667085] text-xs font-medium mt-1">
+              {new Date(match.date).toLocaleDateString()} • {match.locationText || 'Hyderabad'}
+            </p>
           </div>
 
           {!isHost ? (
-            <form onSubmit={handleSubmitReview} className="space-y-8">
-              <div className="text-center">
-                <h2 className="text-lg font-bold mb-4 text-[#172033]">How was the match & host?</h2>
-                <div className="flex justify-center gap-2 mb-2">
+            <form onSubmit={handleSubmitPlayerReview} className="space-y-8">
+              {/* Section 1: Rate Host */}
+              <div className="bg-[#F7F7F2] border border-[#E6E8EC] p-6 rounded-2xl space-y-4">
+                <div className="flex items-center gap-2 text-sm font-black text-[#172033] uppercase">
+                  <Trophy className="w-5 h-5 text-[#FF7A3D]" /> Rate Host ({match.host?.profile?.name || 'Game Host'})
+                </div>
+                
+                <div className="flex justify-center gap-2 py-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
                       type="button"
-                      onMouseEnter={() => setHoverRating(star)}
-                      onMouseLeave={() => setHoverRating(0)}
-                      onClick={() => setRating(star)}
+                      onMouseEnter={() => setHostHoverRating(star)}
+                      onMouseLeave={() => setHostHoverRating(0)}
+                      onClick={() => setHostRating(star)}
                       className="p-1 transition-transform hover:scale-110 focus:outline-none"
                     >
                       <Star 
-                        className={`w-10 h-10 transition-colors ${
-                          star <= (hoverRating || rating) 
+                        className={`w-9 h-9 transition-colors ${
+                          star <= (hostHoverRating || hostRating) 
                             ? 'text-[#FF7A3D] fill-[#FF7A3D]' 
-                            : 'text-[#E6E8EC]'
+                            : 'text-[#98A2B3]/30 fill-[#98A2B3]/10'
                         }`} 
                       />
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-[#98A2B3]">Tap a star to rate</p>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#667085] uppercase mb-1">Host Comments (Optional)</label>
+                  <textarea 
+                    value={hostReviewText}
+                    onChange={e => setHostReviewText(e.target.value)}
+                    rows={2}
+                    className="w-full bg-white border border-[#E6E8EC] text-[#172033] rounded-xl px-4 py-3 text-xs font-medium focus:outline-none focus:border-[#2457D6]"
+                    placeholder="Was the host punctual? Were teams well balanced?"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-[#667085] ml-1">Write a Review (Optional)</label>
-                <textarea 
-                  value={reviewText}
-                  onChange={e => setReviewText(e.target.value)}
-                  rows={4}
-                  className="w-full bg-white border border-[#E6E8EC] text-[#172033] rounded-xl px-4 py-3 mt-2 focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors resize-none placeholder:text-[#98A2B3]"
-                  placeholder="How was the turf? Was the host friendly?"
-                />
+              {/* Section 2: Rate Venue */}
+              <div className="bg-[#F7F7F2] border border-[#E6E8EC] p-6 rounded-2xl space-y-4">
+                <div className="flex items-center gap-2 text-sm font-black text-[#172033] uppercase">
+                  <Building className="w-5 h-5 text-[#2457D6]" /> Rate Venue / Turf Quality
+                </div>
+                
+                <div className="flex justify-center gap-2 py-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onMouseEnter={() => setVenueHoverRating(star)}
+                      onMouseLeave={() => setVenueHoverRating(0)}
+                      onClick={() => setVenueRating(star)}
+                      className="p-1 transition-transform hover:scale-110 focus:outline-none"
+                    >
+                      <Star 
+                        className={`w-9 h-9 transition-colors ${
+                          star <= (venueHoverRating || venueRating) 
+                            ? 'text-[#2457D6] fill-[#2457D6]' 
+                            : 'text-[#98A2B3]/30 fill-[#98A2B3]/10'
+                        }`} 
+                      />
+                    </button>
+                  ))}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#667085] uppercase mb-1">Venue Comments & Amenities Review</label>
+                  <textarea 
+                    value={venueReviewText}
+                    onChange={e => setVenueReviewText(e.target.value)}
+                    rows={3}
+                    className="w-full bg-white border border-[#E6E8EC] text-[#172033] rounded-xl px-4 py-3 text-xs font-medium focus:outline-none focus:border-[#2457D6]"
+                    placeholder="How was the turf quality, floodlights, parking, and cleanliness?"
+                  />
+                </div>
               </div>
 
               <button
-                disabled={saving || rating === 0}
+                disabled={saving}
                 type="submit"
-                className="w-full py-3.5 bg-[#FF7A3D] hover:bg-[#EA622D] text-white rounded-xl font-bold text-sm shadow-sm transition-colors uppercase tracking-wider disabled:opacity-50 flex justify-center items-center"
+                className="w-full py-4 bg-[#FF7A3D] hover:bg-[#EA622D] text-white rounded-xl font-black text-xs shadow-sm transition-colors uppercase tracking-wider disabled:opacity-50 flex justify-center items-center"
               >
-                {saving ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  "Submit Review"
-                )}
+                {saving ? 'Submitting Review...' : 'Submit Ratings & Review'}
               </button>
             </form>
           ) : (
             <div className="space-y-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-extrabold uppercase text-[#172033]">Mark Attendance</h2>
-                <p className="text-xs text-[#667085]">Update player stats</p>
+                <h2 className="text-lg font-extrabold uppercase text-[#172033]">Mark Player Attendance</h2>
+                <p className="text-xs text-[#667085]">Verified hosts update player scores</p>
               </div>
 
               {participants.length === 0 ? (
@@ -230,13 +296,9 @@ export default function MatchReview() {
               <button
                 onClick={handleSaveAttendance}
                 disabled={saving || Object.keys(attendanceMap).length === 0}
-                className="w-full mt-6 py-3.5 bg-[#2457D6] hover:bg-[#1D4ED8] text-white rounded-xl font-bold text-sm shadow-sm transition-colors uppercase tracking-wider disabled:opacity-50 flex items-center justify-center"
+                className="w-full mt-6 py-4 bg-[#2457D6] hover:bg-[#1D4ED8] text-white rounded-xl font-black text-xs shadow-sm transition-colors uppercase tracking-wider disabled:opacity-50 flex items-center justify-center"
               >
-                {saving ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  "Save Attendance"
-                )}
+                {saving ? 'Saving Attendance...' : 'Save Attendance Scores'}
               </button>
             </div>
           )}
@@ -245,4 +307,3 @@ export default function MatchReview() {
     </div>
   );
 }
-

@@ -27,7 +27,7 @@ export default function MapboxPicker({
   );
 
   const handleMapClick = useCallback((e: any) => {
-    if (readOnly) return; // Prevent pin manipulation in read-only mode
+    if (readOnly) return;
     const lat = e.lngLat.lat;
     const lng = e.lngLat.lng;
     setMarker({ lat, lng });
@@ -40,32 +40,32 @@ export default function MapboxPicker({
 
   if (!mapboxToken || mapboxToken === 'your-mapbox-token') {
     return (
-      <div className="w-full h-full min-h-[220px] bg-zinc-900 rounded-xl border border-zinc-800 flex items-center justify-center text-zinc-500 text-xs">
-        <p>Mapbox Token Required. Add VITE_MAPBOX_TOKEN to .env</p>
+      <div className="w-full h-full min-h-[220px] bg-[#F7F7F2] rounded-xl border border-[#E6E8EC] flex items-center justify-center text-[#667085] text-xs font-semibold">
+        <p>📍 Location Coordinates: {initialLat.toFixed(4)}, {initialLng.toFixed(4)}</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full min-h-[220px] rounded-xl overflow-hidden border border-zinc-800 relative shadow-inner shadow-black/50">
+    <div className="w-full h-full min-h-[220px] rounded-xl overflow-hidden border border-[#E6E8EC] relative shadow-sm">
       <Map
         {...viewState}
         onMove={(evt: any) => setViewState(evt.viewState)}
         onClick={handleMapClick}
-        mapStyle="mapbox://styles/mapbox/dark-v11"
+        mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={mapboxToken}
         cursor={readOnly ? 'grab' : 'crosshair'}
       >
         {marker && (
           <Marker longitude={marker.lng} latitude={marker.lat} anchor="bottom">
             <div className="animate-bounce">
-              <MapPin className="text-red-500 fill-red-500/20 w-8 h-8" />
+              <MapPin className="text-[#FF7A3D] fill-[#FF7A3D]/20 w-8 h-8 drop-shadow-md" />
             </div>
           </Marker>
         )}
       </Map>
-      <div className="absolute top-2 left-2 bg-zinc-950/80 backdrop-blur text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-zinc-800 text-zinc-300 shadow-lg">
-        {readOnly ? '📍 Match Venue Location' : 'Click map to set venue coordinates'}
+      <div className="absolute top-2 left-2 bg-white/90 backdrop-blur text-[11px] font-bold px-3 py-1 rounded-lg border border-[#E6E8EC] text-[#172033] shadow-sm">
+        {readOnly ? '📍 Venue Location Pin' : 'Click map to set venue coordinates'}
       </div>
     </div>
   );

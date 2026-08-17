@@ -12,11 +12,39 @@ enum Role {
   USER
   GROUND_OWNER
   POOL_OWNER
+  ADMIN
 }
 
 enum VenueType {
   GROUND
   SWIMMING_POOL
+  BOX_CRICKET
+  FOOTBALL_TURF
+  BADMINTON_COURT
+  PICKLEBALL_COURT
+  ESPORTS_LOUNGE
+}
+
+enum VenueStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum ReportTargetType {
+  USER
+  OWNER
+  VENUE
+  MATCH
+  REVIEW
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  DISMISSED
+  ACTION_TAKEN
 }
 
 enum MatchType {
@@ -54,6 +82,7 @@ model User {
   supabaseId              String           @unique
   email                   String           @unique
   role                    Role             @default(USER)
+  isSuspended             Boolean          @default(false)
   createdAt               DateTime         @default(now())
   updatedAt               DateTime         @updatedAt
 
@@ -67,6 +96,9 @@ model User {
   sentMessageRequests     MessageRequest[] @relation("SentMessageRequests")
   receivedMessageRequests MessageRequest[] @relation("ReceivedMessageRequests")
   notifications           Notification[]
+  venues                  Venue[]          @relation("VenueOwner")
+  venueReviews            VenueReview[]    @relation("VenueReviewAuthor")
+  reportsSubmitted        Report[]         @relation("ReportReporter")
 }
 
 model Profile {
@@ -101,7 +133,7 @@ model Profile {
   hostedGames           Int       @default(0)
   reliabilityScore      Int       @default(100)
 
-  // Venue details (if ground/pool owner)
+  // Venue details (if ground/pool owner legacy fields)
   venueType             VenueType?
   venueImages           String[]  @default([])
   amenities             String[]  @default([])
@@ -110,11 +142,52 @@ model Profile {
   @@index([latitude, longitude])
 }
 
+model Venue {
+  id              String        @id @default(uuid())
+  ownerId         String
+  owner           User          @relation("VenueOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  name            String
+  description     String?
+  category        String        // e.g. 'Cricket Box', 'Football Turf', 'Badminton Court', 'Swimming Pool', 'Pickleball Court', 'E-Sports Lounge'
+  venueType       VenueType?
+  sports          String[]      @default([])
+  
+  address         String?
+  locality        String        // e.g. 'Narayanguda', 'Himayatnagar', 'Gachibowli', 'Madhapur'
+  latitude        Float
+  longitude       Float
+  pricePerHour    Float
+  ownerPhone      String?
+  
+  images          String[]      @default([])
+  amenities       String[]      @default([])
+  
+  status          VenueStatus   @default(PENDING_APPROVAL)
+  rejectionReason String?
+  
+  rating          Float         @default(5.0)
+  reviewCount     Int           @default(0)
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  matches         Match[]
+  venueReviews    VenueReview[]
+
+  @@index([latitude, longitude])
+  @@index([status])
+  @@index([locality])
+}
+
 model Match {
   id             String      @id @default(uuid())
   hostId         String
   host           User        @relation("Host", fields: [hostId], references: [id], onDelete: Cascade)
   
+  venueId        String?
+  venue          Venue?      @relation(fields: [venueId], references: [id], onDelete: SetNull)
+
   title          String
   description    String?
   matchType      MatchType   @default(PHYSICAL)
@@ -146,6 +219,7 @@ model Match {
   attendances    Attendance[]
   reviews        Review[]
   messages       Message[]
+  venueReviews   VenueReview[]
 
   @@index([latitude, longitude])
   @@index([date])
@@ -216,6 +290,46 @@ model Review {
   comment      String?
   
   createdAt    DateTime @default(now())
+}
+
+model VenueReview {
+  id        String   @id @default(uuid())
+  venueId   String
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  
+  authorId  String
+  author    User     @relation("VenueReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  
+  matchId   String?
+  match     Match?   @relation(fields: [matchId], references: [id], onDelete: SetNull)
+  
+  rating    Int
+  comment   String?
+  
+  createdAt DateTime @default(now())
+
+  @@unique([venueId, authorId, matchId])
+  @@index([venueId])
+}
+
+model Report {
+  id           String           @id @default(uuid())
+  reporterId   String
+  reporter     User             @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  
+  targetType   ReportTargetType
+  targetId     String
+  reason       String
+  description  String?
+  
+  status       ReportStatus     @default(PENDING)
+  adminAction  String?
+  
+  createdAt    DateTime         @default(now())
+  resolvedAt   DateTime?
+
+  @@index([status])
+  @@index([targetType])
 }
 
 model Message {

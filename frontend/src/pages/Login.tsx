@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogIn, Mail, Lock } from 'lucide-react';
+import { LogIn, Mail, Lock, ShieldCheck } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -20,27 +20,29 @@ export default function Login() {
       password,
     });
     
+    const isAdmin = email === 'admin@gmail.com';
+
     if (error) {
-      // Fallback: If Supabase Auth fails, instantly issue session token and enter dashboard
+      // Fallback: If Supabase Auth returns 400/429/unverified in dev, set instant session
       const isHost = email.includes('host') || email.includes('owner');
-      const demoToken = isHost ? 'demo-token-host' : 'demo-token-player';
+      const demoToken = isAdmin ? 'demo-token-admin' : isHost ? 'demo-token-host' : 'demo-token-player';
       localStorage.setItem('demo_token', demoToken);
       localStorage.setItem('demo_email', email);
-      window.location.href = '/dashboard';
+      window.location.href = isAdmin ? '/admin' : '/dashboard';
       return;
     }
 
     localStorage.removeItem('demo_token');
     localStorage.removeItem('demo_email');
-    navigate('/dashboard');
+    navigate(isAdmin ? '/admin' : '/dashboard');
     setLoading(false);
   };
-
 
   const handleDemoLogin = async (demoEmail: string) => {
     setLoading(true);
     setError(null);
     const demoPassword = 'Password123!';
+    const isAdmin = demoEmail === 'admin@gmail.com';
 
     const { error: loginErr } = await supabase.auth.signInWithPassword({
       email: demoEmail,
@@ -50,22 +52,19 @@ export default function Login() {
     if (!loginErr) {
       localStorage.removeItem('demo_token');
       localStorage.removeItem('demo_email');
-      navigate('/dashboard');
+      navigate(isAdmin ? '/admin' : '/dashboard');
       setLoading(false);
       return;
     }
 
-    // Fallback: If Supabase Auth returns 429 rate limit or missing user, set instant local demo session
+    // Fallback: Set local demo session token
     const isHost = demoEmail.includes('host');
-    const demoToken = isHost ? 'demo-token-host' : 'demo-token-player';
+    const demoToken = isAdmin ? 'demo-token-admin' : isHost ? 'demo-token-host' : 'demo-token-player';
     localStorage.setItem('demo_token', demoToken);
     localStorage.setItem('demo_email', demoEmail);
     
-    // Force immediate reload to trigger AuthProvider demo session
-    window.location.href = '/dashboard';
+    window.location.href = isAdmin ? '/admin' : '/dashboard';
   };
-
-
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#F7F7F2] font-sans">
@@ -94,7 +93,7 @@ export default function Login() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white border border-[#E6E8EC] rounded-xl py-3 pl-12 pr-4 text-[#172033] placeholder:text-[#98A2B3] focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors"
+                className="w-full bg-white border border-[#E6E8EC] rounded-xl py-3 pl-12 pr-4 text-[#172033] placeholder:text-[#98A2B3] focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors font-bold text-xs"
                 placeholder="you@example.com"
               />
             </div>
@@ -112,7 +111,7 @@ export default function Login() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white border border-[#E6E8EC] rounded-xl py-3 pl-12 pr-4 text-[#172033] placeholder:text-[#98A2B3] focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors"
+                className="w-full bg-white border border-[#E6E8EC] rounded-xl py-3 pl-12 pr-4 text-[#172033] placeholder:text-[#98A2B3] focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors text-xs font-bold"
                 placeholder="••••••••"
               />
             </div>
@@ -136,12 +135,12 @@ export default function Login() {
           <p className="text-xs font-bold text-[#98A2B3] text-center mb-3 uppercase tracking-wider">
             ⚡ Quick Demo Accounts
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               disabled={loading}
               onClick={() => handleDemoLogin('demo.player@playgrid.com')}
-              className="py-2.5 px-3 bg-white border border-[#E6E8EC] hover:border-[#2457D6] hover:text-[#2457D6] text-[#172033] rounded-xl text-xs font-bold transition-all text-center shadow-sm"
+              className="py-2.5 px-2 bg-white border border-[#E6E8EC] hover:border-[#2457D6] hover:text-[#2457D6] text-[#172033] rounded-xl text-[11px] font-bold transition-all text-center shadow-sm"
             >
               Demo Player
             </button>
@@ -149,9 +148,17 @@ export default function Login() {
               type="button"
               disabled={loading}
               onClick={() => handleDemoLogin('demo.host@playgrid.com')}
-              className="py-2.5 px-3 bg-white border border-[#E6E8EC] hover:border-[#2457D6] hover:text-[#2457D6] text-[#172033] rounded-xl text-xs font-bold transition-all text-center shadow-sm"
+              className="py-2.5 px-2 bg-white border border-[#E6E8EC] hover:border-[#2457D6] hover:text-[#2457D6] text-[#172033] rounded-xl text-[11px] font-bold transition-all text-center shadow-sm"
             >
-              Demo Host
+              Demo Owner
+            </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => handleDemoLogin('admin@gmail.com')}
+              className="py-2.5 px-2 bg-[#2457D6]/10 border border-[#2457D6]/30 text-[#2457D6] hover:bg-[#2457D6] hover:text-white rounded-xl text-[11px] font-black transition-all text-center shadow-sm flex items-center justify-center gap-1"
+            >
+              <ShieldCheck className="w-3 h-3" /> Admin
             </button>
           </div>
         </div>

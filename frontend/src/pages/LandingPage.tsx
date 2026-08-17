@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, Users, Calendar, MapPin, ArrowRight, Zap, MessageSquare, Award } from 'lucide-react';
 import { api } from '../api';
+import { useAuth } from '../components/AuthProvider';
 
 export default function LandingPage() {
+  const { user } = useAuth();
   const [featuredMatches, setFeaturedMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,18 +56,29 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link 
-              to="/login" 
-              className="px-4 py-2 bg-white border border-[#E6E8EC] hover:bg-gray-50 text-[#172033] font-bold text-xs rounded-xl transition-colors uppercase tracking-wider"
-            >
-              Sign In
-            </Link>
-            <Link 
-              to="/register" 
-              className="px-4 py-2 bg-[#FF7A3D] hover:bg-[#EA622D] text-white font-bold text-xs rounded-xl shadow-sm transition-colors uppercase tracking-wider"
-            >
-              Get Started
-            </Link>
+            {user ? (
+              <Link 
+                to="/dashboard" 
+                className="px-5 py-2.5 bg-[#2457D6] hover:bg-[#1D4ED8] text-white font-bold text-xs rounded-xl shadow-sm transition-colors uppercase tracking-wider flex items-center gap-1.5"
+              >
+                Go to Dashboard →
+              </Link>
+            ) : (
+              <>
+                <Link 
+                  to="/login" 
+                  className="px-4 py-2 bg-white border border-[#E6E8EC] hover:bg-gray-50 text-[#172033] font-bold text-xs rounded-xl transition-colors uppercase tracking-wider"
+                >
+                  Sign In
+                </Link>
+                <Link 
+                  to="/register" 
+                  className="px-4 py-2 bg-[#FF7A3D] hover:bg-[#EA622D] text-white font-bold text-xs rounded-xl shadow-sm transition-colors uppercase tracking-wider"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -90,19 +103,39 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto mb-16">
-            <Link
-              to="/register"
-              className="w-full sm:w-auto px-8 py-4 bg-[#FF7A3D] hover:bg-[#EA622D] text-white font-bold text-sm rounded-xl shadow-sm flex items-center justify-center gap-2 transition-colors uppercase tracking-wider"
-            >
-              Explore Active Games
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              to="/login"
-              className="w-full sm:w-auto px-8 py-4 bg-white border border-[#E6E8EC] hover:bg-gray-50 text-[#172033] font-bold text-sm rounded-xl transition-colors flex items-center justify-center"
-            >
-              Sign In to Account
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="w-full sm:w-auto px-8 py-4 bg-[#FF7A3D] hover:bg-[#EA622D] text-white font-bold text-sm rounded-xl shadow-sm flex items-center justify-center gap-2 transition-colors uppercase tracking-wider"
+                >
+                  Explore Dashboard
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  to="/profile"
+                  className="w-full sm:w-auto px-8 py-4 bg-white border border-[#E6E8EC] hover:bg-gray-50 text-[#172033] font-bold text-sm rounded-xl transition-colors flex items-center justify-center"
+                >
+                  My Profile
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/register"
+                  className="w-full sm:w-auto px-8 py-4 bg-[#FF7A3D] hover:bg-[#EA622D] text-white font-bold text-sm rounded-xl shadow-sm flex items-center justify-center gap-2 transition-colors uppercase tracking-wider"
+                >
+                  Explore Active Games
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  to="/login"
+                  className="w-full sm:w-auto px-8 py-4 bg-white border border-[#E6E8EC] hover:bg-gray-50 text-[#172033] font-bold text-sm rounded-xl transition-colors flex items-center justify-center"
+                >
+                  Sign In to Account
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Social Proof Stats */}
@@ -149,7 +182,7 @@ export default function LandingPage() {
               <p className="text-xs text-[#667085] leading-relaxed mb-4">
                 {cat.desc}
               </p>
-              <Link to="/register" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FF7A3D] hover:underline uppercase tracking-wider">
+              <Link to={user ? "/dashboard" : "/register"} className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FF7A3D] hover:underline uppercase tracking-wider">
                 Find Games →
               </Link>
             </div>
@@ -166,7 +199,7 @@ export default function LandingPage() {
               <p className="text-[#667085] text-sm">Join games scheduled by verified community hosts</p>
             </div>
             <Link 
-              to="/register" 
+              to={user ? "/dashboard" : "/register"} 
               className="text-[#2457D6] hover:text-[#1D4ED8] font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors"
             >
               View All Matches →
@@ -219,10 +252,10 @@ export default function LandingPage() {
                       {m.filledSlots} / {m.totalSlots} Slots
                     </span>
                     <Link
-                      to="/login"
+                      to={user ? `/match/${m.id}` : "/login"}
                       className="text-xs font-bold text-white bg-[#FF7A3D] hover:bg-[#EA622D] px-3.5 py-1.5 rounded-lg transition-colors shadow-sm uppercase tracking-wider"
                     >
-                      Join Game
+                      {user ? 'View Game' : 'Join Game'}
                     </Link>
                   </div>
                 </div>
@@ -290,16 +323,16 @@ export default function LandingPage() {
 
             <div className="w-full lg:w-auto shrink-0 flex flex-col gap-3">
               <Link
-                to="/register"
+                to="/owner/register"
                 className="px-8 py-4 bg-[#FF7A3D] hover:bg-[#EA622D] text-white font-black text-sm rounded-xl text-center shadow-sm uppercase tracking-wider"
               >
                 Register as Turf Owner
               </Link>
               <Link
-                to="/login"
+                to={user ? "/owner/dashboard" : "/login"}
                 className="px-8 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-sm rounded-xl text-center border border-white/20"
               >
-                Owner Portal Sign In
+                {user ? "Owner Dashboard" : "Owner Portal Sign In"}
               </Link>
             </div>
           </div>
@@ -372,11 +405,17 @@ export default function LandingPage() {
           <div className="space-y-3">
             <h4 className="font-extrabold text-[#172033] text-sm uppercase tracking-wider">Quick Links</h4>
             <ul className="space-y-2 font-medium">
-              <li><Link to="/register" className="hover:text-[#2457D6] transition-colors">Find Matches</Link></li>
-              <li><Link to="/register" className="hover:text-[#2457D6] transition-colors">Host a Game</Link></li>
-              <li><Link to="/register" className="hover:text-[#2457D6] transition-colors">Turf Owner Partner</Link></li>
-              <li><Link to="/login" className="hover:text-[#2457D6] transition-colors">Sign In</Link></li>
-              <li><Link to="/register" className="hover:text-[#2457D6] transition-colors">Register Account</Link></li>
+              <li><Link to={user ? "/dashboard" : "/register"} className="hover:text-[#2457D6] transition-colors">Find Matches</Link></li>
+              <li><Link to={user ? "/create-match" : "/register"} className="hover:text-[#2457D6] transition-colors">Host a Game</Link></li>
+              <li><Link to="/owner/register" className="hover:text-[#2457D6] transition-colors">Turf Owner Partner</Link></li>
+              {user ? (
+                <li><Link to="/dashboard" className="hover:text-[#2457D6] transition-colors font-bold">Dashboard</Link></li>
+              ) : (
+                <>
+                  <li><Link to="/login" className="hover:text-[#2457D6] transition-colors">Sign In</Link></li>
+                  <li><Link to="/register" className="hover:text-[#2457D6] transition-colors">Register Account</Link></li>
+                </>
+              )}
             </ul>
           </div>
 
@@ -410,8 +449,14 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 mt-12 pt-6 border-t border-[#E6E8EC] flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[#98A2B3]">
           <p>© {new Date().getFullYear()} GAMEVIA Inc. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <Link to="/login" className="hover:text-[#172033] transition-colors font-bold">Sign In</Link>
-            <Link to="/register" className="hover:text-[#172033] transition-colors font-bold">Register</Link>
+            {user ? (
+              <Link to="/dashboard" className="hover:text-[#172033] transition-colors font-bold text-[#2457D6]">Dashboard</Link>
+            ) : (
+              <>
+                <Link to="/login" className="hover:text-[#172033] transition-colors font-bold">Sign In</Link>
+                <Link to="/register" className="hover:text-[#172033] transition-colors font-bold">Register</Link>
+              </>
+            )}
           </div>
         </div>
       </footer>

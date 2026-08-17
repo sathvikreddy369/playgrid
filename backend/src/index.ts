@@ -11,6 +11,9 @@ import matchRoutes from './routes/matchRoutes';
 import requestRoutes from './routes/requestRoutes';
 import reviewRoutes from './routes/reviewRoutes';
 import messageRoutes from './routes/messageRoutes';
+import adminRoutes from './routes/adminRoutes';
+import venueRoutes from './routes/venueRoutes';
+import reportRoutes from './routes/reportRoutes';
 
 dotenv.config();
 
@@ -75,9 +78,19 @@ app.use('/reviews', reviewRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/messages', messageRoutes);
 
+app.use('/api/admin', adminRoutes);
+app.use('/admin', adminRoutes);
+
+app.use('/api/venues', venueRoutes);
+app.use('/venues', venueRoutes);
+
+app.use('/api/reports', reportRoutes);
+app.use('/reports', reportRoutes);
+
 const PORT = process.env.PORT || 5000;
 
 httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
 

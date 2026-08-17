@@ -8,13 +8,15 @@ import UserProfile from './pages/UserProfile';
 import PublicProfile from './pages/PublicProfile';
 
 import GroundOwnerProfile from './pages/GroundOwnerProfile';
+import AdminDashboard from './pages/AdminDashboard';
+import OwnerOnboarding from './pages/OwnerOnboarding';
 import Dashboard from './pages/Dashboard';
 import CreateMatch from './pages/CreateMatch';
 import MatchDetails from './pages/MatchDetails';
 import MatchManagement from './pages/MatchManagement';
 import Messaging from './pages/Messaging';
 import MatchReview from './pages/MatchReview';
-
+import LandingPage from './pages/LandingPage';
 
 // Protected Route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -22,8 +24,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#F7F7F2] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#2457D6] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -35,17 +37,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return children;
 }
 
-
-
-import LandingPage from './pages/LandingPage';
-
 function App() {
   return (
     <AuthProvider>
       <SpeedInsights />
       <Analytics />
       <Router>
-
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
@@ -55,6 +52,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/owner/register"
+            element={
+              <ProtectedRoute>
+                <OwnerOnboarding />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/owner/dashboard"
+            element={
+              <ProtectedRoute>
+                <GroundOwnerProfile />
               </ProtectedRoute>
             }
           />
@@ -74,7 +95,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/create-match"
             element={

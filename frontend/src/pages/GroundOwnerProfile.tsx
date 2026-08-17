@@ -1,216 +1,193 @@
 import { useState, useEffect } from 'react';
-import MapboxPicker from '../components/MapboxPicker';
-import ImageUpload from '../components/ImageUpload';
-import { Save, Store, MapPin, DollarSign, Building } from 'lucide-react';
+import { MapPin, Building, Star, ExternalLink, Calendar, Users, DollarSign, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
 import { api } from '../api';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { getGoogleMapsDirectionsUrl } from '../utils/location';
 
 export default function GroundOwnerProfile() {
-  const navigate = useNavigate();
-  const [venueName, setVenueName] = useState('');
-  const [description, setDescription] = useState('');
-  
-  // Venue specific
-
-  const [amenities, setAmenities] = useState<string[]>([]);
-  const [amenityInput, setAmenityInput] = useState('');
-  const [pricing, setPricing] = useState('');
-  const [venueType, setVenueType] = useState('Box Cricket');
-
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [venue, setVenue] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<any>(null);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await api.get('/users/profile');
-        if (res.data.profile) {
-          setVenueName(res.data.profile.venueName || '');
-          setDescription(res.data.profile.bio || '');
-          setVenueType(res.data.profile.venueType || 'Box Cricket');
-        }
-      } catch (err) {
-        console.error('Failed to load profile', err);
-      }
-    };
-    fetchProfile();
+    fetchOwnerVenue();
   }, []);
 
-  const handleAddAmenity = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && amenityInput.trim()) {
-      e.preventDefault();
-      if (!amenities.includes(amenityInput.trim())) {
-        setAmenities([...amenities, amenityInput.trim()]);
-      }
-      setAmenityInput('');
-    }
-  };
-
-  const removeAmenity = (amenity: string) => {
-    setAmenities(amenities.filter(a => a !== amenity));
-  };
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    setError(null);
-
+  const fetchOwnerVenue = async () => {
+    setLoading(true);
     try {
-      await api.post('/users/profile', {
-        name: venueName || 'Ground Owner',
-        venueName: venueName || undefined,
-        venueType: venueType || undefined,
-        venueAddress: description || undefined,
-        bio: description || undefined
-      });
-      navigate('/profile');
-    } catch (err: any) {
-      console.error('Failed to save venue profile', err);
-      setError(err?.response?.data?.error || 'Failed to save venue profile');
+      const res = await api.get('/venues/my-venue');
+      setVenue(res.data.venue);
+      setAnalytics(res.data.analytics);
+    } catch (err) {
+      console.error('Failed to load owner venue:', err);
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F7F7F2] flex items-center justify-center p-4">
+        <div className="w-8 h-8 border-2 border-[#2457D6] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!venue) {
+    return (
+      <div className="min-h-screen bg-[#F7F7F2] p-4 lg:p-8 flex items-center justify-center">
+        <div className="bg-white border border-[#E6E8EC] rounded-2xl p-8 max-w-md text-center shadow-sm space-y-4">
+          <Building className="w-12 h-12 text-[#2457D6] mx-auto" />
+          <h2 className="text-xl font-black text-[#172033] uppercase">No Registered Venue Found</h2>
+          <p className="text-xs text-[#667085]">
+            You have not registered a sports venue or ground yet. Partner with GAMEVIA to list your venue and get instant bookings!
+          </p>
+          <Link
+            to="/owner/register"
+            className="inline-block px-6 py-3 bg-[#FF7A3D] hover:bg-[#EA622D] text-white font-bold text-xs rounded-xl uppercase tracking-wider shadow-sm"
+          >
+            Register Your Venue Now
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const mapsUrl = getGoogleMapsDirectionsUrl(venue.latitude, venue.longitude);
 
   return (
-    <div className="min-h-screen bg-[#F7F7F2] text-[#172033] p-4 lg:p-8 font-sans">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white border border-[#E6E8EC] rounded-xl overflow-hidden shadow-sm">
-          {/* Header Banner */}
-          <div className="h-32 lg:h-48 bg-[#F7F7F2] border-b border-[#E6E8EC] relative flex items-center justify-center">
-            <Store className="w-16 h-16 text-[#2457D6]/40 absolute" />
+    <div className="min-h-screen bg-[#F7F7F2] text-[#172033] p-4 lg:p-8 font-sans pb-24 sm:pb-12">
+      <div className="max-w-5xl mx-auto space-y-8">
+        
+        {/* Status Banner */}
+        <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm ${
+          venue.status === 'APPROVED' ? 'bg-[#16803C]/10 border-[#16803C]/20 text-[#16803C]' :
+          venue.status === 'PENDING_APPROVAL' ? 'bg-[#FF7A3D]/10 border-[#FF7A3D]/20 text-[#FF7A3D]' :
+          'bg-red-50 border-red-200 text-red-700'
+        }`}>
+          <div className="flex items-center gap-3">
+            {venue.status === 'APPROVED' ? (
+              <CheckCircle className="w-6 h-6 shrink-0 text-[#16803C]" />
+            ) : venue.status === 'PENDING_APPROVAL' ? (
+              <Clock className="w-6 h-6 shrink-0 text-[#FF7A3D]" />
+            ) : (
+              <AlertTriangle className="w-6 h-6 shrink-0 text-red-600" />
+            )}
+            <div>
+              <span className="text-xs font-black uppercase tracking-wider">
+                Venue Status: {venue.status === 'APPROVED' ? 'LIVE ON GAMEVIA' : venue.status === 'PENDING_APPROVAL' ? 'UNDER ADMIN REVIEW' : venue.status}
+              </span>
+              <p className="text-xs font-medium text-[#172033]/80 mt-0.5">
+                {venue.status === 'APPROVED' ? 'Your venue is public and receiving match bookings.' :
+                 venue.status === 'PENDING_APPROVAL' ? 'Your venue application was submitted and is pending verification by Platform Admin.' :
+                 venue.rejectionReason || 'Listing status update from moderation.'}
+              </p>
+            </div>
           </div>
 
-          {error && (
-            <div className="mx-8 mt-6 p-4 rounded-xl bg-[#DC2626]/10 border border-[#DC2626]/20 text-[#DC2626] text-sm font-semibold">
-              {error}
+          {mapsUrl && (
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 bg-white border border-[#E6E8EC] hover:bg-gray-50 text-[#2457D6] font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors shadow-sm shrink-0 uppercase tracking-wider"
+            >
+              Open in Google Maps <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
+        </div>
+
+        {/* Business Analytics Overview */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-black text-[#172033] uppercase tracking-wider">Business Analytics & Metrics</h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white border border-[#E6E8EC] p-5 rounded-2xl shadow-sm">
+              <Calendar className="w-6 h-6 text-[#2457D6] mb-2" />
+              <p className="text-2xl font-black text-[#172033]">{analytics?.totalMatchesHosted || 0}</p>
+              <p className="text-xs text-[#667085] font-semibold">Total Matches Hosted</p>
+            </div>
+
+            <div className="bg-white border border-[#E6E8EC] p-5 rounded-2xl shadow-sm">
+              <Users className="w-6 h-6 text-[#FF7A3D] mb-2" />
+              <p className="text-2xl font-black text-[#172033]">{analytics?.totalParticipants || 0}</p>
+              <p className="text-xs text-[#667085] font-semibold">Confirmed Players</p>
+            </div>
+
+            <div className="bg-white border border-[#E6E8EC] p-5 rounded-2xl shadow-sm">
+              <DollarSign className="w-6 h-6 text-[#16803C] mb-2" />
+              <p className="text-2xl font-black text-[#172033]">₹{analytics?.estimatedMatchValue || 0}</p>
+              <p className="text-xs text-[#667085] font-semibold">Estimated Match Value</p>
+            </div>
+
+            <div className="bg-white border border-[#E6E8EC] p-5 rounded-2xl shadow-sm">
+              <Star className="w-6 h-6 text-[#FF7A3D] fill-[#FF7A3D] mb-2" />
+              <p className="text-2xl font-black text-[#172033]">{analytics?.averageRating || 5.0} ★</p>
+              <p className="text-xs text-[#667085] font-semibold">Average Rating ({analytics?.reviewCount || 0} Reviews)</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Venue Profile Details Card */}
+        <div className="bg-white border border-[#E6E8EC] rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#E6E8EC] pb-6">
+            <div>
+              <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded bg-[#2457D6]/10 text-[#2457D6]">
+                {venue.category}
+              </span>
+              <h1 className="text-2xl font-black text-[#172033] mt-2">{venue.name}</h1>
+              <p className="text-xs text-[#667085] mt-1 flex items-center gap-1.5 font-semibold">
+                <MapPin className="w-4 h-4 text-[#2457D6]" /> {venue.locality} • ₹{venue.pricePerHour}/hr
+              </p>
+            </div>
+            <Link
+              to="/create-match"
+              className="px-5 py-2.5 bg-[#FF7A3D] hover:bg-[#EA622D] text-white font-bold text-xs rounded-xl shadow-sm uppercase tracking-wider"
+            >
+              + Host Match at Venue
+            </Link>
+          </div>
+
+          <p className="text-xs text-[#667085] leading-relaxed bg-[#F7F7F2] p-4 rounded-xl">
+            {venue.description || 'No venue description added.'}
+          </p>
+
+          {venue.images && venue.images.length > 0 && (
+            <div>
+              <h3 className="text-xs font-bold text-[#172033] uppercase mb-3">Venue Photos</h3>
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {venue.images.map((img: string, i: number) => (
+                  <img key={i} src={img} alt="Venue" className="w-32 h-24 object-cover rounded-xl border border-[#E6E8EC]" />
+                ))}
+              </div>
             </div>
           )}
 
-          <form onSubmit={handleSave} className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Reviews List */}
+          <div className="pt-6 border-t border-[#E6E8EC] space-y-4">
+            <h3 className="text-sm font-black text-[#172033] uppercase tracking-wider">
+              Customer Reviews ({venue.venueReviews?.length || 0})
+            </h3>
 
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-extrabold mb-4 flex items-center gap-2 text-[#172033] uppercase tracking-wider">
-                  <Building className="w-5 h-5 text-[#2457D6]" />
-                  Venue Details
-                </h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-xs font-bold text-[#667085] ml-1">Venue Name</label>
-                    <input 
-                      type="text" 
-                      value={venueName}
-                      onChange={e => setVenueName(e.target.value)}
-                      className="w-full bg-white border border-[#E6E8EC] text-[#172033] rounded-xl px-4 py-2.5 mt-1 focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors"
-                      placeholder="e.g. Skyline Box Cricket"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-bold text-[#667085] ml-1">Venue Type</label>
-                      <select 
-                        value={venueType}
-                        onChange={e => setVenueType(e.target.value)}
-                        className="w-full bg-white border border-[#E6E8EC] text-[#172033] rounded-xl px-4 py-2.5 mt-1 focus:outline-none focus:border-[#2457D6] transition-colors appearance-none font-semibold"
-                      >
-                        <option>Box Cricket</option>
-                        <option>Football Turf</option>
-                        <option>Badminton Court</option>
-                        <option>Swimming Pool</option>
-                        <option>Pickleball Court</option>
-                      </select>
+            {venue.venueReviews && venue.venueReviews.length > 0 ? (
+              <div className="space-y-3">
+                {venue.venueReviews.map((rev: any) => (
+                  <div key={rev.id} className="bg-[#F7F7F2] p-4 rounded-xl border border-[#E6E8EC]">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-xs text-[#172033]">{rev.author?.profile?.name || rev.author?.email}</span>
+                      <span className="text-xs font-bold text-[#FF7A3D]">{rev.rating} ★</span>
                     </div>
-                    <div>
-                      <label className="text-xs font-bold text-[#667085] ml-1">Price per Hour (₹)</label>
-                      <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#98A2B3]" />
-                        <input 
-                          type="number" 
-                          value={pricing}
-                          onChange={e => setPricing(e.target.value)}
-                          className="w-full bg-white border border-[#E6E8EC] text-[#172033] rounded-xl pl-9 pr-4 py-2.5 mt-1 focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors font-semibold"
-                          placeholder="1200"
-                        />
-                      </div>
-                    </div>
+                    <p className="text-xs text-[#667085]">{rev.comment || 'No text review'}</p>
                   </div>
-
-                  <div>
-                    <label className="text-xs font-bold text-[#667085] ml-1">Description</label>
-                    <textarea 
-                      value={description}
-                      onChange={e => setDescription(e.target.value)}
-                      rows={3}
-                      className="w-full bg-white border border-[#E6E8EC] text-[#172033] rounded-xl px-4 py-2.5 mt-1 focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors resize-none placeholder:text-[#98A2B3]"
-                      placeholder="Describe your venue, rules, etc..."
-                    />
-                  </div>
-                </div>
+                ))}
               </div>
-
-              <div>
-                <h2 className="text-xl font-extrabold mb-4 flex items-center gap-2 text-[#172033] uppercase tracking-wider">
-                  <MapPin className="w-5 h-5 text-[#2457D6]" />
-                  Location
-                </h2>
-                <MapboxPicker />
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-extrabold mb-4 text-[#172033] uppercase tracking-wider">Venue Images</h2>
-                <p className="text-sm text-[#667085] mb-4">Upload up to 3 high-quality images of your venue.</p>
-                <ImageUpload maxImages={3} onUpload={() => {}} />
-              </div>
-
-              <div>
-                <h2 className="text-xl font-extrabold mb-4 mt-8 text-[#172033] uppercase tracking-wider">Amenities</h2>
-                <div>
-                  <label className="text-xs font-bold text-[#667085] ml-1">Add Amenity (Press Enter)</label>
-                  <input 
-                    type="text" 
-                    value={amenityInput}
-                    onChange={e => setAmenityInput(e.target.value)}
-                    onKeyDown={handleAddAmenity}
-                    className="w-full bg-white border border-[#E6E8EC] text-[#172033] rounded-xl px-4 py-2.5 mt-1 focus:outline-none focus:border-[#2457D6] focus:ring-1 focus:ring-[#2457D6] transition-colors placeholder:text-[#98A2B3]"
-                    placeholder="e.g. Parking, Washroom, Floodlights"
-                  />
-                  
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {amenities.map(amenity => (
-                      <span key={amenity} className="px-3 py-1 bg-[#F7F7F2] border border-[#E6E8EC] text-[#2457D6] rounded-full text-xs font-bold flex items-center gap-1">
-                        {amenity}
-                        <button type="button" onClick={() => removeAmenity(amenity)} className="hover:text-[#172033]">&times;</button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-[#E6E8EC]">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="w-full py-3 bg-[#2457D6] hover:bg-[#1D4ED8] text-white font-bold text-sm rounded-xl shadow-sm flex items-center justify-center gap-2 transition-colors uppercase tracking-wider disabled:opacity-50"
-                >
-                  {saving ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <Save className="w-5 h-5" />
-                      Save Venue Profile
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </form>
+            ) : (
+              <p className="text-xs text-[#667085]">No reviews submitted for this venue yet.</p>
+            )}
+          </div>
         </div>
+
       </div>
     </div>
   );

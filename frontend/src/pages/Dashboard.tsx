@@ -275,6 +275,11 @@ export default function Dashboard() {
           </Link>
 
           <div className="flex items-center gap-3">
+            {(profile?.user?.role === 'ADMIN' || profile?.email === 'admin@gmail.com' || profile?.user?.email === 'admin@gmail.com') && (
+              <Link to="/admin" className="px-3 py-1.5 bg-[#2457D6] hover:bg-[#1D4ED8] text-white font-black text-xs rounded-xl shadow-sm uppercase tracking-wider flex items-center gap-1">
+                🛡️ Admin
+              </Link>
+            )}
             <NotificationBell />
             <Link to="/messages" className="hidden sm:block p-2 text-[#667085] hover:text-[#172033] transition-colors">
               <MessageSquare className="w-5 h-5" />

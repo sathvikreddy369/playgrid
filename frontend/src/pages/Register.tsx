@@ -125,11 +125,19 @@ export default function Register() {
           </button>
         </form>
 
-        <div className="mt-8 text-center text-xs text-[#667085]">
-          Already have an account?{' '}
-          <Link to="/login" className="text-[#2457D6] font-bold hover:underline">
-            Sign in instead
-          </Link>
+        <div className="mt-8 text-center text-xs text-[#667085] space-y-2">
+          <div>
+            Already have an account?{' '}
+            <Link to="/login" className="text-[#2457D6] font-bold hover:underline">
+              Sign in instead
+            </Link>
+          </div>
+          <div className="pt-3 border-t border-[#E6E8EC]">
+            Own a sports venue?{' '}
+            <Link to="/owner/register" className="text-[#FF7A3D] font-bold hover:underline">
+              Partner with GAMEVIA →
+            </Link>
+          </div>
         </div>
       </div>
     </div>

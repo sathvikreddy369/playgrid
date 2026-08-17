@@ -34,7 +34,7 @@ export default function NearbyMap({ userLocation, items, radius }: NearbyMapProp
   const [viewState, setViewState] = useState({
     latitude: centerLat,
     longitude: centerLng,
-    zoom: 12
+    zoom: 13
   });
 
   const [selectedPoint, setSelectedPoint] = useState<MapPoint | null>(null);
@@ -45,7 +45,7 @@ export default function NearbyMap({ userLocation, items, radius }: NearbyMapProp
     <div className="w-full bg-white border border-[#E6E8EC] rounded-2xl overflow-hidden shadow-sm space-y-0">
       {/* Map Header Controls */}
       <div className="p-4 bg-white border-b border-[#E6E8EC] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-[#2457D6]/10 text-[#2457D6] flex items-center justify-center font-bold">
             <Navigation className="w-4 h-4" />
           </div>
@@ -54,23 +54,26 @@ export default function NearbyMap({ userLocation, items, radius }: NearbyMapProp
               Nearby Active Radar ({items.length} items within {radius}km)
             </h3>
             <p className="text-xs text-[#667085]">
-              {userLocation ? 'Using live GPS coordinates' : 'Centered near Hyderabad Center'}
+              {userLocation ? '🟢 Showing your live GPS coordinates in Green' : 'Centered around Hyderabad'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs">
-          <span className="inline-flex items-center gap-1 font-bold text-[#FF7A3D]">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#FF7A3D]" /> Active Matches
+        <div className="flex items-center gap-3 text-xs">
+          <span className="inline-flex items-center gap-1.5 font-bold text-[#16803C]">
+            <span className="w-3 h-3 rounded-full bg-[#16803C] animate-pulse border border-white shadow-sm" /> Your Location
           </span>
-          <span className="inline-flex items-center gap-1 font-bold text-[#2457D6]">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#2457D6]" /> Turf Owners & Venues
+          <span className="inline-flex items-center gap-1.5 font-bold text-[#FF7A3D]">
+            <span className="w-3 h-3 rounded-full bg-[#FF7A3D] border border-white shadow-sm" /> Active Games
+          </span>
+          <span className="inline-flex items-center gap-1.5 font-bold text-[#2457D6]">
+            <span className="w-3 h-3 rounded-full bg-[#2457D6] border border-white shadow-sm" /> Turf Venues
           </span>
         </div>
       </div>
 
       {/* Map Container */}
-      <div className="relative w-full h-[360px] sm:h-[420px] bg-[#F7F7F2]">
+      <div className="relative w-full h-[380px] sm:h-[440px] bg-[#F7F7F2]">
         {hasMapbox ? (
           <Map
             {...viewState}
@@ -78,13 +81,16 @@ export default function NearbyMap({ userLocation, items, radius }: NearbyMapProp
             mapStyle="mapbox://styles/mapbox/light-v11"
             mapboxAccessToken={mapboxToken}
           >
-            {/* User GPS Location Marker */}
+            {/* User GPS Location Marker in Vibrant Green */}
             {userLocation && (
               <Marker latitude={userLocation.lat} longitude={userLocation.lng} anchor="center">
-                <div className="relative flex items-center justify-center">
-                  <span className="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-[#2457D6] opacity-40" />
-                  <div className="w-5 h-5 rounded-full bg-[#2457D6] border-2 border-white shadow-md flex items-center justify-center text-white text-[9px] font-black">
+                <div className="relative flex items-center justify-center group cursor-pointer">
+                  <span className="animate-ping absolute inline-flex h-9 w-9 rounded-full bg-[#16803C] opacity-50" />
+                  <div className="w-6 h-6 rounded-full bg-[#16803C] border-2 border-white shadow-lg flex items-center justify-center text-white text-[9px] font-black tracking-wider">
                     YOU
+                  </div>
+                  <div className="absolute -bottom-7 whitespace-nowrap bg-[#16803C] text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md">
+                    📍 Your Live Location
                   </div>
                 </div>
               </Marker>
@@ -103,7 +109,7 @@ export default function NearbyMap({ userLocation, items, radius }: NearbyMapProp
                     e.stopPropagation();
                     setSelectedPoint(item);
                   }}
-                  className={`cursor-pointer transform hover:scale-110 transition-transform p-1.5 rounded-xl border-2 shadow-md flex items-center gap-1 text-xs font-black text-white ${
+                  className={`cursor-pointer transform hover:scale-110 transition-transform px-2 py-1 rounded-xl border-2 shadow-md flex items-center gap-1 text-[11px] font-black text-white ${
                     item.type === 'MATCH'
                       ? 'bg-[#FF7A3D] border-white'
                       : 'bg-[#2457D6] border-white'
@@ -145,14 +151,14 @@ export default function NearbyMap({ userLocation, items, radius }: NearbyMapProp
                   {selectedPoint.type === 'MATCH' ? (
                     <Link
                       to={`/match/${selectedPoint.id}`}
-                      className="mt-2 block w-full text-center py-1.5 bg-[#FF7A3D] text-white font-bold text-[11px] rounded-lg uppercase tracking-wider"
+                      className="mt-2 block w-full text-center py-1.5 bg-[#FF7A3D] hover:bg-[#EA622D] text-white font-bold text-[11px] rounded-lg uppercase tracking-wider"
                     >
                       View Match Details
                     </Link>
                   ) : (
                     <Link
                       to={`/create-match?venue=${encodeURIComponent(selectedPoint.title)}`}
-                      className="mt-2 block w-full text-center py-1.5 bg-[#2457D6] text-white font-bold text-[11px] rounded-lg uppercase tracking-wider"
+                      className="mt-2 block w-full text-center py-1.5 bg-[#2457D6] hover:bg-[#1D4ED8] text-white font-bold text-[11px] rounded-lg uppercase tracking-wider"
                     >
                       Book Turf / Host Here
                     </Link>
@@ -167,15 +173,16 @@ export default function NearbyMap({ userLocation, items, radius }: NearbyMapProp
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#2457D6_1px,transparent_1px)] [background-size:16px_16px]" />
 
             <div className="relative z-10 flex items-center justify-between">
-              <span className="text-xs font-black uppercase text-[#2457D6] bg-white/90 px-3 py-1 rounded-full border border-[#E6E8EC] shadow-sm">
-                📍 Interactive Location Grid
+              <span className="text-xs font-black uppercase text-[#16803C] bg-white/90 px-3 py-1 rounded-full border border-[#E6E8EC] shadow-sm flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#16803C] animate-pulse" />
+                📍 Your GPS Location Radar
               </span>
               <span className="text-xs font-semibold text-[#667085] bg-white/90 px-3 py-1 rounded-full border border-[#E6E8EC]">
                 {items.length} Active Venues & Games Nearby
               </span>
             </div>
 
-            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto max-h-[280px] p-1">
+            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto max-h-[300px] p-1">
               {items.map((item) => (
                 <div 
                   key={item.id}

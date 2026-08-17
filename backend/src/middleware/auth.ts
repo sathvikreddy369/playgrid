@@ -17,20 +17,23 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
 
     const token = authHeader.split(' ')[1];
 
-    // Handle demo bypass tokens for testing when Supabase Auth rate limits signups
+    // Handle demo bypass tokens for testing
     if (token?.startsWith('demo-token-')) {
       const isHost = token.includes('host') || token.includes('owner');
-      const demoEmail = (req.headers['x-demo-email'] as string) || (isHost ? 'demo.host@playgrid.com' : 'demo.player@playgrid.com');
+      const isAdminToken = token.includes('admin');
+      const demoEmail = (req.headers['x-demo-email'] as string) || 
+        (isAdminToken ? 'admin@gmail.com' : isHost ? 'demo.host@playgrid.com' : 'demo.player@playgrid.com');
+      
       let user = await prisma.user.findUnique({ where: { email: demoEmail } });
       if (!user) {
         user = await prisma.user.create({
           data: {
             supabaseId: `demo-id-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
             email: demoEmail,
-            role: isHost ? 'GROUND_OWNER' : 'USER',
+            role: demoEmail === 'admin@gmail.com' ? 'ADMIN' : isHost ? 'GROUND_OWNER' : 'USER',
             profile: {
               create: {
-                name: demoEmail.split('@')[0] || 'Demo User',
+                name: demoEmail === 'admin@gmail.com' ? 'Platform Administrator' : demoEmail.split('@')[0] || 'Demo User',
                 favoriteSports: ['Cricket', 'Football'],
                 levels: ['Intermediate']
               }
@@ -38,12 +41,24 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
           }
         });
       }
+
+      if (user.email === 'admin@gmail.com' && user.role !== 'ADMIN') {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { role: 'ADMIN' }
+        });
+      }
+
+      if (user.isSuspended) {
+        res.status(403).json({ error: 'Your account has been suspended due to policy violations.' });
+        return;
+      }
+
       req.user = user;
       return next();
     }
 
-    
-    // Verify token with Supabase
+    // Verify token with Supabase Auth
     const { data: { user: supabaseUser }, error } = await supabase.auth.getUser(token);
     
     if (error || !supabaseUser) {
@@ -51,23 +66,21 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
       return;
     }
 
-
-    // Read-only lookup by default to prevent write-on-read overhead on every request
     let user = await prisma.user.findUnique({
       where: { supabaseId: supabaseUser.id }
     });
 
-    // Safe user provisioning fallback if user does not exist in DB yet
     if (!user) {
       try {
+        const isAdmin = supabaseUser.email === 'admin@gmail.com';
         user = await prisma.user.create({
           data: {
             supabaseId: supabaseUser.id,
-            email: supabaseUser.email!
+            email: supabaseUser.email!,
+            role: isAdmin ? 'ADMIN' : 'USER'
           }
         });
       } catch (err: any) {
-        // Handle potential concurrent creation race condition (Prisma P2002 unique constraint error)
         if (err?.code === 'P2002') {
           user = await prisma.user.findUnique({
             where: { supabaseId: supabaseUser.id }
@@ -78,8 +91,20 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
       }
     }
 
+    if (user && user.email === 'admin@gmail.com' && user.role !== 'ADMIN') {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { role: 'ADMIN' }
+      });
+    }
+
     if (!user) {
       res.status(500).json({ error: 'Failed to synchronize user account' });
+      return;
+    }
+
+    if (user.isSuspended) {
+      res.status(403).json({ error: 'Your account has been suspended due to policy violations.' });
       return;
     }
 
@@ -89,5 +114,21 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
     console.error('Auth middleware error:', error);
     res.status(500).json({ error: 'Internal server error during authentication' });
   }
+};
+
+export const requireAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  if (!req.user || req.user.role !== 'ADMIN') {
+    res.status(403).json({ error: 'Forbidden: Platform Admin privileges required' });
+    return;
+  }
+  next();
+};
+
+export const requireOwner = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  if (!req.user || (req.user.role !== 'GROUND_OWNER' && req.user.role !== 'POOL_OWNER' && req.user.role !== 'ADMIN')) {
+    res.status(403).json({ error: 'Forbidden: Venue Owner privileges required' });
+    return;
+  }
+  next();
 };
 
